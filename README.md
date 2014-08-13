@@ -1,4 +1,4 @@
-A(simple) Crypto Daemon
+A(rsene/ctive/nother) Crypto Daemon
 
 An attempt to provide an IRC encryption mechanism that is not perfect, but
 hopefully better than plaintext..
@@ -32,6 +32,14 @@ we're using the following:
 The daemon is implemented in Go langage and will produce a binary.
 
 This is in DEV and instructions to build/install are on the way... gimme time :)
+
+Requirements:
+
+protobuf-2.5.0+
+go-1.2+
+(svn, mercurial, git along with go in fact..)
+
+(go get should do the rest of the magic...)
 
 more detailled description to come.
 
