@@ -3,7 +3,7 @@ package acpb
 import (
     "fmt"
     "os"
-    "arsene/ac/proto"
+    "github.com/unix4fun/ac/proto"
 )
 
 // some variable to handle the maps and the run loop

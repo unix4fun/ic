@@ -11,7 +11,7 @@ import (
     "hash"
     "crypto/rand"
 //    "encoding/hex"
-    "arsene/ac/proto"
+    "github.com/unix4fun/ac/proto"
     "code.google.com/p/goprotobuf/proto"
     "code.google.com/p/go.crypto/pbkdf2"
     "code.google.com/p/go.crypto/hkdf"

@@ -16,7 +16,7 @@ import (
     "code.google.com/p/go.crypto/nacl/box"
     "code.google.com/p/go.crypto/nacl/secretbox"
     "code.google.com/p/go.crypto/sha3"
-    "arsene/ac/obf"
+    "github.com/unix4fun/ac/obf"
 )
 
 /*

@@ -23,7 +23,7 @@ import (
 //    "arsene/ac/ocb"
 //    "arsene/ac/obf"
 //    "arsene/ac/proto"
-    "arsene/ac/acpb"
+    "github.com/unix4fun/ac/acpb"
 //    "code.google.com/p/goprotobuf/proto"
 )
 

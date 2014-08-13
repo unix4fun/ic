@@ -7,7 +7,7 @@ import (
 //    "net"
     "time"
     "crypto/rand"
-    "arsene/ac/proto"
+    "github.com/unix4fun/ac/proto"
     "code.google.com/p/goprotobuf/proto"
 )
 
