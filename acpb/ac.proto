@@ -116,7 +116,7 @@ message acCipherTextMessageResponse {
         CTR_SEAL = 32;
         CTR_OPEN = 33;
         CTR_ADD = 34;
-        CT_ERR = 33;
+        CTR_ERR = 35;
     }
     required acCTRespMsgType type = 1;
     required bool bada = 2; // did it work or not
@@ -155,7 +155,7 @@ message acControlMessageResponse {
         CTLR_LOADCTX = 52;
         CTLR_QUIT = 53;
     }
-    required acCTLRRespMsgType = 1;
+    required acCTLRRespMsgType type = 1;
     required bool bada = 2; // did it work or not
     optional sint32 error_code = 3;
     optional int64 timestamp = 4;
