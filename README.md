@@ -29,13 +29,13 @@ communicating on stdin/stdout using Google Protobuf serialization
 
 irc client ask one of the following:
 - get my public key
-- get <nick> stored public key
-- encrypt <plaintext> for <chan/serv>
-- decrypt <ciphertext> from <chan/serv>
-- build a KEX (Key EXchange) blob for <nick> on <chan/serv>
-- open a KEX blob from <nick> on <chan/serv>
-- generate a ECC pub/priv key pair for <my nickname/serv> 
-- generate a symmetric key pair for <chan/serv>
+- get [nick] stored public key
+- encrypt [plaintext] for [chan/serv]
+- decrypt [ciphertext] from [chan/serv]
+- build a KEX (Key EXchange) blob for [nick] on [chan/serv]
+- open a KEX blob from [nick] on [chan/serv]
+- generate a ECC pub/priv key pair for [my nickname/serv] 
+- generate a symmetric key pair for [chan/serv]
 
 This way the IRC client does not store any secret, nor deal with encryption
 mechanisms, it does not parse messages
@@ -45,9 +45,9 @@ mechanisms, it does not parse messages
 (IRC network) <=> IRC Client <-stdin/stdout-> AC --> [infamous crypto keys]
 
 IRC Message Format:
-<ac> <blob>         : Encrypted Messages
-<acpk> <blob>       : Public key Messages
-<ackx:nick> <blob>  : KEX Messages
+[<ac>] <blob>         : Encrypted Messages
+[<acpk>] <blob>       : Public key Messages
+[<ackx:nick> <blob>]  : KEX Messages
 
 Encrypted Messages Format:
 TODO
