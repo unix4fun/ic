@@ -1,13 +1,12 @@
 # WORK IN PROGRESS
-# **A**(nother) **C**(rypto) daemon
+# **A**(nother) **C**(rypto daemon)
 
-An attempt to provide an IRC encryption mechanism that is not perfect, but
-hopefully better than plaintext and current used ones..
+An attempt to provide a rather simple (to use and maintain) IRC encryption mechanism, but hopefully better than plaintext and current used ones..
+with (hopefully) no "false" sense of security.
 
-It is inspired from previous/known/alternative projects that has been done by "pioneers" or
-e-settlers.. as well as in underground and take account that IRC have some *limitations*.
+It is inspired from previous/known/alternative projects that has been done by "pioneers" or e-settlers.. as well as in underground and take account that IRC have some *limitations*.
 
-It's our first project in an inspiring and pragmatic new language : Go
+It's my first project in an inspiring and pragmatic new language : Go
 
 ## Goals
 
@@ -25,22 +24,21 @@ I needed something like this *up-to-date* so I tried to do/build it.
 
 So far the design is fairly straight forward, the IRC client itself should/does not have any cryptographic knowledge.
 
-the client script [ac-weechat](https://github.com/unix4fun/ac-weechat) just "request" services to a little "daemon" running and
-communicating on stdin/stdout/stderr using [Google
-Protobuf](https://code.google.com/p/protobuf/) serialization.
+the client script [ac-weechat](https://github.com/unix4fun/ac-weechat) just *request* services to a little *daemon* running and
+communicating on *stdin/stdout/stderr* using [Google Protobuf](https://code.google.com/p/protobuf/) serialization.
 
-IRC script running on the client ask one of the following:
+IRC script running on the client *request* one of the following:
 - get my public key
 - get [nick] stored public key(s)
 - encrypt [plaintext] for [chan/serv]
 - decrypt [ciphertext] from [chan/serv]
 - seal a KEX (Key EXchange) blob for *nick* (using's *nick*'s public key) on *chan/serv* (exchange the symmetric key for *chan/serv*)
 - open a KEX blob from *nick* on *chan/serv* (receive & open the key exchange blob from *nick*)
-- generate a ECC 25519 pub/priv key pair for [my nickname/serv] 
-- generate a symmetric key pair for [chan/serv]
+- generate a ECC 25519 pub/priv key pair for *my nickname/serv* 
+- generate a symmetric key pair for *chan/serv*
 
-This way the IRC client does not store any secret, nor deal with encryption
-mechanisms, it does not parse messages
+This way the IRC client does not store any secret, nor deal with encryption mechanisms, it work *in-memory* only and do NOT store anything on disk.
+However we are not yet making sure the page are not swapped to disk. 
 
 
 
@@ -50,18 +48,26 @@ mechanisms, it does not parse messages
 (IRC network) <=> IRC Client <-stdin/stdout-> AC --> [infamous crypto keys]
 
 ### IRC Message Format:
-[<ac>] <blob>         : Encrypted Messages
-[<acpk>] <blob>       : Public key Messages
-[<ackx:nick> <blob>]  : KEX Messages
+```
+<ac> base64_blob         : Encrypted Messages
+<acpk> base64_blob       : Public key Messages
+<ackx:nick> base64_blob  : KEX Messages
+```
 
 ### Encrypted Messages Format:
+```
 TODO
+```
 
 ### Public Key Messages Format:
+```
 TODO
+```
 
 ### KEX Messages Format: 
+```
 TODO
+```
 
 keys should never appear in clear and should be "randomly" (as far as my crypto user knowledge goes) generated.
 
@@ -79,6 +85,7 @@ keys should never appear in clear and should be "randomly" (as far as my crypto 
 * Evil IRC server MITM wins.
 * [Go crypto implementation] (https://godoc.org/code.google.com/p/go.crypto): is it safe?
 * [EC Curve 25519] (http://cr.yp.to/ecdh.html): is it really safe? 
+* memory is swappable to disk and not encrypted (**yet**).
 
 ## Todo
 
