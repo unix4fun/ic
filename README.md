@@ -94,11 +94,18 @@ in no particular order..
 * identity RSA keys (currently in study/dev)
 * ala SSH authorized_nicks (for trusted KEX/messages)
 * OR socialist milionnaire probleme implementation (like OTR).
+* rename a SKMap key (for queries automagically on nick change)
+* rename a PKMap key (on nick change)
 * irssi plugin/script.
 * encrypted runtime memory key storage
 * try to avoid page to disk memory
 * scrub memory before deleting the objects
 * unit/regression testing in Go (bleh_test.go).
+* more cleanup
+* more cleanup
+* more cleanup
+* check/audit source code
+* check/audit source code
 * check/audit source code
 
 The daemon is implemented in Go langage and will produce a binary.
