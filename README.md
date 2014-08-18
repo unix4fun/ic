@@ -1,4 +1,5 @@
-**A**nother **C**rypto daemon
+# WORK IN PROGRESS
+# **A**(nother) **C**(rypto) daemon
 
 An attempt to provide an IRC encryption mechanism that is not perfect, but
 hopefully better than plaintext and current used ones..
@@ -111,4 +112,4 @@ correctly, the following should work:
 
 Binary `ac` should then be in `$GOPATH/bin`
 
-MORE TO COME...
+
