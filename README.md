@@ -77,7 +77,8 @@ keys should never appear in clear and should be "randomly" (as far as my crypto 
 * [PBKDF2] (http://en.wikipedia.org/wiki/PBKDF2) for key generation using input entropy (/sk gen|CT_ADD script command)
 * [HMAC KDF] (http://en.wikipedia.org/wiki/Key_derivation_function) using SHA-3 (w/ a salt for key based on crypto/rand Go implementation)
 * [SHA-3] (http://en.wikipedia.org/wiki/SHA-3) in various area, including NONCE generation (low probability of collision property)
-* [Go] (http://golang.org\) because I like trying something new and promising.
+* [Go] (http://golang.org) because I like trying something new and promising.
+* [Weechat] (http://weechat.org/) because I like trying something new and promising.
 
 ## Known Weaknesses
 
