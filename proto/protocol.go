@@ -150,11 +150,6 @@ func (sk *ACMsgContext) GetNonce() uint32 {
 	return sk.nonce
 }
 
-//func ACMsgContextMapInit( sk map[string](*ACMsgContext) ) {
-//    sk = make(map[string](*ACMsgContext))
-//}
-//
-
 func IsValidChannelName(input []byte) (ok bool, err error) {
 	chanRE := string("^(((![A-Z0-9]{5})|([#+&][^\x00\x07\r\n ,:]+))(:[^\x00\x07\r\n ,:]+)?)$")
 	ok, err = regexp.Match(chanRE, input)
