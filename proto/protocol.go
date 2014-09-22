@@ -163,7 +163,8 @@ func IsValidChannelName(input []byte) (ok bool, err error) {
 //}
 
 func HashSHA3Data(input []byte) (out []byte, err error) {
-	sha3hash := sha3.NewKeccak256()
+	//sha3hash := sha3.NewKeccak256()
+	sha3hash := sha3.New256()
 	_, err = sha3hash.Write(input)
 	if err != nil {
 		return nil, acprotoError(-1, "HashSHA3Data().Write(): ", err)
