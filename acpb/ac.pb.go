@@ -2,31 +2,15 @@
 // source: ac.proto
 // DO NOT EDIT!
 
-/*
-Package acpb is a generated protocol buffer package.
-
-It is generated from these files:
-	ac.proto
-
-It has these top-level messages:
-	AcPublicKeyMessageRequest
-	AcPublicKey
-	AcPublicKeyMessageResponse
-	AcKeyExchangeMessageRequest
-	AcKeyExchangeMessageResponse
-	AcCipherTextMessageRequest
-	AcCipherTextMessageResponse
-	AcControlMessageRequest
-	AcControlMessageResponse
-	ArseneCryptoMessage
-*/
 package acpb
 
 import proto "code.google.com/p/goprotobuf/proto"
+import json "encoding/json"
 import math "math"
 
-// Reference imports to suppress errors if they are not otherwise used.
+// Reference proto, json, and math imports to suppress error if they are not otherwise used.
 var _ = proto.Marshal
+var _ = &json.SyntaxError{}
 var _ = math.Inf
 
 type AcPublicKeyMessageRequestAcPKReqMsgType int32
@@ -805,11 +789,12 @@ func (m *AcCipherTextMessageResponse) GetNonce() uint32 {
 //
 //
 type AcControlMessageRequest struct {
-	Type             *AcControlMessageRequestAcCTLReqMsgType `protobuf:"varint,1,req,name=type,enum=acpb.AcControlMessageRequestAcCTLReqMsgType" json:"type,omitempty"`
-	Bada             *bool                                   `protobuf:"varint,2,req,name=bada" json:"bada,omitempty"`
-	ErrorCode        *int32                                  `protobuf:"zigzag32,3,opt,name=error_code" json:"error_code,omitempty"`
-	Timestamp        *int64                                  `protobuf:"varint,4,opt,name=timestamp" json:"timestamp,omitempty"`
-	XXX_unrecognized []byte                                  `json:"-"`
+	Type *AcControlMessageRequestAcCTLReqMsgType `protobuf:"varint,1,req,name=type,enum=acpb.AcControlMessageRequestAcCTLReqMsgType" json:"type,omitempty"`
+	// required bool bada = 2; // did it work or not
+	// optional sint32 error_code = 3;
+	Timestamp        *int64  `protobuf:"varint,3,opt,name=timestamp" json:"timestamp,omitempty"`
+	Filename         *string `protobuf:"bytes,2,opt,name=filename" json:"filename,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
 }
 
 func (m *AcControlMessageRequest) Reset()         { *m = AcControlMessageRequest{} }
@@ -823,25 +808,18 @@ func (m *AcControlMessageRequest) GetType() AcControlMessageRequestAcCTLReqMsgTy
 	return AcControlMessageRequest_CTL_PING
 }
 
-func (m *AcControlMessageRequest) GetBada() bool {
-	if m != nil && m.Bada != nil {
-		return *m.Bada
-	}
-	return false
-}
-
-func (m *AcControlMessageRequest) GetErrorCode() int32 {
-	if m != nil && m.ErrorCode != nil {
-		return *m.ErrorCode
-	}
-	return 0
-}
-
 func (m *AcControlMessageRequest) GetTimestamp() int64 {
 	if m != nil && m.Timestamp != nil {
 		return *m.Timestamp
 	}
 	return 0
+}
+
+func (m *AcControlMessageRequest) GetFilename() string {
+	if m != nil && m.Filename != nil {
+		return *m.Filename
+	}
+	return ""
 }
 
 type AcControlMessageResponse struct {

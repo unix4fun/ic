@@ -120,6 +120,18 @@ func HandleACMsg(msg []byte) (msgReply []byte, err error) {
 		// now return
 		msgReply, err := proto.Marshal(acMessageEnvelope)
 		return msgReply, err
+	case ArseneCryptoMessage_AC_CTL:
+        // control messages let's start with PING!
+		ctlMsgReply, err := HandleACCtlMsg(acMessageEnvelope.GetBlob())
+
+		// now let's pack it in the new message
+		responseType = ArseneCryptoMessage_AC_CTL
+		acMessageEnvelope.Reset()
+		acMessageEnvelope.Type = &responseType
+		acMessageEnvelope.Blob = ctlMsgReply
+		// now return
+		msgReply, err := proto.Marshal(acMessageEnvelope)
+		return msgReply, err
 	case ArseneCryptoMessage_AC_QUIT:
 		// we go out!!
 		ACrun = false
