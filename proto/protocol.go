@@ -324,9 +324,9 @@ func OpenACMessage(context *ACMsgContext, cmsg, peerNick, myNick []byte) (out []
 	b64str := make([]byte, base64.StdEncoding.DecodedLen(len(cmsg)))
 
 	b64str_len, err := base64.StdEncoding.Decode(b64str, cmsg)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "DECODE FUCK!\n")
-		return nil, acprotoError(-1, "OpenACMessage().B64Decode(): ", err)
+	if err != nil || b64str_len <= 8 {
+		fmt.Fprintf(os.Stderr, "DECODE FUCK || Too Small!\n")
+		return nil, acprotoError(-1, "OpenACMessage().B64Decode()||TooSmall: ", err)
 		//return
 	}
 
@@ -663,8 +663,8 @@ func OpenKXMessage(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerN
 
 	b64str := make([]byte, base64.StdEncoding.DecodedLen(len(cmsg)))
 	b64str_len, err := base64.StdEncoding.Decode(b64str, cmsg)
-	if err != nil {
-		return nil, acprotoError(-1, "OpenKXMessage().B64Decode(): ", err)
+	if err != nil || b64str_len <= 8 {
+		return nil, acprotoError(-1, "OpenKXMessage().B64Decode()||TooSmall: ", err)
 		//panic(err)
 		//return
 	}

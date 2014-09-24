@@ -163,6 +163,7 @@ type ACSecretKeyGen struct {
 
 func (skgen *ACSecretKeyGen) Init(input []byte, channel []byte, nick []byte, serv []byte) (err error) {
 	//skgen.hash = sha3.NewKeccak256
+    // go.crypto changed it... mlgrmlbmlbm
 	skgen.hash = sha3.New256
 
 	if input != nil {
