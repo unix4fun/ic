@@ -485,7 +485,7 @@ func OpenPKMessage(ircmsg []byte) (out []byte, err error) {
 
 	datalen, err := base64.StdEncoding.Decode(zdata, ircmsg)
 	//data, err := base64.StdEncoding.DecodeString( string(ircmsg) )
-	if err != nil {
+	if err != nil || datalen <= 4 {
 		return nil, acprotoError(-1, "OpenPKMessage().B64Decode(): ", err)
 		//log.Fatal(err)
 		//return
