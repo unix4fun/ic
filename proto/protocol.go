@@ -437,7 +437,11 @@ func OpenACMessage(context *ACMsgContext, cmsg, peerNick, myNick []byte) (out []
 	out = b.Bytes()
 
 	// update the nonce value
-	context.nonce = nonceval + 1
+    if nonceval > context.nonce {
+        context.nonce = nonceval + 1
+    } else {
+        context.nonce++
+    }
 	return out, nil
 	//return
 }
