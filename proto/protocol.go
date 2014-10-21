@@ -110,7 +110,7 @@ func (pk *ACMyKeys) String() string {
 	fmt.Fprintf(&b, "ACMyKeys struct @ %p\n", pk)
 	fmt.Fprintf(&b, "nick: %s @ %s on %s\n", pk.Nickname, pk.Userhost, pk.Server)
 	fmt.Fprintf(&b, "pubkey: %s\n", pk.Pubkey)
-	fmt.Fprintf(&b, "privkey: %s\n", hex.EncodeToString(pk.privkey[:]))
+	//fmt.Fprintf(&b, "privkey: %s\n", hex.EncodeToString(pk.privkey[:]))
 	fmt.Fprintf(&b, "created: %l\n", pk.CreaTime.Unix())
 	return b.String()
 }
@@ -291,7 +291,7 @@ func CreateACMessage(context *ACMsgContext, msg, myNick []byte) (out []byte, err
 	binary.Write(nonce_build, binary.LittleEndian, context.nonce)
 	nonce_build.WriteByte(byte(':'))
 	nonce_build.Write(hdr)
-	fmt.Fprintf(os.Stderr, "ENCODE NONCE HEX: %s (%s)\n", hex.EncodeToString(nonce_build.Bytes()), nonce_build.Bytes())
+	//fmt.Fprintf(os.Stderr, "ENCODE NONCE HEX: %s (%s)\n", hex.EncodeToString(nonce_build.Bytes()), nonce_build.Bytes())
 
 	nonce_sha, err := HashSHA3Data(nonce_build.Bytes())
 	if err != nil {
@@ -311,7 +311,7 @@ func CreateACMessage(context *ACMsgContext, msg, myNick []byte) (out []byte, err
 	encoder.Close()
 
 	out = buffer.Bytes()
-	//fmt.Printf("AC MSG OUT[%d]: %s\n", len(out), out)
+	fmt.Fprintf(os.Stderr, "AC MSG OUT[%d]: %s\n", len(out), out)
 	context.nonce++
 	return
 }
@@ -390,7 +390,7 @@ func OpenACMessage(context *ACMsgContext, cmsg, peerNick, myNick []byte) (out []
 	nonce_build.Write(b64str[:4])
 	//nonce_buf := bytes.NewReader(b64str[4:8])
 	//binary.Read(nonce_buf, binary.LittleEndian, &in)
-	fmt.Fprintf(os.Stderr, "DECODE NONCE HEX(%d): %s(%s)\n", len(nonce_build.Bytes()), hex.EncodeToString(nonce_build.Bytes()), nonce_build.Bytes())
+	//fmt.Fprintf(os.Stderr, "DECODE NONCE HEX(%d): %s(%s)\n", len(nonce_build.Bytes()), hex.EncodeToString(nonce_build.Bytes()), nonce_build.Bytes())
 
 	nonce_sha, err := HashSHA3Data(nonce_build.Bytes())
 	if err != nil {
@@ -413,7 +413,7 @@ func OpenACMessage(context *ACMsgContext, cmsg, peerNick, myNick []byte) (out []
 	if ok == false {
 		return nil, acprotoError(1, "OpenACMessage().SecretOpen(): false ", nil)
 	}
-	fmt.Fprintf(os.Stderr, "DECODED UNSEALED: %s\n", packed)
+	//fmt.Fprintf(os.Stderr, "DECODED UNSEALED: %s\n", packed)
 	//fmt.Printf("DECODED UNSEALED: %s\n", ret)
 
 	zbuf := bytes.NewBuffer(packed)
@@ -432,7 +432,7 @@ func OpenACMessage(context *ACMsgContext, cmsg, peerNick, myNick []byte) (out []
 		return nil, acprotoError(-6, "OpenACMessage().io.Copy(): ", err)
 		//panic(err)
 	}
-	fmt.Fprintf(os.Stderr, "DECODED UNSEALED: %s\n", b.Bytes())
+	//fmt.Fprintf(os.Stderr, "DECODED UNSEALED: %s\n", b.Bytes())
 	plain.Close()
 	out = b.Bytes()
 
@@ -783,8 +783,8 @@ func OpenKXMessage(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerN
 	// too much into a restricted buffer...
 	copy(context.key[:], b.Bytes())
 
-	fmt.Fprintf(os.Stderr, "KEY HEX: %s\n", hex.EncodeToString(b.Bytes()))
-	fmt.Fprintf(os.Stderr, "DECODED UNSEALED: %d\n", len(b.Bytes()))
+	//fmt.Fprintf(os.Stderr, "KEY HEX: %s\n", hex.EncodeToString(b.Bytes()))
+	//fmt.Fprintf(os.Stderr, "DECODED UNSEALED: %d\n", len(b.Bytes()))
 	//    out = b.Bytes()
 	return context, nil
 }
