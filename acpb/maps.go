@@ -2,7 +2,7 @@ package acpb
 
 import (
 	"fmt"
-	"github.com/unix4fun/ac/proto"
+	"github.com/unix4fun/ac/accp"
 	"os"
 )
 
@@ -20,7 +20,7 @@ type PSKMap map[string](*AcCOMM)
 //
 // SKMaps
 //
-func (psk PSKMap) GetSKMapEntry(server string, channel string) (*acproto.ACMsgContext, bool) {
+func (psk PSKMap) GetSKMapEntry(server string, channel string) (*accp.ACMsgContext, bool) {
 	skmap, ok := psk.GetSKMap(server)
 	fmt.Fprintf(os.Stderr, "===---=-=-=--==- GetSKMapEntry (serv: %s channel: %s) ! skmap: %p ok: %t --==-=---=-=-=-==-\n", server, channel, skmap, ok)
 	if ok == true {
@@ -31,7 +31,7 @@ func (psk PSKMap) GetSKMapEntry(server string, channel string) (*acproto.ACMsgCo
 	return nil, false
 }
 
-func (psk PSKMap) SetSKMapEntry(server string, channel string, sk *acproto.ACMsgContext) {
+func (psk PSKMap) SetSKMapEntry(server string, channel string, sk *accp.ACMsgContext) {
 	skmap, ok := psk.GetSKMap(server)
 	if ok == true {
 		delete(skmap, channel) // NO OP in case of nil..
@@ -52,7 +52,7 @@ func (psk PSKMap) GetSKMap(server string) (SKMap, bool) {
 }
 
 // call only if SKMap s empty
-func (psk PSKMap) initSKMapWith(server string, channel string, sk *acproto.ACMsgContext) {
+func (psk PSKMap) initSKMapWith(server string, channel string, sk *accp.ACMsgContext) {
 	ac := new(AcCOMM)
 	ac.Init()
 	psk[server] = ac
@@ -63,7 +63,7 @@ func (psk PSKMap) initSKMapWith(server string, channel string, sk *acproto.ACMsg
 //
 // PKMaps
 //
-func (psk PSKMap) GetPKMapEntry(server string, nick string) (*acproto.ACMyKeys, bool) {
+func (psk PSKMap) GetPKMapEntry(server string, nick string) (*accp.ACMyKeys, bool) {
 	pkmap, ok := psk.GetPKMap(server)
 	fmt.Fprintf(os.Stderr, "===---=-=-=--==- GetPKMapEntry (serv: %s nick: %s) ! pkmap: %p ok: %t --==-=---=-=-=-==-\n", server, nick, pkmap, ok)
 	if ok == true {
@@ -76,7 +76,7 @@ func (psk PSKMap) GetPKMapEntry(server string, nick string) (*acproto.ACMyKeys, 
 	return nil, false
 }
 
-func (psk PSKMap) SetPKMapEntry(server string, nick string, pk *acproto.ACMyKeys) {
+func (psk PSKMap) SetPKMapEntry(server string, nick string, pk *accp.ACMyKeys) {
 	pkmap, ok := psk.GetPKMap(server)
 	if ok == true {
 		delete(pkmap, nick) // NO OP in case of nil..
@@ -97,7 +97,7 @@ func (psk PSKMap) GetPKMap(server string) (PKMap, bool) {
 }
 
 // call only if PKMap s empty
-func (psk PSKMap) initPKMapWith(server string, nick string, pk *acproto.ACMyKeys) {
+func (psk PSKMap) initPKMapWith(server string, nick string, pk *accp.ACMyKeys) {
 	ac := new(AcCOMM)
 	ac.Init()
 	psk[server] = ac
@@ -113,13 +113,13 @@ func (psk PSKMap) initPKMapWith(server string, nick string, pk *acproto.ACMyKeys
 //
 //
 // XXX Pk map[string](*ACMyKeys)
-type PKMap map[string](*acproto.ACMyKeys)
+type PKMap map[string](*accp.ACMyKeys)
 
 func (pkm PKMap) Init() {
 	pkm = make(PKMap)
 }
 
-func (pkm PKMap) GetPK(nick string) *acproto.ACMyKeys {
+func (pkm PKMap) GetPK(nick string) *accp.ACMyKeys {
 	pk, ok := pkm[nick]
 	if ok == true {
 		return pk
@@ -135,13 +135,13 @@ func (pkm PKMap) GetPK(nick string) *acproto.ACMyKeys {
 //
 //
 //
-type SKMap map[string](*acproto.ACMsgContext)
+type SKMap map[string](*accp.ACMsgContext)
 
 func (skm SKMap) Init() {
 	skm = make(SKMap)
 }
 
-func (skm SKMap) GetSK(channel string) *acproto.ACMsgContext {
+func (skm SKMap) GetSK(channel string) *accp.ACMsgContext {
 	sk, ok := skm[channel]
 	if ok == true {
 		return sk

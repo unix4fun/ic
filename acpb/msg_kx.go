@@ -10,13 +10,13 @@ import (
 	//    "crypto/rand"
 	"code.google.com/p/goprotobuf/proto"
 	"encoding/hex"
-	"github.com/unix4fun/ac/proto"
+	"github.com/unix4fun/ac/accp"
 )
 
 func KXPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgResponse *AcKeyExchangeMessageResponse, err error) {
 	var responseType AcKeyExchangeMessageResponseAcKXRespMsgType
 	responseType = AcKeyExchangeMessageResponse_KXR_PACK
-	//var acctx * acproto.ACMsgContext
+	//var acctx * accp.ACMsgContext
 
 	//fmt.Printf("KXPACK Message: let's give the key\n")
 	//fmt.Printf("from myNick: %s\n", acMessageKxReq.GetMynick())
@@ -71,7 +71,7 @@ func KXPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgResponse 
 	//
 	// TODO: to move into CreateKXMessage and OpenKXMessage
 	//    kx_channel := []byte(channel)
-	//    ok_channel, _ :=  acproto.IsValidChannelName(kx_channel)
+	//    ok_channel, _ :=  accp.IsValidChannelName(kx_channel)
 	//    fmt.Printf("[+] KXPACK: is %s a valid channel: %t\n", channel, ok_channel)
 	//    if ok_channel == false {
 	//        //kx_channel := channel
@@ -85,7 +85,7 @@ func KXPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgResponse 
 	//    }
 
 	//fmt.Printf("KEY: %s\n", hex.EncodeToString(acctx.GetKey()))
-	kxMsg, err := acproto.CreateKXMessage(acctx, peer.GetPubkey(), me.GetPrivkey(), []byte(channel), []byte(mynick), []byte(peernick))
+	kxMsg, err := accp.CreateKXMessage(acctx, peer.GetPubkey(), me.GetPrivkey(), []byte(channel), []byte(mynick), []byte(peernick))
 	//fmt.Printf("kxMsg: %s\n", kxMsg)
 	if err != nil {
 		retErr := acpbError(-3, "KXPACK_Handler().CreateKXMessage(): ", err)
@@ -111,7 +111,7 @@ func KXPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgResponse 
 func KXUNPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgResponse *AcKeyExchangeMessageResponse, err error) {
 	var responseType AcKeyExchangeMessageResponseAcKXRespMsgType
 	responseType = AcKeyExchangeMessageResponse_KXR_PACK
-	//var acctx * acproto.ACMsgContext
+	//var acctx * accp.ACMsgContext
 
 	channel := acMessageKxReq.GetChannel()
 	mynick := acMessageKxReq.GetMynick()
@@ -165,7 +165,7 @@ func KXUNPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgRespons
 	// KXPACK => mynick=peernick
 	// KXUNPACK => peernick=mynick
 	//    kx_channel := []byte(channel)
-	//    ok_channel, _ :=  acproto.IsValidChannelName(kx_channel)
+	//    ok_channel, _ :=  accp.IsValidChannelName(kx_channel)
 	//    fmt.Printf("[+] KXUNPACK: is %s a valid channel: %t\n", channel, ok_channel)
 	//    if ok_channel == false {
 	//        // private channel building!
@@ -177,8 +177,8 @@ func KXUNPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgRespons
 	//        fmt.Printf("[+] KXUNPACK: not a channel, private conversation let's use this: %s\n", kx_channel)
 	//    }
 
-	acctx, err := acproto.OpenKXMessage(peer.GetPubkey(), me.GetPrivkey(), blobMsg, []byte(channel), []byte(mynick), []byte(peernick))
-	//    acctx, err := acproto.OpenKXMessage(peer.GetPubkey(), me.GetPrivkey(), blobMsg, kx_channel, []byte(mynick), []byte(peernick))
+	acctx, err := accp.OpenKXMessage(peer.GetPubkey(), me.GetPrivkey(), blobMsg, []byte(channel), []byte(mynick), []byte(peernick))
+	//    acctx, err := accp.OpenKXMessage(peer.GetPubkey(), me.GetPrivkey(), blobMsg, kx_channel, []byte(mynick), []byte(peernick))
 	if err != nil {
 		retErr := acpbError(-3, "KXUNPACK_Handler().OpenKXMessage(): ", err)
 		acMsgResponse = &AcKeyExchangeMessageResponse{

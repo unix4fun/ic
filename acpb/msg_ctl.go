@@ -1,20 +1,20 @@
 package acpb
 
 import (
+	"code.google.com/p/goprotobuf/proto"
 	"fmt"
 	"os"
-    "time"
-	"code.google.com/p/goprotobuf/proto"
+	"time"
 )
 
 func CTLPING_Handler(acMessageCtlReq *AcControlMessageRequest) (acMsgResponse *AcControlMessageResponse, err error) {
 	var responseType AcControlMessageResponseAcCTLRRespMsgType
 	responseType = AcControlMessageResponse_CTLR_PONG
-    timeStamp := acMessageCtlReq.GetTimestamp()
+	timeStamp := acMessageCtlReq.GetTimestamp()
 
-    fmt.Fprintf(os.Stderr, "[+] CTLPING timestamp: %d\n", timeStamp)
+	fmt.Fprintf(os.Stderr, "[+] CTLPING timestamp: %d\n", timeStamp)
 
-    if timeStamp <= 0 {
+	if timeStamp <= 0 {
 		retErr := acpbError(-1, "CTLPING invalid timestamp", nil)
 		acMsgResponse = &AcControlMessageResponse{
 			Type:      &responseType,
@@ -25,7 +25,7 @@ func CTLPING_Handler(acMessageCtlReq *AcControlMessageRequest) (acMsgResponse *A
 		return acMsgResponse, retErr
 	}
 
-    replyTime := time.Now().Unix()
+	replyTime := time.Now().Unix()
 
 	//func CreateACMessage(context * ACMsgContext, msg, myNick []byte) (out []byte, err error) {
 	acMsgResponse = &AcControlMessageResponse{
@@ -38,11 +38,10 @@ func CTLPING_Handler(acMessageCtlReq *AcControlMessageRequest) (acMsgResponse *A
 	return acMsgResponse, nil
 }
 
-
 func CTLLOAD_Handler(acMessageCtlReq *AcControlMessageRequest) (acMsgResponse *AcControlMessageResponse, err error) {
 	var responseType AcControlMessageResponseAcCTLRRespMsgType
 	responseType = AcControlMessageResponse_CTLR_LOADCTX
-    reqFilename := acMessageCtlReq.GetFilename()
+	reqFilename := acMessageCtlReq.GetFilename()
 
 	fmt.Fprintf(os.Stderr, "[+] LOADCTX '%s'\n", reqFilename)
 
@@ -58,7 +57,7 @@ func CTLLOAD_Handler(acMessageCtlReq *AcControlMessageRequest) (acMsgResponse *A
 func CTLSAVE_Handler(acMessageCtlReq *AcControlMessageRequest) (acMsgResponse *AcControlMessageResponse, err error) {
 	var responseType AcControlMessageResponseAcCTLRRespMsgType
 	responseType = AcControlMessageResponse_CTLR_SAVECTX
-    reqFilename := acMessageCtlReq.GetFilename()
+	reqFilename := acMessageCtlReq.GetFilename()
 
 	fmt.Fprintf(os.Stderr, "[+] SAVECTX '%s'\n", reqFilename)
 

@@ -1,3 +1,4 @@
+// acpb == AC Protocol Buffer
 package acpb
 
 import (
@@ -7,7 +8,7 @@ import (
 	//    "net"
 	"code.google.com/p/goprotobuf/proto"
 	"crypto/rand"
-	"github.com/unix4fun/ac/proto"
+	"github.com/unix4fun/ac/accp"
 	"time"
 )
 
@@ -34,7 +35,7 @@ func PKGEN_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 		return acMsgResponse, retErr
 	}
 
-	myNewKeys, err := acproto.CreateMyKeys(rand.Reader, reqNick, reqHost, reqServ)
+	myNewKeys, err := accp.CreateMyKeys(rand.Reader, reqNick, reqHost, reqServ)
 	if err != nil {
 		retErr := acpbError(-2, "PKGEN_Handler().CreateMyKeys(): ", err)
 		acMsgResponse = &AcPublicKeyMessageResponse{
@@ -80,7 +81,7 @@ func PKADD_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 		return acMsgResponse, retErr
 	}
 
-	newkey := new(acproto.ACMyKeys)
+	newkey := new(accp.ACMyKeys)
 	newkey.Nickname = reqNick
 	newkey.Userhost = reqHost
 	newkey.Server = reqServ
@@ -88,7 +89,7 @@ func PKADD_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 	newkey.HasPriv = false
 	newkey.CreaTime = time.Now()
 
-	pubk, err := acproto.OpenPKMessage([]byte(reqPubkey))
+	pubk, err := accp.OpenPKMessage([]byte(reqPubkey))
 	if err != nil {
 		retErr := acpbError(-2, "PKADD_Handler().OpenPKMessage(): ", err)
 		acMsgResponse = &AcPublicKeyMessageResponse{

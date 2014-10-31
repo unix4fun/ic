@@ -8,11 +8,11 @@ import (
 	"os/signal" // XXX deactivated
 	//    "time"
 	//    "log" // XXX deactivated
-	"syscall" // XXX deactivated
 	"github.com/unix4fun/ac/acpb"
+	"syscall" // XXX deactivated
 )
 
-func Usage(mycmd string) {
+func usage(mycmd string) {
 	fmt.Fprintf(os.Stderr, "%s [options]", mycmd)
 }
 
@@ -32,10 +32,10 @@ func handleStdin() (err error) {
 				os.Stdout.Write(msgReply)
 			}
 			return acErr
-		} else {
-			os.Stdout.Write(msgReply)
-			return nil
 		}
+
+		os.Stdout.Write(msgReply)
+		return nil
 	} /* end of for() */
 }
 

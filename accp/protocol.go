@@ -1,4 +1,6 @@
-package acproto
+//package acproto
+//accp == AC Crypto Protocol
+package accp
 
 import (
 	"fmt"
@@ -24,43 +26,44 @@ import (
  */
 
 const (
-	MSGHDR_PK = "PK"
-	MSGHDR_AC = "AC"
-	MSGHDR_KX = "KX"
+	msgHdrPK = "PK"
+	msgHdrAC = "AC"
+	msgHdrKX = "KX"
 )
 
-//
-//
-// this is error handling
-//
-//
-type AcprotoError struct {
+// protoError is the custom AC error type
+// exporting the error code ad well as string and cascaded error message
+type protoError struct {
 	value int    // the error code.
 	msg   string // the associated message
 	err   error  // called layer error
 }
 
-func (ae *AcprotoError) Error() string {
+func (ae *protoError) Error() string {
 	if ae.err != nil {
-		ae.msg = fmt.Sprintf("AcprotoError[%d]: %s:%s\n", ae.value, ae.msg, ae.err.Error())
+		ae.msg = fmt.Sprintf("protoError[%d]: %s:%s\n", ae.value, ae.msg, ae.err.Error())
 	} else {
-		ae.msg = fmt.Sprintf("AcprotoError[%d]: %s\n", ae.value, ae.msg)
+		ae.msg = fmt.Sprintf("protoError[%d]: %s\n", ae.value, ae.msg)
 	}
 	return ae.msg
 }
 
-func (ae *AcprotoError) GetErrorCode() int {
+/*
+func (ae *protoError) getErrorCode() int {
 	return ae.value
 }
 
-func (ae *AcprotoError) GetErrorMsg() string {
+func (ae *protoError) getErrorMsg() string {
 	return ae.Error()
 }
 
-func acprotoError(val int, msg string, err error) (ae *AcprotoError) {
-	return &AcprotoError{value: val, msg: msg, err: err}
+func acprotoError(val int, msg string, err error) (ae *protoError) {
+	return &protoError{value: val, msg: msg, err: err}
 }
+*/
 
+// ACMyKeys describe the internal structure stored in memory for public/private
+// key pairs owned or received from peers
 type ACMyKeys struct {
 	Nickname string
 	Userhost string
@@ -74,11 +77,14 @@ type ACMyKeys struct {
 	privkey  *[32]byte // 32 bytes TODO: we need to box those info, and unbox them when necessary...
 }
 
+// GetPubkey retrieve and return the public key component from the current ACMyKeys structure.
 func (pk *ACMyKeys) GetPubkey() (pubkey *[32]byte) {
 	pubkey = pk.pubkey
 	return
 }
 
+// SetPubkey writes the argument provided public key (pubkey) of the current
+// AcMyKeys structure.
 func (pk *ACMyKeys) SetPubkey(pubkey []byte) {
 	if len(pubkey) == 32 {
 		pk.pubkey = new([32]byte)
@@ -93,11 +99,15 @@ func (pk *ACMyKeys) SetPubkey(pubkey []byte) {
 	return
 }
 
+// GetPrivkey retrieve and return the private key (privkey) of the current
+// AcMyKeys structure.
 func (pk *ACMyKeys) GetPrivkey() (privkey *[32]byte) {
 	privkey = pk.privkey
 	return privkey
 }
 
+// GetPubfp retrieve and return the public key fingerprint associated with the
+// current key.
 func (pk *ACMyKeys) GetPubfp() (pubfp []byte) {
 	pubfp = pk.pubfp[:]
 	return
@@ -167,24 +177,29 @@ func HashSHA3Data(input []byte) (out []byte, err error) {
 	sha3hash := sha3.New256()
 	_, err = sha3hash.Write(input)
 	if err != nil {
-		return nil, acprotoError(-1, "HashSHA3Data().Write(): ", err)
+		//return nil, acprotoError(-1, "HashSHA3Data().Write(): ", err)
+		return nil, &protoError{value: -1, msg: "HashSHA3Data().Write(): ", err: err}
 	}
 	out = sha3hash.Sum(nil)
 	//fmt.Printf("SHA[%d]:%s\n", len(input), hex.EncodeToString(out))
 	return
 }
 
-// XXX i need to feed the PRNG and use fortuna...
+// CreateMyKeys create an ACMyKeys structure using provide randomness source and
+// compute the initial EC Ephemeral keypair
+// XXX Make sure PRNG is strong.. may be use fortuna...
 func CreateMyKeys(rnd io.Reader, nickname string, userhost string, server string) (mykeys *ACMyKeys, err error) {
 	mykeys = new(ACMyKeys)
 	mykeys.pubkey, mykeys.privkey, err = box.GenerateKey(rand.Reader)
 	if err != nil {
-		return nil, acprotoError(-1, "CreateMyKeys().GenerateKey(): ", err)
+		//return nil, acprotoError(-1, "CreateMyKeys().GenerateKey(): ", err)
+		return nil, &protoError{value: -1, msg: "CreateMyKeys().GenerateKey(): ", err: err}
 	}
 
 	pubfp, err := HashSHA3Data(mykeys.pubkey[:])
 	if err != nil {
-		return nil, acprotoError(-1, "CreateMyKeys().hash(): ", err)
+		//return nil, acprotoError(-1, "CreateMyKeys().hash(): ", err)
+		return nil, &protoError{value: -2, msg: "CreateMyKeys().hash(): ", err: err}
 	}
 
 	// copy and store the public fingerprint..
@@ -192,7 +207,8 @@ func CreateMyKeys(rnd io.Reader, nickname string, userhost string, server string
 
 	PK, err := CreatePKMessage(mykeys.pubkey[:])
 	if err != nil {
-		return nil, acprotoError(-3, "CreateMyKeys().CreatePKMessage(): ", err)
+		//return nil, acprotoError(-3, "CreateMyKeys().CreatePKMessage(): ", err)
+		return nil, &protoError{value: -3, msg: "CreateMyKeys().CreatePKMessage(): ", err: err}
 	}
 	mykeys.Pubkey = string(PK)
 	mykeys.Nickname = nickname
@@ -212,21 +228,22 @@ func CreateACContext(channel []byte, nonce uint32) (context *ACMsgContext, err e
 	context.nonce = nonce
 	context.bob = channel
 	context.Overhead = secretbox.Overhead
-	return
+	return context, nil
 }
 
-func CreateACContextWithInputEntropy(channel []byte, input_entropy []byte) (context *ACMsgContext, err error) {
+func CreateACContextWithInputEntropy(channel []byte, inputEntropy []byte) (context *ACMsgContext, err error) {
 	context = new(ACMsgContext)
 	context.nonce = 0
 	context.bob = channel
 	context.Overhead = secretbox.Overhead
 
-	sha_entropy, err := HashSHA3Data(input_entropy)
+	shaEntropy, err := HashSHA3Data(inputEntropy)
 	if err != nil {
-		return nil, acprotoError(-1, "CreateACContextWithInputEntropy().HashSHA3Data(): ", err)
+		//return nil, acprotoError(-1, "CreateACContextWithInputEntropy().HashSHA3Data(): ", err)
+		return nil, &protoError{value: -1, msg: "CreateACContextWithInputEntropy().HashSHA3Data(): ", err: err}
 	}
-	copy(context.key[:], sha_entropy)
-	return
+	copy(context.key[:], shaEntropy)
+	return context, nil
 }
 
 //
@@ -239,9 +256,10 @@ func CreateACContextWithInputEntropy(channel []byte, input_entropy []byte) (cont
 
 func CreateACMessage(context *ACMsgContext, msg, myNick []byte) (out []byte, err error) {
 	var noncebyte [24]byte
-	hdr, err := obf.Obfuscate([]byte(MSGHDR_AC))
+	hdr, err := obf.Obfuscate([]byte(msgHdrAC))
 	if err != nil {
-		return nil, acprotoError(-1, "CreateACMessage().Obfuscate(): ", err)
+		//return nil, acprotoError(-1, "CreateACMessage().Obfuscate(): ", err)
+		return nil, &protoError{value: -1, msg: "CreateACMessage().Obfuscate(): ", err: err}
 	}
 
 	body := new(bytes.Buffer)
@@ -249,14 +267,16 @@ func CreateACMessage(context *ACMsgContext, msg, myNick []byte) (out []byte, err
 	// first let's compress
 	zbuf, err := zlib.NewWriterLevel(body, zlib.BestCompression)
 	if err != nil {
-		return nil, acprotoError(-2, "CreateACMessage().zlib.NewWriterLevel(): ", err)
+		//return nil, acprotoError(-2, "CreateACMessage().zlib.NewWriterLevel(): ", err)
+		return nil, &protoError{value: -2, msg: "CreateACMessage().zlib.NewWriterLevel(): ", err: err}
 		//fmt.Printf("PANIIIIC\n")
 		//panic(err)
 	}
 
 	_, err = zbuf.Write(msg)
 	if err != nil {
-		return nil, acprotoError(-3, "CreateACMessage().zlib.Write(): ", err)
+		//return nil, acprotoError(-3, "CreateACMessage().zlib.Write(): ", err)
+		return nil, &protoError{value: -3, msg: "CreateACMessage().zlib.Write(): ", err: err}
 		//panic(err)
 	}
 	zbuf.Close()
@@ -295,7 +315,8 @@ func CreateACMessage(context *ACMsgContext, msg, myNick []byte) (out []byte, err
 
 	nonce_sha, err := HashSHA3Data(nonce_build.Bytes())
 	if err != nil {
-		return nil, acprotoError(-4, "CreateACMessage().HashSHA3Data(): ", err)
+		//return nil, acprotoError(-4, "CreateACMessage().HashSHA3Data(): ", err)
+		return nil, &protoError{value: -4, msg: "CreateACMessage().HashSHA3Data(): ", err: err}
 	}
 	copy(noncebyte[:], nonce_sha[:24])
 	//fmt.Printf("ENCODE SHA HEX(%d): %s\n", len(body.Bytes()), hex.EncodeToString(nonce_sha))
@@ -325,15 +346,17 @@ func OpenACMessage(context *ACMsgContext, cmsg, peerNick, myNick []byte) (out []
 
 	b64str_len, err := base64.StdEncoding.Decode(b64str, cmsg)
 	if err != nil || b64str_len <= 8 {
-		fmt.Fprintf(os.Stderr, "DECODE FUCK || Too Small!\n")
-		return nil, acprotoError(-1, "OpenACMessage().B64Decode()||TooSmall: ", err)
+		//fmt.Fprintf(os.Stderr, "DECODE FUCK || Too Small!\n")
+		//return nil, acprotoError(-1, "OpenACMessage().B64Decode()||TooSmall: ", err)
+		return nil, &protoError{value: -1, msg: "OpenACMessage().B64Decode()||TooSmall: ", err: err}
 		//return
 	}
 
 	hdr, err := obf.DeObfuscate(b64str[:4])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "CA FOIRE!!!!\n")
-		return nil, acprotoError(-2, "OpenACMessage().Deobfuscate(): ", err)
+		//return nil, acprotoError(-2, "OpenACMessage().Deobfuscate(): ", err)
+		return nil, &protoError{value: -2, msg: "OpenACMessage().Deobfuscate(): ", err: err}
 		//panic(err)
 		//return
 	}
@@ -341,14 +364,16 @@ func OpenACMessage(context *ACMsgContext, cmsg, peerNick, myNick []byte) (out []
 	if len(hdr) != 2 {
 		fmt.Fprintf(os.Stderr, "WRONG HEADER")
 		// TODO XXX error type and number
-		return nil, acprotoError(-3, "OpenACMessage().Hdr(): ", err)
+		//return nil, acprotoError(-3, "OpenACMessage().Hdr(): ", err)
+		return nil, &protoError{value: -3, msg: "OpenACMessage().Hdr(): ", err: err}
 		//return
 	}
 
-	if bytes.Compare(hdr, []byte(MSGHDR_AC)) != 0 {
+	if bytes.Compare(hdr, []byte(msgHdrAC)) != 0 {
 		fmt.Fprintf(os.Stderr, "WRONG HEADER 2")
 		// TODO XXX error type and number
-		return nil, acprotoError(-4, "OpenACMessage().Hdr(): ", err)
+		//return nil, acprotoError(-4, "OpenACMessage().Hdr(): ", err)
+		return nil, &protoError{value: -4, msg: "OpenACMessage().Hdr(): ", err: err}
 		//return
 	}
 
@@ -372,7 +397,8 @@ func OpenACMessage(context *ACMsgContext, cmsg, peerNick, myNick []byte) (out []
 	nonce_get := bytes.NewReader(b64str[4:8])
 	err = binary.Read(nonce_get, binary.LittleEndian, &nonceval)
 	if err != nil {
-		return nil, acprotoError(-8, "OpenACMessage().nonce_get(): ", err)
+		//return nil, acprotoError(-8, "OpenACMessage().nonce_get(): ", err)
+		return nil, &protoError{value: -5, msg: "OpenACMessage().nonce_get(): ", err: err}
 		//    //log.Fatal(err)
 		//    //return
 	}
@@ -394,7 +420,8 @@ func OpenACMessage(context *ACMsgContext, cmsg, peerNick, myNick []byte) (out []
 
 	nonce_sha, err := HashSHA3Data(nonce_build.Bytes())
 	if err != nil {
-		return nil, acprotoError(-4, "OpenACMessage().HashSHA3Data(): ", err)
+		//return nil, acprotoError(-4, "OpenACMessage().HashSHA3Data(): ", err)
+		return nil, &protoError{value: -6, msg: "OpenACMessage().HashSHA3Data(): ", err: err}
 		//return
 	}
 	copy(noncebyte[:], nonce_sha[:24])
@@ -411,7 +438,8 @@ func OpenACMessage(context *ACMsgContext, cmsg, peerNick, myNick []byte) (out []
 	//    fmt.Printf("C EST OK?!?!?\n")
 	//    fmt.Println(ok)
 	if ok == false {
-		return nil, acprotoError(1, "OpenACMessage().SecretOpen(): false ", nil)
+		//return nil, acprotoError(1, "OpenACMessage().SecretOpen(): false ", nil)
+		return nil, &protoError{value: -7, msg: "OpenACMessage().SecretOpen(): ", err: nil}
 	}
 	//fmt.Fprintf(os.Stderr, "DECODED UNSEALED: %s\n", packed)
 	//fmt.Printf("DECODED UNSEALED: %s\n", ret)
@@ -421,7 +449,8 @@ func OpenACMessage(context *ACMsgContext, cmsg, peerNick, myNick []byte) (out []
 	if err != nil {
 
 		//        fmt.Println(err)
-		return nil, acprotoError(-5, "OpenACMessage().zlib.NewReader(): ", err)
+		//return nil, acprotoError(-5, "OpenACMessage().zlib.NewReader(): ", err)
+		return nil, &protoError{value: -8, msg: "OpenACMessage().zlib.NewReader(): ", err: err}
 		//return
 	}
 
@@ -429,7 +458,8 @@ func OpenACMessage(context *ACMsgContext, cmsg, peerNick, myNick []byte) (out []
 	b := new(bytes.Buffer)
 	_, err = io.Copy(b, plain)
 	if err != nil {
-		return nil, acprotoError(-6, "OpenACMessage().io.Copy(): ", err)
+		//return nil, acprotoError(-6, "OpenACMessage().io.Copy(): ", err)
+		return nil, &protoError{value: -9, msg: "OpenACMessage().io.Copy(): ", err: err}
 		//panic(err)
 	}
 	//fmt.Fprintf(os.Stderr, "DECODED UNSEALED: %s\n", b.Bytes())
@@ -437,11 +467,11 @@ func OpenACMessage(context *ACMsgContext, cmsg, peerNick, myNick []byte) (out []
 	out = b.Bytes()
 
 	// update the nonce value
-    if nonceval > context.nonce {
-        context.nonce = nonceval + 1
-    } else {
-        context.nonce++
-    }
+	if nonceval > context.nonce {
+		context.nonce = nonceval + 1
+	} else {
+		context.nonce++
+	}
 	return out, nil
 	//return
 }
@@ -455,17 +485,19 @@ func OpenACMessage(context *ACMsgContext, cmsg, peerNick, myNick []byte) (out []
 
 //func Pubkey2Irc(pubkey []byte) (out []byte, err error) {
 func CreatePKMessage(pubkey []byte) (out []byte, err error) {
-	hdr, _ := obf.Obfuscate([]byte(MSGHDR_PK))
+	hdr, _ := obf.Obfuscate([]byte(msgHdrPK))
 	//fmt.Printf("HEX: %s\n", hex.EncodeToString(hdr))
 
 	body := new(bytes.Buffer)
 	zbuf, err := zlib.NewWriterLevel(body, zlib.BestCompression)
 	if err != nil {
-		return nil, acprotoError(-1, "CreatePKMessage().zlib.NewWriterLevel(): ", err)
+		//return nil, acprotoError(-1, "CreatePKMessage().zlib.NewWriterLevel(): ", err)
+		return nil, &protoError{value: -1, msg: "CreatePKMessage().zlib.NewWriterLevel()", err: err}
 	}
 
 	if _, err = zbuf.Write(pubkey); err != nil {
-		return nil, acprotoError(-2, "CreatePKMessage().zlib.Write(): ", err)
+		//return nil, acprotoError(-2, "CreatePKMessage().zlib.Write(): ", err)
+		return nil, &protoError{value: -2, msg: "CreatePKMessage().zlib.Write()", err: err}
 	}
 	zbuf.Close()
 	//fmt.Printf("BODY HEX: %s\n", hex.EncodeToString(body.Bytes()))
@@ -473,7 +505,8 @@ func CreatePKMessage(pubkey []byte) (out []byte, err error) {
 	buffer := bytes.NewBuffer(hdr)
 	_, err = buffer.Write(body.Bytes())
 	if err != nil {
-		return nil, acprotoError(-3, "CreatePKMessage().FinalMsg(): ", err)
+		//return nil, acprotoError(-3, "CreatePKMessage().FinalMsg(): ", err)
+		return nil, &protoError{value: -3, msg: "CreatePKMessage().FinalMsg()", err: err}
 	}
 
 	out = make([]byte, base64.StdEncoding.EncodedLen(len(buffer.Bytes())))
@@ -490,32 +523,36 @@ func OpenPKMessage(ircmsg []byte) (out []byte, err error) {
 	datalen, err := base64.StdEncoding.Decode(zdata, ircmsg)
 	//data, err := base64.StdEncoding.DecodeString( string(ircmsg) )
 	if err != nil || datalen <= 4 {
-		return nil, acprotoError(-1, "OpenPKMessage().B64Decode(): ", err)
+		//return nil, acprotoError(-1, "OpenPKMessage().B64Decode(): ", err)
+		return nil, &protoError{value: -1, msg: "OpenPKMessage().B64Decode(): ", err: err}
 		//log.Fatal(err)
 		//return
 	}
 	//    fmt.Printf("DATALEN: %d\n", datalen)
 
 	if datalen < 20 {
-		return nil, acprotoError(-2, "OpenPKMessage().B64Decode(): invalid message size ", nil)
-		//return
+		//return nil, acprotoError(-2, "OpenPKMessage().B64Decode(): invalid message size ", nil)
+		return nil, &protoError{value: -2, msg: "OpenPKMessage().B64Decode(): invalid message size ", err: nil}
 	}
 
 	hdr, err := obf.DeObfuscate(zdata[:4])
 	if err != nil {
-		return nil, acprotoError(-3, "OpenPKMessage().Deobfuscate(): invalid message size ", nil)
+		//return nil, acprotoError(-3, "OpenPKMessage().Deobfuscate(): invalid message size ", nil)
+		return nil, &protoError{value: -3, msg: "OpenPKMessage().Deobfuscate(): invalid message size.", err: err}
 	}
 	//fmt.Printf("HDR: %s\n", hdr)
 
 	if len(hdr) != 2 {
 		//fmt.Printf("WRONG HEADER")
-		return nil, acprotoError(-4, "OpenPKMessage().Hdr(): invalid header", nil)
+		//return nil, acprotoError(-4, "OpenPKMessage().Hdr(): invalid header", nil)
+		return nil, &protoError{value: -4, msg: "OpenPKMessage().Hdr(): invalid header", err: nil}
 		//return
 	}
 
-	if bytes.Compare(hdr, []byte(MSGHDR_PK)) != 0 {
+	if bytes.Compare(hdr, []byte(msgHdrPK)) != 0 {
 		//fmt.Printf("WRONG HEADER")
-		return nil, acprotoError(-5, "OpenPKMessage().Hdr(): invalid header", nil)
+		//return nil, acprotoError(-5, "OpenPKMessage().Hdr(): invalid header", nil)
+		return nil, &protoError{value: -5, msg: "OpenPKMessage().Hdr(): invalid header", err: nil}
 		//return
 	}
 
@@ -523,7 +560,8 @@ func OpenPKMessage(ircmsg []byte) (out []byte, err error) {
 	data, err := zlib.NewReader(zbuf)
 	defer data.Close()
 	if err != nil {
-		return nil, acprotoError(-5, "OpenPKMessage().zlib.NewReader(): ", err)
+		//return nil, acprotoError(-5, "OpenPKMessage().zlib.NewReader(): ", err)
+		return nil, &protoError{value: -6, msg: "OpenPKMessage().zlib.NewReader(): ", err: err}
 	}
 	/*
 	   if err != nil {
@@ -535,7 +573,8 @@ func OpenPKMessage(ircmsg []byte) (out []byte, err error) {
 	b := new(bytes.Buffer)
 	_, err = io.Copy(b, data)
 	if err != nil {
-		return nil, acprotoError(-6, "OpenPKMessage().io.Copy(): ", err)
+		//return nil, acprotoError(-6, "OpenPKMessage().io.Copy(): ", err)
+		return nil, &protoError{value: -7, msg: "OpenPKMessage().io.Copy(): ", err: err}
 		//log.Fatal(err)
 		//return
 	}
@@ -560,9 +599,10 @@ func OpenPKMessage(ircmsg []byte) (out []byte, err error) {
 
 func CreateKXMessage(context *ACMsgContext, peerPubkey, myPrivkey *[32]byte, channel, myNick, peerNick []byte) (out []byte, err error) {
 	var noncebyte [24]byte
-	hdr, err := obf.Obfuscate([]byte(MSGHDR_KX))
+	hdr, err := obf.Obfuscate([]byte(msgHdrKX))
 	if err != nil {
-		return nil, acprotoError(-1, "CreateKXMessage().Hdr(): ", err)
+		//return nil, acprotoError(-1, "CreateKXMessage().Hdr(): ", err)
+		return nil, &protoError{value: -1, msg: "CreateKXMessage().Hdr(): ", err: err}
 	}
 
 	body := new(bytes.Buffer)
@@ -572,13 +612,15 @@ func CreateKXMessage(context *ACMsgContext, peerPubkey, myPrivkey *[32]byte, cha
 	//fmt.Printf("MSG(%d): %s\n", len(msg), msg)
 	zbuf, err := zlib.NewWriterLevel(body, zlib.BestCompression)
 	if err != nil {
-		return nil, acprotoError(-2, "CreateKXMessage().zlib.NewWriterLevel(): ", err)
+		//return nil, acprotoError(-2, "CreateKXMessage().zlib.NewWriterLevel(): ", err)
+		return nil, &protoError{value: -2, msg: "CreateKXMessage().zlib.NewWriterLevel(): ", err: err}
 		//panic(err)
 	}
 
 	_, err = zbuf.Write(context.key[:])
 	if err != nil {
-		return nil, acprotoError(-3, "CreateKXMessage().zlib.Write(): ", err)
+		//return nil, acprotoError(-3, "CreateKXMessage().zlib.Write(): ", err)
+		return nil, &protoError{value: -3, msg: "CreateKXMessage().zlib.Write(): ", err: err}
 	}
 	zbuf.Close()
 	//fmt.Printf("Compressed: %d bytes -> %d bytes\n", n, len(body.Bytes()))
@@ -616,7 +658,8 @@ func CreateKXMessage(context *ACMsgContext, peerPubkey, myPrivkey *[32]byte, cha
 
 	nonce_sha, err := HashSHA3Data(nonce_build.Bytes())
 	if err != nil {
-		return nil, acprotoError(-4, "CreateKXMessage().HashSHA3Data(): ", err)
+		//return nil, acprotoError(-4, "CreateKXMessage().HashSHA3Data(): ", err)
+		return nil, &protoError{value: -4, msg: "CreateKXMessage().HashSHA3Data(): ", err: err}
 	}
 	copy(noncebyte[:], nonce_sha[:24])
 	//fmt.Printf("ENCODE KEX NONCE SHA: %s\n", hex.EncodeToString(nonce_sha))
@@ -640,12 +683,14 @@ func CreateKXMessage(context *ACMsgContext, peerPubkey, myPrivkey *[32]byte, cha
 	encoder := base64.NewEncoder(base64.StdEncoding, buffer)
 	_, err = encoder.Write(hdr)
 	if err != nil {
-		return nil, acprotoError(-5, "CreateKXMessage().B64Encode(): ", err)
+		//return nil, acprotoError(-5, "CreateKXMessage().B64Encode(): ", err)
+		return nil, &protoError{value: -5, msg: "CreateKXMessage().B64Encode(): ", err: err}
 	}
 	binary.Write(encoder, binary.LittleEndian, context.nonce)
 	_, err = encoder.Write(cipherKex)
 	if err != nil {
-		return nil, acprotoError(-6, "CreateKXMessage().B64Encode(): ", err)
+		//return nil, acprotoError(-6, "CreateKXMessage().B64Encode(): ", err)
+		return nil, &protoError{value: -6, msg: "CreateKXMessage().B64Encode(): ", err: err}
 	}
 	encoder.Close()
 
@@ -662,33 +707,38 @@ func OpenKXMessage(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerN
 
 	// check that we are indeed
 	if peerPubkey == nil || myPrivkey == nil {
-		return nil, acprotoError(-1, "OpenKXMessage().invalidPubPrivKeys(): ", err)
+		//return nil, acprotoError(-1, "OpenKXMessage().invalidPubPrivKeys(): ", err)
+		return nil, &protoError{value: -1, msg: "OpenKXMessage().invalidPubPrivKeys(): ", err: err}
 	}
 
 	b64str := make([]byte, base64.StdEncoding.DecodedLen(len(cmsg)))
 	b64str_len, err := base64.StdEncoding.Decode(b64str, cmsg)
 	if err != nil || b64str_len <= 8 {
-		return nil, acprotoError(-1, "OpenKXMessage().B64Decode()||TooSmall: ", err)
+		//return nil, acprotoError(-1, "OpenKXMessage().B64Decode()||TooSmall: ", err)
+		return nil, &protoError{value: -2, msg: "OpenKXMessage().B64Decode()||Too small: ", err: err}
 		//panic(err)
 		//return
 	}
 
 	hdr, err := obf.DeObfuscate(b64str[:4])
 	if err != nil {
-		return nil, acprotoError(-2, "OpenKXMessage().Hdr(): ", err)
+		//return nil, acprotoError(-2, "OpenKXMessage().Hdr(): ", err)
+		return nil, &protoError{value: -3, msg: "OpenKXMessage().Hdr(): ", err: err}
 		//panic(err)
 		//return
 	}
 
 	if len(hdr) != 2 {
 		//fmt.Printf("WRONG HEADER")
-		return nil, acprotoError(-3, "OpenKXMessage().Hdr(): ", err)
+		//return nil, acprotoError(-3, "OpenKXMessage().Hdr(): ", err)
+		return nil, &protoError{value: -4, msg: "OpenKXMessage().Hdr(): ", err: err}
 		//return
 	}
 
-	if bytes.Compare(hdr, []byte(MSGHDR_KX)) != 0 {
+	if bytes.Compare(hdr, []byte(msgHdrKX)) != 0 {
 		//fmt.Printf("WRONG HEADER")
-		return nil, acprotoError(-4, "OpenKXMessage().Hdr(): ", err)
+		//return nil, acprotoError(-4, "OpenKXMessage().Hdr(): ", err)
+		return nil, &protoError{value: -5, msg: "OpenKXMessage().Hdr(): ", err: err}
 		//return
 	}
 
@@ -725,7 +775,8 @@ func OpenKXMessage(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerN
 	//fmt.Printf("DECODE KEX NONCE HEX: %s\n", hex.EncodeToString(nonce_build.Bytes()))
 	nonce_sha, err := HashSHA3Data(nonce_build.Bytes())
 	if err != nil {
-		return nil, acprotoError(-5, "OpenKXMessage().HashSHA3Data(): ", err)
+		//return nil, acprotoError(-5, "OpenKXMessage().HashSHA3Data(): ", err)
+		return nil, &protoError{value: -6, msg: "OpenKXMessage().HashSHA3Data(): ", err: err}
 	}
 	copy(noncebyte[:], nonce_sha[:24])
 	//fmt.Printf("DECODE KEX NONCE SHA: %s\n", hex.EncodeToString(nonce_sha))
@@ -742,7 +793,8 @@ func OpenKXMessage(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerN
 	//fmt.Println(ok)
 	if ok == false {
 		//fmt.Printf("ON RETURN ON PEUT PAS OPEN LE SEAL\n")
-		return nil, acprotoError(-6, "OpenKXMessage().BoxOpen(): ", nil)
+		//return nil, acprotoError(-6, "OpenKXMessage().BoxOpen(): ", nil)
+		return nil, &protoError{value: -7, msg: "OpenKXMessage().BoxOpen(): ", err: nil}
 		//return
 	}
 	//    fmt.Printf("DECODE SHA HEX: %s\n", hex.EncodeToString(noncebyte[:]))
@@ -750,7 +802,8 @@ func OpenKXMessage(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerN
 	plain, err := zlib.NewReader(zbuf)
 	defer plain.Close()
 	if err != nil {
-		return nil, acprotoError(-7, "OpenKXMessage().zlib.NewReader(): ", err)
+		//return nil, acprotoError(-7, "OpenKXMessage().zlib.NewReader(): ", err)
+		return nil, &protoError{value: -8, msg: "OpenKXMessage().zlib.NewReader(): ", err: err}
 		//log.Fatal(err)
 		//return
 	}
@@ -760,7 +813,8 @@ func OpenKXMessage(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerN
 	nonceBuf := bytes.NewReader(b64str[4:8])
 	err = binary.Read(nonceBuf, binary.LittleEndian, &nonceval)
 	if err != nil {
-		return nil, acprotoError(-8, "OpenKXMessage().Hdr(): ", err)
+		//return nil, acprotoError(-8, "OpenKXMessage().Hdr(): ", err)
+		return nil, &protoError{value: -9, msg: "OpenKXMessage().Hdr(): ", err: err}
 		//log.Fatal(err)
 		//return
 	}
@@ -768,14 +822,16 @@ func OpenKXMessage(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerN
 	// XXX TODO are we at the end of the nonce value..
 	context, err = CreateACContext(channel, nonceval+1)
 	if err != nil {
-		return nil, acprotoError(-9, "OpenKXMessage().CreateACContext(): ", err)
+		//return nil, acprotoError(-9, "OpenKXMessage().CreateACContext(): ", err)
+		return nil, &protoError{value: -10, msg: "OpenKXMessage().CreateACContext(): ", err: err}
 		//return
 	}
 
 	b := new(bytes.Buffer)
 	_, err = io.Copy(b, plain)
 	if err != nil {
-		return nil, acprotoError(-10, "OpenKXMessage().io.Copy(): ", err)
+		//return nil, acprotoError(-10, "OpenKXMessage().io.Copy(): ", err)
+		return nil, &protoError{value: -10, msg: "OpenKXMessage().io.Copy(): ", err: err}
 		//panic(err)
 	}
 

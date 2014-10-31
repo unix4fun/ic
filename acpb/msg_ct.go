@@ -15,13 +15,13 @@ import (
 	"code.google.com/p/go.crypto/pbkdf2"
 	"code.google.com/p/go.crypto/sha3"
 	"code.google.com/p/goprotobuf/proto"
-	"github.com/unix4fun/ac/proto"
+	"github.com/unix4fun/ac/accp"
 )
 
 func CTSEAL_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *AcCipherTextMessageResponse, err error) {
 	var responseType AcCipherTextMessageResponseAcCTRespMsgType
 	responseType = AcCipherTextMessageResponse_CTR_SEAL
-	var acctx *acproto.ACMsgContext
+	var acctx *accp.ACMsgContext
 
 	reqChan := acMessageCtReq.GetChannel()
 	myNick := acMessageCtReq.GetNick()
@@ -55,7 +55,7 @@ func CTSEAL_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 	}
 
 	//func CreateACMessage(context * ACMsgContext, msg, myNick []byte) (out []byte, err error) {
-	out, err := acproto.CreateACMessage(acctx, reqBlob, []byte(myNick))
+	out, err := accp.CreateACMessage(acctx, reqBlob, []byte(myNick))
 	if err != nil {
 		retErr := acpbError(-3, "CTSEAL_Handler(): CreateACMessage() error:", err)
 		acMsgResponse = &AcCipherTextMessageResponse{
@@ -81,7 +81,7 @@ func CTSEAL_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 func CTOPEN_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *AcCipherTextMessageResponse, err error) {
 	var responseType AcCipherTextMessageResponseAcCTRespMsgType
 	responseType = AcCipherTextMessageResponse_CTR_OPEN
-	var acctx *acproto.ACMsgContext
+	var acctx *accp.ACMsgContext
 
 	//    fmt.Fprintf(os.Stderr, "CTOPEN Message: let's give the key\n")
 	//    fmt.Fprintf(os.Stderr, "from nick: %s\n", acMessageCtReq.GetNick())
@@ -125,7 +125,7 @@ func CTOPEN_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 
 	//func OpenACMessage(context * ACMsgContext, cmsg, peerNick []byte) (out []byte, err error) {
 	// XXX TODO: use reqOpt accordingly
-	out, err := acproto.OpenACMessage(acctx, blob, []byte(peernick), []byte(reqOpt))
+	out, err := accp.OpenACMessage(acctx, blob, []byte(peernick), []byte(reqOpt))
 	if err != nil {
 		//fmt.Println(err)
 		retErr := acpbError(-3, "CTOPEN_Handler(): OpenACMessage() error !", err)
@@ -163,7 +163,7 @@ type ACSecretKeyGen struct {
 
 func (skgen *ACSecretKeyGen) Init(input []byte, channel []byte, nick []byte, serv []byte) (err error) {
 	//skgen.hash = sha3.NewKeccak256
-    // go.crypto changed it... mlgrmlbmlbm
+	// go.crypto changed it... mlgrmlbmlbm
 	skgen.hash = sha3.New256
 
 	if input != nil {
@@ -209,7 +209,7 @@ func (skgen *ACSecretKeyGen) Init(input []byte, channel []byte, nick []byte, ser
 	str_build.WriteByte(byte(':'))
 	str_build.Write(channel)
 
-	skgen.info_hkdf, err = acproto.HashSHA3Data(str_build.Bytes())
+	skgen.info_hkdf, err = accp.HashSHA3Data(str_build.Bytes())
 	if err != nil {
 		//fmt.Fprintf(os.Stderr, "HashSHA3ERRORRRR\n")
 		//        fmt.Println(err)
@@ -240,7 +240,7 @@ func (skgen *ACSecretKeyGen) Read(p []byte) (n int, err error) {
 func CTADD_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *AcCipherTextMessageResponse, err error) {
 	var responseType AcCipherTextMessageResponseAcCTRespMsgType
 	responseType = AcCipherTextMessageResponse_CTR_OPEN
-	//var acctx * acproto.ACMsgContext
+	//var acctx * accp.ACMsgContext
 
 	//fmt.Fprintf(os.Stderr, "CTADD Message: let's give the key\n")
 	//fmt.Fprintf(os.Stderr, "from myNick: %s\n", acMessageCtReq.GetNick())
@@ -279,9 +279,9 @@ func CTADD_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *A
 		return acMsgResponse, retErr
 	}
 
-	//acctx := new(acproto.ACMsgContext)
+	//acctx := new(accp.ACMsgContext)
 	// XXX TODO: handle error...
-	acctx, _ := acproto.CreateACContext([]byte(reqChan), 0)
+	acctx, _ := accp.CreateACContext([]byte(reqChan), 0)
 
 	key := make([]byte, 32)
 	io.ReadFull(skgen, key)
