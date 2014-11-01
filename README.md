@@ -106,8 +106,6 @@ where <NONCE_AUTH> is:
 
 ### Public Key Messages Format:
 ```
-TODO
-```
 Base64(
         'PKheader' ||
         Zlib(<NACL_PUBKEY>)
