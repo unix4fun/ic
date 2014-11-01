@@ -54,7 +54,7 @@ However we are not yet making sure the page are not swapped to disk.
 ```
 
 
-### Key Generation:
+### Channel/Query Key Generation:
 ```
 <CHANNEL_KEY> is built the following way:
  HKDF_SHA3-256(
@@ -108,6 +108,11 @@ where <NONCE_AUTH> is:
 ```
 TODO
 ```
+Base64(
+        'PKheader' ||
+        Zlib(<NACL_PUBKEY>)
+)
+```
 
 ### KEX Messages Format: 
 ```
@@ -136,22 +141,23 @@ keys should never appear in clear and should be "randomly" (as far as my crypto 
 ## Todo
 
 in no particular order..
-* identity RSA keys (currently in study/dev)
-* ala SSH authorized_nicks (for trusted KEX/messages)
-* OR socialist milionnaire probleme implementation (like OTR).
+* identity RSA keys (currently in study/dev) with ala SSH authorized_nicks (for trusted KEX/messages)
+* evaluate feasibility of socialist milionnaire probleme implementation (like OTR).
 * rename a SKMap key (for queries automagically on nick change)
 * rename a PKMap key (on nick change)
 * irssi plugin/script.
-* encrypted runtime memory key storage
+* xchat plugin/script.
 * try to avoid page to disk memory
 * scrub memory before deleting the objects
 * unit/regression testing in Go (bleh_test.go).
-* more cleanup
-* more cleanup
-* more cleanup
+* huge code cleanup
 * check/audit source code
-* check/audit source code
-* check/audit source code
+* load/save channel/query keys on disk
+* daemon protobuf ping heartbeat
+* fix IRC truncated encrypted messages
+
+## Done
+* encrypted runtime memory key storage (to some extent..)
 
 The daemon is implemented in Go langage and will produce a binary.
 
