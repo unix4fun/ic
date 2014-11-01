@@ -1,5 +1,5 @@
 # WORK IN PROGRESS
-# **A**(nother) **C**(rypto daemon)
+# **A**(nother) **C**(rypto)  (the daemon part..)
 
 An attempt to provide a rather simple (to use and maintain) IRC encryption mechanism, but hopefully better than plaintext and current used ones..
 with (hopefully) no "false" sense of security.
@@ -42,22 +42,44 @@ However we are not yet making sure the page are not swapped to disk.
 
 
 
-
 ## Design/Format
 
-(IRC network) <=> IRC Client <-stdin/stdout-> AC --> [infamous crypto keys]
+(IRC network) <=> IRC Client <--stdin/stdout--> AC --> [infamous crypto keys]
 
 ### IRC Message Format:
 ```
-<ac> base64_blob         : Encrypted Messages
-<acpk> base64_blob       : Public key Messages
-<ackx:nick> base64_blob  : KEX Messages
+<ac> [base64_blob]         : Encrypted Messages
+<acpk> [base64_blob]       : Public key Messages
+<ackx:nick> [base64_blob]  : KEX Messages
+```
+
+
+### Key Generation:
+```
+<CHANNEL_KEY> is built the following way:
+
+   HKDF_SHA3-256(secret: <PBKDF_SHA3-256_GENERATOR>, salt: <CRYPTO_RAND_256>, info: <SHA3_INFO>)
+
+where <PBKDF_SHA3-256_GENERATOR> is :
+   PBKDF2_SHA3-256(pass:<USER_INPUT>, salt: <CRYPTO_RAND_256>, iteration:4096 ,len: 32)
+
+and <SHA3_INFO> is:
+   SHA3(<server_name>||':'||<nickname>||':'||<channel_name>)
+
 ```
 
 ### Encrypted Messages Format:
 ```
-TODO
+Base64( 'ACheader' || <NonceInt32Value> || ECC25519_NACL_SECRETBOX(<CHANNEL_KEY> , <NONCE_AUTH> , Zlib(<Plaintext>)) )
+
+where <NonceInt32Value> is:
+   a non repeating 32bit counter starting at 0, for each new channel key.
+
+where <NONCE_AUTH> is:
+   SHA3( 'CHANNEL' || ':' || 'SRC_NICK' || ':' || 'NONCE_VALUE' || ':' || 'ACheader')
+
 ```
+
 
 ### Public Key Messages Format:
 ```
