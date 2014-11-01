@@ -50,8 +50,9 @@ func KXPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgResponse 
 	//peer, ok_c := Pk[peernick]
 	peer, ok_c := ACmap.GetPKMapEntry(reqServ, peernick)
 	//fmt.Print(ok_c)
+	acrnd, ok_d := ACmap.GetRDMapEntry(reqServ, channel)
 
-	if ok_a == false || ok_b == false || ok_c == false {
+	if ok_a == false || ok_b == false || ok_c == false || ok_d == false {
 		retErr := acpbError(-2, "KXPACK_Handler().GetSKMapEntry/GetPKMapEntry(): failed ", nil)
 		acMsgResponse = &AcKeyExchangeMessageResponse{
 			Type:      &responseType,
@@ -85,7 +86,7 @@ func KXPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgResponse 
 	//    }
 
 	//fmt.Printf("KEY: %s\n", hex.EncodeToString(acctx.GetKey()))
-	kxMsg, err := accp.CreateKXMessage(acctx, peer.GetPubkey(), me.GetPrivkey(), []byte(channel), []byte(mynick), []byte(peernick))
+	kxMsg, err := accp.CreateKXMessage(acctx, acrnd, peer.GetPubkey(), me.GetPrivkey(), []byte(channel), []byte(mynick), []byte(peernick))
 	//fmt.Printf("kxMsg: %s\n", kxMsg)
 	if err != nil {
 		retErr := acpbError(-3, "KXPACK_Handler().CreateKXMessage(): ", err)
@@ -177,7 +178,7 @@ func KXUNPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgRespons
 	//        fmt.Printf("[+] KXUNPACK: not a channel, private conversation let's use this: %s\n", kx_channel)
 	//    }
 
-	acctx, err := accp.OpenKXMessage(peer.GetPubkey(), me.GetPrivkey(), blobMsg, []byte(channel), []byte(mynick), []byte(peernick))
+	acctx, acrnd, err := accp.OpenKXMessage(peer.GetPubkey(), me.GetPrivkey(), blobMsg, []byte(channel), []byte(mynick), []byte(peernick))
 	//    acctx, err := accp.OpenKXMessage(peer.GetPubkey(), me.GetPrivkey(), blobMsg, kx_channel, []byte(mynick), []byte(peernick))
 	if err != nil {
 		retErr := acpbError(-3, "KXUNPACK_Handler().OpenKXMessage(): ", err)
@@ -192,6 +193,8 @@ func KXUNPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgRespons
 
 	//fmt.Printf("reqServ: %s channel: %s key: %s\n", reqServ, channel, hex.EncodeToString(acctx.GetKey()))
 	ACmap.SetSKMapEntry(reqServ, channel, acctx)
+	ACmap.SetRDMapEntry(reqServ, channel, acrnd)
+
 	acMsgResponse = &AcKeyExchangeMessageResponse{
 		Type:      &responseType,
 		Bada:      proto.Bool(true),

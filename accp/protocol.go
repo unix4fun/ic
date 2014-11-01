@@ -62,9 +62,9 @@ func acprotoError(val int, msg string, err error) (ae *protoError) {
 }
 */
 
-// ACMyKeys describe the internal structure stored in memory for public/private
+// KexKey describe the internal structure stored in memory for public/private
 // key pairs owned or received from peers
-type ACMyKeys struct {
+type KexKey struct {
 	Nickname string
 	Userhost string
 	Server   string
@@ -77,15 +77,15 @@ type ACMyKeys struct {
 	privkey  *[32]byte // 32 bytes TODO: we need to box those info, and unbox them when necessary...
 }
 
-// GetPubkey retrieve and return the public key component from the current ACMyKeys structure.
-func (pk *ACMyKeys) GetPubkey() (pubkey *[32]byte) {
+// GetPubkey retrieve and return the public key component from the current KexKey structure.
+func (pk *KexKey) GetPubkey() (pubkey *[32]byte) {
 	pubkey = pk.pubkey
 	return
 }
 
 // SetPubkey writes the argument provided public key (pubkey) of the current
 // AcMyKeys structure.
-func (pk *ACMyKeys) SetPubkey(pubkey []byte) {
+func (pk *KexKey) SetPubkey(pubkey []byte) {
 	if len(pubkey) == 32 {
 		pk.pubkey = new([32]byte)
 		copy(pk.pubkey[:], pubkey)
@@ -101,23 +101,23 @@ func (pk *ACMyKeys) SetPubkey(pubkey []byte) {
 
 // GetPrivkey retrieve and return the private key (privkey) of the current
 // AcMyKeys structure.
-func (pk *ACMyKeys) GetPrivkey() (privkey *[32]byte) {
+func (pk *KexKey) GetPrivkey() (privkey *[32]byte) {
 	privkey = pk.privkey
 	return privkey
 }
 
 // GetPubfp retrieve and return the public key fingerprint associated with the
 // current key.
-func (pk *ACMyKeys) GetPubfp() (pubfp []byte) {
+func (pk *KexKey) GetPubfp() (pubfp []byte) {
 	pubfp = pk.pubfp[:]
 	return
 }
 
 // if you Println() the struct then it call this as part of the type.
-func (pk *ACMyKeys) String() string {
+func (pk *KexKey) String() string {
 	var b bytes.Buffer
 	fmt.Fprintf(&b, "----\n")
-	fmt.Fprintf(&b, "ACMyKeys struct @ %p\n", pk)
+	fmt.Fprintf(&b, "KexKey struct @ %p\n", pk)
 	fmt.Fprintf(&b, "nick: %s @ %s on %s\n", pk.Nickname, pk.Userhost, pk.Server)
 	fmt.Fprintf(&b, "pubkey: %s\n", pk.Pubkey)
 	//fmt.Fprintf(&b, "privkey: %s\n", hex.EncodeToString(pk.privkey[:]))
@@ -125,7 +125,7 @@ func (pk *ACMyKeys) String() string {
 	return b.String()
 }
 
-type ACMsgContext struct {
+type SecKey struct {
 	nonce    uint32
 	bob      []byte
 	key      [32]byte
@@ -134,10 +134,10 @@ type ACMsgContext struct {
 }
 
 // if you Println() the struct then it call this as part of the type.
-func (sk *ACMsgContext) String() string {
+func (sk *SecKey) String() string {
 	var b bytes.Buffer
 	fmt.Fprintf(&b, "----\n")
-	fmt.Fprintf(&b, "ACMsgContext struct @ %p\n", sk)
+	fmt.Fprintf(&b, "SecKey struct @ %p\n", sk)
 	fmt.Fprintf(&b, "-> bob : %s\n", sk.bob)
 	fmt.Fprintf(&b, "-> key : %s\n", hex.EncodeToString(sk.key[:]))
 	fmt.Fprintf(&b, "-> nonce : %08x\n", sk.nonce)
@@ -145,18 +145,18 @@ func (sk *ACMsgContext) String() string {
 	return b.String()
 }
 
-func (sk *ACMsgContext) GetKey() []byte {
+func (sk *SecKey) GetKey() []byte {
 	// XXX TODO here we will be able to get the memory encrypted key instead of
 	// plain.
 	return sk.key[:]
 }
 
-func (sk *ACMsgContext) SetKey(keydata []byte) {
+func (sk *SecKey) SetKey(keydata []byte) {
 	copy(sk.key[:], keydata[:32])
 	return
 }
 
-func (sk *ACMsgContext) GetNonce() uint32 {
+func (sk *SecKey) GetNonce() uint32 {
 	return sk.nonce
 }
 
@@ -185,11 +185,11 @@ func HashSHA3Data(input []byte) (out []byte, err error) {
 	return
 }
 
-// CreateMyKeys create an ACMyKeys structure using provide randomness source and
+// CreateMyKeys create an KexKey structure using provide randomness source and
 // compute the initial EC Ephemeral keypair
 // XXX Make sure PRNG is strong.. may be use fortuna...
-func CreateMyKeys(rnd io.Reader, nickname string, userhost string, server string) (mykeys *ACMyKeys, err error) {
-	mykeys = new(ACMyKeys)
+func CreateMyKeys(rnd io.Reader, nickname string, userhost string, server string) (mykeys *KexKey, err error) {
+	mykeys = new(KexKey)
 	mykeys.pubkey, mykeys.privkey, err = box.GenerateKey(rand.Reader)
 	if err != nil {
 		//return nil, acprotoError(-1, "CreateMyKeys().GenerateKey(): ", err)
@@ -220,8 +220,8 @@ func CreateMyKeys(rnd io.Reader, nickname string, userhost string, server string
 	return mykeys, nil
 }
 
-func CreateACContext(channel []byte, nonce uint32) (context *ACMsgContext, err error) {
-	context = new(ACMsgContext)
+func CreateACContext(channel []byte, nonce uint32) (context *SecKey, err error) {
+	context = new(SecKey)
 	// TODO XXX: we need to be careful after a key exchange we can re-encrypt a
 	// message with the same nonce, so we should give the nonce with the KEX
 	// and also update the nonce on every received message
@@ -231,8 +231,8 @@ func CreateACContext(channel []byte, nonce uint32) (context *ACMsgContext, err e
 	return context, nil
 }
 
-func CreateACContextWithInputEntropy(channel []byte, inputEntropy []byte) (context *ACMsgContext, err error) {
-	context = new(ACMsgContext)
+func CreateACContextWithInputEntropy(channel []byte, inputEntropy []byte) (context *SecKey, err error) {
+	context = new(SecKey)
 	context.nonce = 0
 	context.bob = channel
 	context.Overhead = secretbox.Overhead
@@ -254,30 +254,23 @@ func CreateACContextWithInputEntropy(channel []byte, inputEntropy []byte) (conte
 // SHA3( 'CHANNEL' || ':' || 'SRC_NICK' || ':' || 'NONCE_VALUE' || ':' || 'HDR_RAW' )
 //
 
-func CreateACMessage(context *ACMsgContext, msg, myNick []byte) (out []byte, err error) {
+func CreateACMessage(context *SecKey, rnd, msg, myNick []byte) (out []byte, err error) {
 	var noncebyte [24]byte
 	hdr, err := obf.Obfuscate([]byte(msgHdrAC))
 	if err != nil {
-		//return nil, acprotoError(-1, "CreateACMessage().Obfuscate(): ", err)
 		return nil, &protoError{value: -1, msg: "CreateACMessage().Obfuscate(): ", err: err}
 	}
 
-	body := new(bytes.Buffer)
-
 	// first let's compress
+	body := new(bytes.Buffer)
 	zbuf, err := zlib.NewWriterLevel(body, zlib.BestCompression)
 	if err != nil {
-		//return nil, acprotoError(-2, "CreateACMessage().zlib.NewWriterLevel(): ", err)
 		return nil, &protoError{value: -2, msg: "CreateACMessage().zlib.NewWriterLevel(): ", err: err}
-		//fmt.Printf("PANIIIIC\n")
-		//panic(err)
 	}
 
 	_, err = zbuf.Write(msg)
 	if err != nil {
-		//return nil, acprotoError(-3, "CreateACMessage().zlib.Write(): ", err)
 		return nil, &protoError{value: -3, msg: "CreateACMessage().zlib.Write(): ", err: err}
-		//panic(err)
 	}
 	zbuf.Close()
 
@@ -321,8 +314,18 @@ func CreateACMessage(context *ACMsgContext, msg, myNick []byte) (out []byte, err
 	copy(noncebyte[:], nonce_sha[:24])
 	//fmt.Printf("ENCODE SHA HEX(%d): %s\n", len(body.Bytes()), hex.EncodeToString(nonce_sha))
 
+	// OPEN the key
+	// XXX new to check rnd and context.key are the same size
+	for j := 0; j < len(rnd); j++ {
+		context.key[j] = context.key[j] ^ rnd[j]
+	}
 	// encrypt
 	cipher := secretbox.Seal(nil, body.Bytes(), &noncebyte, &context.key)
+
+	// close the key
+	for j := 0; j < len(rnd); j++ {
+		context.key[j] = context.key[j] ^ rnd[j]
+	}
 
 	buffer := new(bytes.Buffer)
 	encoder := base64.NewEncoder(base64.StdEncoding, buffer)
@@ -337,7 +340,7 @@ func CreateACMessage(context *ACMsgContext, msg, myNick []byte) (out []byte, err
 	return
 }
 
-func OpenACMessage(context *ACMsgContext, cmsg, peerNick, myNick []byte) (out []byte, err error) {
+func OpenACMessage(context *SecKey, rnd, cmsg, peerNick, myNick []byte) (out []byte, err error) {
 	var noncebyte [24]byte
 	var nonceval uint32
 
@@ -427,6 +430,12 @@ func OpenACMessage(context *ACMsgContext, cmsg, peerNick, myNick []byte) (out []
 	copy(noncebyte[:], nonce_sha[:24])
 	//fmt.Printf("DECODE SHA HEX: %s\n", hex.EncodeToString(noncebyte[:]))
 
+	// OPEN the key
+	// XXX new to check rnd and context.key are the same size
+	for j := 0; j < len(rnd); j++ {
+		context.key[j] = context.key[j] ^ rnd[j]
+	}
+
 	//plain = make([]byte, len(b64str[8:])-secretbox.Overhead)
 	//bounce := b64str[8:b64str_len]
 	//fmt.Printf("LAST BYTE: %02x\n", bounce[len(bounce)-1:len(bounce)])
@@ -437,6 +446,11 @@ func OpenACMessage(context *ACMsgContext, cmsg, peerNick, myNick []byte) (out []
 	packed, ok := secretbox.Open(nil, b64str[8:b64str_len], &noncebyte, &context.key)
 	//    fmt.Printf("C EST OK?!?!?\n")
 	//    fmt.Println(ok)
+	// Close the key
+	for j := 0; j < len(rnd); j++ {
+		context.key[j] = context.key[j] ^ rnd[j]
+	}
+
 	if ok == false {
 		//return nil, acprotoError(1, "OpenACMessage().SecretOpen(): false ", nil)
 		return nil, &protoError{value: -7, msg: "OpenACMessage().SecretOpen(): ", err: nil}
@@ -597,8 +611,9 @@ func OpenPKMessage(ircmsg []byte) (out []byte, err error) {
 // SHA3( 'CHANNEL' || ':' || 'MY_NICK' || ':' || 'PEER_NICK' || ':' || 'NONCE_VALUE' || ':' || 'HDR_RAW' )
 //
 
-func CreateKXMessage(context *ACMsgContext, peerPubkey, myPrivkey *[32]byte, channel, myNick, peerNick []byte) (out []byte, err error) {
+func CreateKXMessage(context *SecKey, rnd []byte, peerPubkey, myPrivkey *[32]byte, channel, myNick, peerNick []byte) (out []byte, err error) {
 	var noncebyte [24]byte
+
 	hdr, err := obf.Obfuscate([]byte(msgHdrKX))
 	if err != nil {
 		//return nil, acprotoError(-1, "CreateKXMessage().Hdr(): ", err)
@@ -617,6 +632,11 @@ func CreateKXMessage(context *ACMsgContext, peerPubkey, myPrivkey *[32]byte, cha
 		//panic(err)
 	}
 
+	// Open the key
+	for j := 0; j < len(rnd); j++ {
+		context.key[j] = context.key[j] ^ rnd[j]
+	}
+
 	_, err = zbuf.Write(context.key[:])
 	if err != nil {
 		//return nil, acprotoError(-3, "CreateKXMessage().zlib.Write(): ", err)
@@ -624,6 +644,11 @@ func CreateKXMessage(context *ACMsgContext, peerPubkey, myPrivkey *[32]byte, cha
 	}
 	zbuf.Close()
 	//fmt.Printf("Compressed: %d bytes -> %d bytes\n", n, len(body.Bytes()))
+
+	// Close the key
+	for j := 0; j < len(rnd); j++ {
+		context.key[j] = context.key[j] ^ rnd[j]
+	}
 
 	// XXX this handle the fact that it is a channel or a private message, it is
 	// very IRC specific as such, think again before modifying the format, you
@@ -701,21 +726,21 @@ func CreateKXMessage(context *ACMsgContext, peerPubkey, myPrivkey *[32]byte, cha
 	return
 }
 
-func OpenKXMessage(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerNick []byte) (context *ACMsgContext, err error) {
+func OpenKXMessage(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerNick []byte) (context *SecKey, SecRnd []byte, err error) {
 	var noncebyte [24]byte
 	var nonceval uint32
 
 	// check that we are indeed
 	if peerPubkey == nil || myPrivkey == nil {
 		//return nil, acprotoError(-1, "OpenKXMessage().invalidPubPrivKeys(): ", err)
-		return nil, &protoError{value: -1, msg: "OpenKXMessage().invalidPubPrivKeys(): ", err: err}
+		return nil, nil, &protoError{value: -1, msg: "OpenKXMessage().invalidPubPrivKeys(): ", err: err}
 	}
 
 	b64str := make([]byte, base64.StdEncoding.DecodedLen(len(cmsg)))
 	b64str_len, err := base64.StdEncoding.Decode(b64str, cmsg)
 	if err != nil || b64str_len <= 8 {
 		//return nil, acprotoError(-1, "OpenKXMessage().B64Decode()||TooSmall: ", err)
-		return nil, &protoError{value: -2, msg: "OpenKXMessage().B64Decode()||Too small: ", err: err}
+		return nil, nil, &protoError{value: -2, msg: "OpenKXMessage().B64Decode()||Too small: ", err: err}
 		//panic(err)
 		//return
 	}
@@ -723,7 +748,7 @@ func OpenKXMessage(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerN
 	hdr, err := obf.DeObfuscate(b64str[:4])
 	if err != nil {
 		//return nil, acprotoError(-2, "OpenKXMessage().Hdr(): ", err)
-		return nil, &protoError{value: -3, msg: "OpenKXMessage().Hdr(): ", err: err}
+		return nil, nil, &protoError{value: -3, msg: "OpenKXMessage().Hdr(): ", err: err}
 		//panic(err)
 		//return
 	}
@@ -731,14 +756,14 @@ func OpenKXMessage(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerN
 	if len(hdr) != 2 {
 		//fmt.Printf("WRONG HEADER")
 		//return nil, acprotoError(-3, "OpenKXMessage().Hdr(): ", err)
-		return nil, &protoError{value: -4, msg: "OpenKXMessage().Hdr(): ", err: err}
+		return nil, nil, &protoError{value: -4, msg: "OpenKXMessage().Hdr(): ", err: err}
 		//return
 	}
 
 	if bytes.Compare(hdr, []byte(msgHdrKX)) != 0 {
 		//fmt.Printf("WRONG HEADER")
 		//return nil, acprotoError(-4, "OpenKXMessage().Hdr(): ", err)
-		return nil, &protoError{value: -5, msg: "OpenKXMessage().Hdr(): ", err: err}
+		return nil, nil, &protoError{value: -5, msg: "OpenKXMessage().Hdr(): ", err: err}
 		//return
 	}
 
@@ -776,7 +801,7 @@ func OpenKXMessage(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerN
 	nonce_sha, err := HashSHA3Data(nonce_build.Bytes())
 	if err != nil {
 		//return nil, acprotoError(-5, "OpenKXMessage().HashSHA3Data(): ", err)
-		return nil, &protoError{value: -6, msg: "OpenKXMessage().HashSHA3Data(): ", err: err}
+		return nil, nil, &protoError{value: -6, msg: "OpenKXMessage().HashSHA3Data(): ", err: err}
 	}
 	copy(noncebyte[:], nonce_sha[:24])
 	//fmt.Printf("DECODE KEX NONCE SHA: %s\n", hex.EncodeToString(nonce_sha))
@@ -794,7 +819,7 @@ func OpenKXMessage(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerN
 	if ok == false {
 		//fmt.Printf("ON RETURN ON PEUT PAS OPEN LE SEAL\n")
 		//return nil, acprotoError(-6, "OpenKXMessage().BoxOpen(): ", nil)
-		return nil, &protoError{value: -7, msg: "OpenKXMessage().BoxOpen(): ", err: nil}
+		return nil, nil, &protoError{value: -7, msg: "OpenKXMessage().BoxOpen(): ", err: nil}
 		//return
 	}
 	//    fmt.Printf("DECODE SHA HEX: %s\n", hex.EncodeToString(noncebyte[:]))
@@ -803,7 +828,7 @@ func OpenKXMessage(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerN
 	defer plain.Close()
 	if err != nil {
 		//return nil, acprotoError(-7, "OpenKXMessage().zlib.NewReader(): ", err)
-		return nil, &protoError{value: -8, msg: "OpenKXMessage().zlib.NewReader(): ", err: err}
+		return nil, nil, &protoError{value: -8, msg: "OpenKXMessage().zlib.NewReader(): ", err: err}
 		//log.Fatal(err)
 		//return
 	}
@@ -814,7 +839,7 @@ func OpenKXMessage(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerN
 	err = binary.Read(nonceBuf, binary.LittleEndian, &nonceval)
 	if err != nil {
 		//return nil, acprotoError(-8, "OpenKXMessage().Hdr(): ", err)
-		return nil, &protoError{value: -9, msg: "OpenKXMessage().Hdr(): ", err: err}
+		return nil, nil, &protoError{value: -9, msg: "OpenKXMessage().Hdr(): ", err: err}
 		//log.Fatal(err)
 		//return
 	}
@@ -823,7 +848,7 @@ func OpenKXMessage(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerN
 	context, err = CreateACContext(channel, nonceval+1)
 	if err != nil {
 		//return nil, acprotoError(-9, "OpenKXMessage().CreateACContext(): ", err)
-		return nil, &protoError{value: -10, msg: "OpenKXMessage().CreateACContext(): ", err: err}
+		return nil, nil, &protoError{value: -10, msg: "OpenKXMessage().CreateACContext(): ", err: err}
 		//return
 	}
 
@@ -831,16 +856,29 @@ func OpenKXMessage(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerN
 	_, err = io.Copy(b, plain)
 	if err != nil {
 		//return nil, acprotoError(-10, "OpenKXMessage().io.Copy(): ", err)
-		return nil, &protoError{value: -10, msg: "OpenKXMessage().io.Copy(): ", err: err}
+		return nil, nil, &protoError{value: -10, msg: "OpenKXMessage().io.Copy(): ", err: err}
 		//panic(err)
+	}
+
+	// XXX TODO
+	// get RANDOMNESS bytes, return the random bytes
+	newRnd := make([]byte, len(context.key))
+	_, err = rand.Read(newRnd)
+	if err != nil {
+		return nil, nil, &protoError{value: -11, msg: "OpenKXMessage() no randomness to protect the key in memory: ", err: err}
 	}
 
 	// XXX TODO: check the extracted buffer size... to sure we're not copying
 	// too much into a restricted buffer...
 	copy(context.key[:], b.Bytes())
 
+	// Xor the key now..
+	for j := 0; j < len(newRnd); j++ {
+		context.key[j] = context.key[j] ^ newRnd[j]
+	}
+
 	//fmt.Fprintf(os.Stderr, "KEY HEX: %s\n", hex.EncodeToString(b.Bytes()))
 	//fmt.Fprintf(os.Stderr, "DECODED UNSEALED: %d\n", len(b.Bytes()))
 	//    out = b.Bytes()
-	return context, nil
+	return context, newRnd, nil
 }

@@ -10,10 +10,6 @@ import (
 	"code.google.com/p/goprotobuf/proto"
 )
 
-/* this is our cache package wise */
-//var Pk map[string](*acproto.ACMyKeys)
-//var Sk map[string](*acproto.ACMsgContext)
-
 // it's temporary until my design looks better
 type AcPBError struct {
 	value int    // the error code.

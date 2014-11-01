@@ -18,9 +18,50 @@ var ACrun bool
 type PSKMap map[string](*AcCOMM)
 
 //
+// RDMaps
+//
+func (psk PSKMap) GetRDMapEntry(server string, channel string) ([]byte, bool) {
+	rdmap, ok := psk.GetRDMap(server)
+	if ok == true {
+		val, ok := rdmap[channel]
+		return val, ok
+	}
+	return nil, false
+}
+
+func (psk PSKMap) SetRDMapEntry(server, channel string, rnd []byte) {
+	rdmap, ok := psk.GetRDMap(server)
+	if ok == true {
+		delete(rdmap, channel)
+		rdmap[channel] = rnd
+		return
+	}
+	// the RDMap for this server is non existent, let's make it...
+	psk.initRDMapWith(server, channel, rnd)
+	return
+}
+
+func (psk PSKMap) GetRDMap(server string) (RDMap, bool) {
+	acm, ok := psk[server]
+	if ok == true {
+		return acm.Rd, true
+	}
+	return nil, false
+}
+
+// call only if RDMap s empty
+func (psk PSKMap) initRDMapWith(server string, channel string, rnd []byte) {
+	ac := new(AcCOMM)
+	ac.Init()
+	psk[server] = ac
+	ac.Rd[channel] = rnd
+	return
+}
+
+//
 // SKMaps
 //
-func (psk PSKMap) GetSKMapEntry(server string, channel string) (*accp.ACMsgContext, bool) {
+func (psk PSKMap) GetSKMapEntry(server string, channel string) (*accp.SecKey, bool) {
 	skmap, ok := psk.GetSKMap(server)
 	fmt.Fprintf(os.Stderr, "===---=-=-=--==- GetSKMapEntry (serv: %s channel: %s) ! skmap: %p ok: %t --==-=---=-=-=-==-\n", server, channel, skmap, ok)
 	if ok == true {
@@ -31,7 +72,7 @@ func (psk PSKMap) GetSKMapEntry(server string, channel string) (*accp.ACMsgConte
 	return nil, false
 }
 
-func (psk PSKMap) SetSKMapEntry(server string, channel string, sk *accp.ACMsgContext) {
+func (psk PSKMap) SetSKMapEntry(server string, channel string, sk *accp.SecKey) {
 	skmap, ok := psk.GetSKMap(server)
 	if ok == true {
 		delete(skmap, channel) // NO OP in case of nil..
@@ -52,7 +93,7 @@ func (psk PSKMap) GetSKMap(server string) (SKMap, bool) {
 }
 
 // call only if SKMap s empty
-func (psk PSKMap) initSKMapWith(server string, channel string, sk *accp.ACMsgContext) {
+func (psk PSKMap) initSKMapWith(server string, channel string, sk *accp.SecKey) {
 	ac := new(AcCOMM)
 	ac.Init()
 	psk[server] = ac
@@ -63,7 +104,7 @@ func (psk PSKMap) initSKMapWith(server string, channel string, sk *accp.ACMsgCon
 //
 // PKMaps
 //
-func (psk PSKMap) GetPKMapEntry(server string, nick string) (*accp.ACMyKeys, bool) {
+func (psk PSKMap) GetPKMapEntry(server string, nick string) (*accp.KexKey, bool) {
 	pkmap, ok := psk.GetPKMap(server)
 	fmt.Fprintf(os.Stderr, "===---=-=-=--==- GetPKMapEntry (serv: %s nick: %s) ! pkmap: %p ok: %t --==-=---=-=-=-==-\n", server, nick, pkmap, ok)
 	if ok == true {
@@ -76,7 +117,7 @@ func (psk PSKMap) GetPKMapEntry(server string, nick string) (*accp.ACMyKeys, boo
 	return nil, false
 }
 
-func (psk PSKMap) SetPKMapEntry(server string, nick string, pk *accp.ACMyKeys) {
+func (psk PSKMap) SetPKMapEntry(server string, nick string, pk *accp.KexKey) {
 	pkmap, ok := psk.GetPKMap(server)
 	if ok == true {
 		delete(pkmap, nick) // NO OP in case of nil..
@@ -97,7 +138,7 @@ func (psk PSKMap) GetPKMap(server string) (PKMap, bool) {
 }
 
 // call only if PKMap s empty
-func (psk PSKMap) initPKMapWith(server string, nick string, pk *accp.ACMyKeys) {
+func (psk PSKMap) initPKMapWith(server string, nick string, pk *accp.KexKey) {
 	ac := new(AcCOMM)
 	ac.Init()
 	psk[server] = ac
@@ -112,14 +153,14 @@ func (psk PSKMap) initPKMapWith(server string, nick string, pk *accp.ACMyKeys) {
 //
 //
 //
-// XXX Pk map[string](*ACMyKeys)
-type PKMap map[string](*accp.ACMyKeys)
+// XXX Pk map[string](*KexKey)
+type PKMap map[string](*accp.KexKey)
 
 func (pkm PKMap) Init() {
 	pkm = make(PKMap)
 }
 
-func (pkm PKMap) GetPK(nick string) *accp.ACMyKeys {
+func (pkm PKMap) GetPK(nick string) *accp.KexKey {
 	pk, ok := pkm[nick]
 	if ok == true {
 		return pk
@@ -135,16 +176,28 @@ func (pkm PKMap) GetPK(nick string) *accp.ACMyKeys {
 //
 //
 //
-type SKMap map[string](*accp.ACMsgContext)
+type SKMap map[string](*accp.SecKey)
 
 func (skm SKMap) Init() {
 	skm = make(SKMap)
 }
 
-func (skm SKMap) GetSK(channel string) *accp.ACMsgContext {
+func (skm SKMap) GetSK(channel string) *accp.SecKey {
 	sk, ok := skm[channel]
 	if ok == true {
 		return sk
+	}
+	return nil
+}
+
+// RDMap store the random value we use for "protecting/obfuscating" secret keys
+// in memory, it is far from perfect, but better than pure plain text.
+type RDMap map[string]([]byte)
+
+func (rdm RDMap) GetRD(channel string) []byte {
+	rd, ok := rdm[channel]
+	if ok == true {
+		return rd
 	}
 	return nil
 }
@@ -158,9 +211,11 @@ func (skm SKMap) GetSK(channel string) *accp.ACMsgContext {
 type AcCOMM struct {
 	Pk PKMap
 	Sk SKMap
+	Rd RDMap
 }
 
 func (ac *AcCOMM) Init() {
 	ac.Pk = make(PKMap)
 	ac.Sk = make(SKMap)
+	ac.Rd = make(RDMap)
 }

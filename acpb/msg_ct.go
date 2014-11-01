@@ -21,7 +21,7 @@ import (
 func CTSEAL_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *AcCipherTextMessageResponse, err error) {
 	var responseType AcCipherTextMessageResponseAcCTRespMsgType
 	responseType = AcCipherTextMessageResponse_CTR_SEAL
-	var acctx *accp.ACMsgContext
+	var acctx *accp.SecKey
 
 	reqChan := acMessageCtReq.GetChannel()
 	myNick := acMessageCtReq.GetNick()
@@ -54,8 +54,20 @@ func CTSEAL_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 		return acMsgResponse, retErr
 	}
 
-	//func CreateACMessage(context * ACMsgContext, msg, myNick []byte) (out []byte, err error) {
-	out, err := accp.CreateACMessage(acctx, reqBlob, []byte(myNick))
+	acrnd, ok_b := ACmap.GetRDMapEntry(reqServ, reqChan)
+	if ok_b == false {
+		retErr := acpbError(-2, "CTSEAL_Handler(): no RDMap found!", nil)
+		acMsgResponse = &AcCipherTextMessageResponse{
+			Type:      &responseType,
+			Bada:      proto.Bool(false),
+			ErrorCode: proto.Int32(-2),
+		}
+		fmt.Fprintf(os.Stderr, "[!] CTSEAL -> (R) -2 ! %s\n", retErr.Error())
+		return acMsgResponse, retErr
+	}
+
+	//func CreateACMessage(context * SecKey, msg, myNick []byte) (out []byte, err error) {
+	out, err := accp.CreateACMessage(acctx, acrnd, reqBlob, []byte(myNick))
 	if err != nil {
 		retErr := acpbError(-3, "CTSEAL_Handler(): CreateACMessage() error:", err)
 		acMsgResponse = &AcCipherTextMessageResponse{
@@ -81,7 +93,7 @@ func CTSEAL_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 func CTOPEN_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *AcCipherTextMessageResponse, err error) {
 	var responseType AcCipherTextMessageResponseAcCTRespMsgType
 	responseType = AcCipherTextMessageResponse_CTR_OPEN
-	var acctx *accp.ACMsgContext
+	var acctx *accp.SecKey
 
 	//    fmt.Fprintf(os.Stderr, "CTOPEN Message: let's give the key\n")
 	//    fmt.Fprintf(os.Stderr, "from nick: %s\n", acMessageCtReq.GetNick())
@@ -123,9 +135,21 @@ func CTOPEN_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 		return acMsgResponse, retErr
 	}
 
-	//func OpenACMessage(context * ACMsgContext, cmsg, peerNick []byte) (out []byte, err error) {
+	acrnd, ok_b := ACmap.GetRDMapEntry(reqServ, channel)
+	if ok_b == false {
+		retErr := acpbError(-2, "CTOPEN_Handler(): no RDMap found!", nil)
+		acMsgResponse = &AcCipherTextMessageResponse{
+			Type:      &responseType,
+			Bada:      proto.Bool(false),
+			ErrorCode: proto.Int32(-2),
+		}
+		fmt.Fprintf(os.Stderr, "[!] CTOPEN -> (R) -2 ! %s\n", retErr.Error())
+		return acMsgResponse, retErr
+	}
+
+	//func OpenACMessage(context * SecKey, cmsg, peerNick []byte) (out []byte, err error) {
 	// XXX TODO: use reqOpt accordingly
-	out, err := accp.OpenACMessage(acctx, blob, []byte(peernick), []byte(reqOpt))
+	out, err := accp.OpenACMessage(acctx, acrnd, blob, []byte(peernick), []byte(reqOpt))
 	if err != nil {
 		//fmt.Println(err)
 		retErr := acpbError(-3, "CTOPEN_Handler(): OpenACMessage() error !", err)
@@ -240,7 +264,7 @@ func (skgen *ACSecretKeyGen) Read(p []byte) (n int, err error) {
 func CTADD_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *AcCipherTextMessageResponse, err error) {
 	var responseType AcCipherTextMessageResponseAcCTRespMsgType
 	responseType = AcCipherTextMessageResponse_CTR_OPEN
-	//var acctx * accp.ACMsgContext
+	//var acctx * accp.SecKey
 
 	//fmt.Fprintf(os.Stderr, "CTADD Message: let's give the key\n")
 	//fmt.Fprintf(os.Stderr, "from myNick: %s\n", acMessageCtReq.GetNick())
@@ -279,15 +303,35 @@ func CTADD_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *A
 		return acMsgResponse, retErr
 	}
 
-	//acctx := new(accp.ACMsgContext)
+	//acctx := new(accp.SecKey)
 	// XXX TODO: handle error...
 	acctx, _ := accp.CreateACContext([]byte(reqChan), 0)
 
 	key := make([]byte, 32)
 	io.ReadFull(skgen, key)
 	//fmt.Fprintf(os.Stderr, "ReqServ: %s reqChan: %s HEX KEY: %s\n", reqServ, reqChan, hex.EncodeToString(key))
+
+	newRnd := make([]byte, len(key))
+	_, err = rand.Read(newRnd)
+	if err != nil {
+		//return nil, nil, &protoError{value: -11, msg: "OpenKXMessage() no randomness to protect the key in memory: ", err: err}
+		retErr := acpbError(-3, "CTADD_Handler(): randomness to protect key failed:", err)
+		acMsgResponse = &AcCipherTextMessageResponse{
+			Type:      &responseType,
+			Bada:      proto.Bool(false),
+			ErrorCode: proto.Int32(-3),
+		}
+		return acMsgResponse, retErr
+	}
+
+	// XOR the key..
+	for j := 0; j < len(key); j++ {
+		key[j] = key[j] ^ newRnd[j]
+	}
+
 	acctx.SetKey(key)
 	ACmap.SetSKMapEntry(reqServ, reqChan, acctx)
+	ACmap.SetRDMapEntry(reqServ, reqChan, newRnd)
 
 	acMsgResponse = &AcCipherTextMessageResponse{
 		Type:      &responseType,

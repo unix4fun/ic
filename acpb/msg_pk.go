@@ -81,7 +81,7 @@ func PKADD_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 		return acMsgResponse, retErr
 	}
 
-	newkey := new(accp.ACMyKeys)
+	newkey := new(accp.KexKey)
 	newkey.Nickname = reqNick
 	newkey.Userhost = reqHost
 	newkey.Server = reqServ
