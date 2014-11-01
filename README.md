@@ -57,26 +57,25 @@ However we are not yet making sure the page are not swapped to disk.
 ### Key Generation:
 ```
 <CHANNEL_KEY> is built the following way:
-
-   HKDF_SHA3-256(secret: <PBKDF_SHA3-256_GENERATOR>, salt: <CRYPTO_RAND_256>, info: <SHA3_INFO>)
+ HKDF_SHA3-256(secret:<PBKDF_SHA3-256_GENERATOR>, salt:<CRYPTO_RAND_256>, info:<SHA3_INFO>)
 
 where <PBKDF_SHA3-256_GENERATOR> is :
-   PBKDF2_SHA3-256(pass:<USER_INPUT>, salt: <CRYPTO_RAND_256>, iteration:4096 ,len: 32)
+ PBKDF2_SHA3-256(pass:<USER_INPUT>, salt:<CRYPTO_RAND_256>, iteration:4096 ,len:32)
 
 and <SHA3_INFO> is:
-   SHA3(<server_name>||':'||<nickname>||':'||<channel_name>)
+ SHA3(<server_name>||':'||<nickname>||':'||<channel_name>)
 
 ```
 
 ### Encrypted Messages Format:
 ```
-Base64( 'ACheader' || <NonceInt32Value> || ECC25519_NACL_SECRETBOX(<CHANNEL_KEY> , <NONCE_AUTH> , Zlib(<Plaintext>)) )
+Base64('ACheader'||<NonceInt32Value>||NACL_SECRETBOX(<CHANNEL_KEY>,<NONCE_AUTH>,Zlib(<Plaintext>)) )
 
 where <NonceInt32Value> is:
-   a non repeating 32bit counter starting at 0, for each new channel key.
+ a non repeating 32bit counter starting at 0, for each new channel key.
 
 where <NONCE_AUTH> is:
-   SHA3( 'CHANNEL' || ':' || 'SRC_NICK' || ':' || 'NONCE_VALUE' || ':' || 'ACheader')
+ SHA3( 'CHANNEL' || ':' || 'SRC_NICK' || ':' || 'NONCE_VALUE' || ':' || 'ACheader')
 
 ```
 
