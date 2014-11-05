@@ -294,6 +294,7 @@ func CreateACMessage(context *SecKey, rnd, msg, myNick []byte) (out []byte, err 
 	//}
 
 	// nonce building!
+    // XXX TODO: this require hash() of all values..
 	nonce_build := new(bytes.Buffer)
 	nonce_build.Write(context.bob)
 	// XXX this solution is sub optimal... may be adding an argument is better...

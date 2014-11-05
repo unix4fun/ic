@@ -37,6 +37,8 @@ func handleStdin() (err error) {
 		os.Stdout.Write(msgReply)
 		return nil
 	} /* end of for() */
+	// XXX need to return Error.New() really...
+	return nil
 }
 
 func main() {
