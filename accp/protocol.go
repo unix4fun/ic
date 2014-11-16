@@ -247,11 +247,22 @@ func CreateACContextWithInputEntropy(channel []byte, inputEntropy []byte) (conte
 }
 
 //
-// AC Message Format:
+// AC Message OLD Format:
 // BASE64( 'AC' || 'NONCE_VALUE' || SECRETBOX( KEY, NONCE_AUTH, ZLIB( MSG ) )
 //
-// Nonce AUTH Format:
+// AC Message NEW Format:
+// BASE64( 'AC' || 'OPTIONS' || 'NONCE_VALUE' || SECRETBOX( KEY, NONCE_AUTH, ZLIB( MSG ) )
+//
+// Nonce AUTH OLD Format:
 // SHA3( 'CHANNEL' || ':' || 'SRC_NICK' || ':' || 'NONCE_VALUE' || ':' || 'HDR_RAW' )
+//
+// Nonce AUTH NEW Format:
+// SHA3( SHA3('CHANNEL') || ':' || SHA3('SRC_NICK') || ':' || SHA3('NONCE_VALUE') || ':' || 'HDR_RAW=AC||OPTIONS||NONCE_VALUE' )
+//
+// OPTIONS:
+// 0x01 = NaCL secretbox
+// 0x02 = AES-GCM
+// 0x?0 = PROTO VERSION [ 0 - 15 ]
 //
 
 func CreateACMessage(context *SecKey, rnd, msg, myNick []byte) (out []byte, err error) {
@@ -294,7 +305,7 @@ func CreateACMessage(context *SecKey, rnd, msg, myNick []byte) (out []byte, err 
 	//}
 
 	// nonce building!
-    // XXX TODO: this require hash() of all values..
+	// XXX TODO: this require hash() of all values..
 	nonce_build := new(bytes.Buffer)
 	nonce_build.Write(context.bob)
 	// XXX this solution is sub optimal... may be adding an argument is better...

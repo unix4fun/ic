@@ -187,6 +187,29 @@ message ArseneCryptoMessage {
 
 
 //
+// PROTOBUF WOULD NOW OUTPUT THE MESSAGE 
+// WE PROTECT THE MESSAGE FORMAT DIRECT BY FORCING ITS TYPING OUTPUTING PROTOBUF MESSAGES
+// THE OVERHEAD DO NOT SEEMS BIGGER THAN A FEW BYTES...
+// AC Message OLD Format:
+// BASE64( 'AC' || 'NONCE_VALUE' || SECRETBOX( KEY, NONCE_AUTH, ZLIB( MSG ) )
+//
+// AC Message NEW Format:
+// BASE64( 'AC' || 'OPTIONS' || 'NONCE_VALUE' || SECRETBOX( KEY, NONCE_AUTH, ZLIB( MSG ) )
+//
+// Nonce AUTH OLD Format:
+// SHA3( 'CHANNEL' || ':' || 'SRC_NICK' || ':' || 'NONCE_VALUE' || ':' || 'HDR_RAW' )
+//
+// Nonce AUTH NEW Format:
+// SHA3( SHA3('CHANNEL') || ':' || SHA3('SRC_NICK') || ':' || SHA3('NONCE_VALUE') || ':' || 'HDR_RAW=AC||OPTIONS||NONCE_VALUE' )
+//
+// message ACOutputMessage {
+// required fixed32 header;
+// required uint32 options;
+// required uint32 nonce;
+// required bytes ciphertext;
+// }
+
+//
 //
 //
 //service ArseneCryptoService {
