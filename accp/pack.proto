@@ -30,16 +30,27 @@ option py_generic_services = false;
 //
 //
 message ACPackedMessage {
-    required fixed32 header = 1;
-    required uint32 nonce = 2;
-    required bytes ciphertext = 3;
-    optional uint32 options = 4;
+    required fixed32 header = 1;    // obfuscate('AC')
+    optional uint32 nonce = 2;      // 32 bits unsigned integer counter starting at 0
+    required bytes ciphertext = 3;  // the resulting blob
+    optional uint32 options = 4;    // options: proto version (1st nibble), proto options (2nd nibble: AES-GCM / NaCL)
 }
 
 
+/*
 message PKPackedMessage {
-    required fixed32 header = 5;
-    required bytes publickey = 6;
-    optional uint32 options = 7;
+    required fixed32 header = 5;    // obfuscate('PK')
+    required bytes publickey = 6;   // public key blob (Ec25519 Curve).
+    optional uint32 options = 7;    // options: proto version (1st nibble), proto options (2nd nibble: AES-GCM / NaCL) 
 }
 
+message KXPackedMessage {
+    required fixed32 header = 8;    // obfuscate('KX')
+    required uint32 nonce = 9;      // 32 bits unsigned integer counter starting at 0, shared with AC messages
+    //required bytes src = 10;
+    //required bytes dst = 11;
+    required bytes ciphertext = 12; // resulting public key encrypted blob (fixed size!)
+    //optional bytes idsignature = 13;// resulting digitally signed hash of data being encrypted
+    optional uint32 options = 14;   // options: proto version (1st nibble), proto options (2nd nibble: AES-GCM / NaCL)
+}
+*/

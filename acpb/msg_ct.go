@@ -22,6 +22,8 @@ func CTSEAL_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 	var responseType AcCipherTextMessageResponseAcCTRespMsgType
 	responseType = AcCipherTextMessageResponse_CTR_SEAL
 	var acctx *accp.SecKey
+	var acBlobArray [][]byte
+	var out []byte
 
 	reqChan := acMessageCtReq.GetChannel()
 	myNick := acMessageCtReq.GetNick()
@@ -66,25 +68,96 @@ func CTSEAL_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 		return acMsgResponse, retErr
 	}
 
-	//func CreateACMessage(context * SecKey, msg, myNick []byte) (out []byte, err error) {
-	out, err := accp.CreateACMessage(acctx, acrnd, reqBlob, []byte(myNick))
-	if err != nil {
-		retErr := acpbError(-3, "CTSEAL_Handler(): CreateACMessage() error:", err)
-		acMsgResponse = &AcCipherTextMessageResponse{
-			Type:      &responseType,
-			Bada:      proto.Bool(false),
-			ErrorCode: proto.Int32(-3),
+	// XXX test here for message length and send multiple encrypted messages
+	// TODO: dont hardcode the limits but well it's a first try
+	// back if the original message is too long.
+	/*
+		if len(out)+14+len(reqChan) > 512 {
+			fmt.Fprintf(os.Stderr, "MESSAGE WAYYYYYY TOO LONG LET's SPLIT AND BUILD SEVERAL")
 		}
-		fmt.Fprintf(os.Stderr, "[!] CTSEAL -> (R) -3 ! %s\n", retErr.Error())
-		return acMsgResponse, retErr
+	*/
+	//tmpBlobLen := len(reqBlob)
+	//:nick!user@host PRIVMSG target :<usable bytes><CRLF>
+	msgLen := accp.PredictLenNACL(reqBlob) + len(reqChan) + 14
+	nBlock := msgLen / 420
+	nBlock += 1
+
+	//for msgLen, nBlock := accp.PredictLenNACL(tmpBlobLen)+len(reqChan)+14, 1; msgLen > 510; msgLen, nBlock = accp.PredictLenNACL(reqBlob)+len(reqChan)+14, nBlock+1 {
+	/*
+		for ; msgLen > 510; msgLen, nBlock = (accp.PredictLenNACL(reqBlob)+len(reqChan)+14)/nBlock, nBlock+1 {
+			fmt.Fprintf(os.Stderr, ">>block size: %d numblock: %d\n", msgLen, nBlock)
+		}
+		nBlock--
+	*/
+	for j, bSize, bAll, bPtr := 0, len(reqBlob)/nBlock, len(reqBlob), 0; j < nBlock; j, bPtr = j+1, bPtr+bSize {
+		if bPtr+bSize > bAll {
+			fmt.Fprintf(os.Stderr, ">>#%d block[%d:%d] \n", j, bPtr, bAll)
+
+			out, err = accp.CreateACMessage(acctx, acrnd, reqBlob[bPtr:bAll], []byte(myNick))
+			if err != nil {
+				retErr := acpbError(-3, "CTSEAL_Handler(): CreateACMessage() error:", err)
+				acMsgResponse = &AcCipherTextMessageResponse{
+					Type:      &responseType,
+					Bada:      proto.Bool(false),
+					ErrorCode: proto.Int32(-3),
+				}
+				fmt.Fprintf(os.Stderr, "[!] CTSEAL -> (R) -3 ! %s\n", retErr.Error())
+				return acMsgResponse, retErr
+			}
+			//reqBlob[bPtr:bAll]
+		} else {
+			fmt.Fprintf(os.Stderr, ">>#%d block[%d:%d] \n", j, bPtr, bPtr+bSize)
+			out, err = accp.CreateACMessage(acctx, acrnd, reqBlob[bPtr:bPtr+bSize], []byte(myNick))
+			if err != nil {
+				retErr := acpbError(-3, "CTSEAL_Handler(): CreateACMessage() error:", err)
+				acMsgResponse = &AcCipherTextMessageResponse{
+					Type:      &responseType,
+					Bada:      proto.Bool(false),
+					ErrorCode: proto.Int32(-4),
+				}
+				fmt.Fprintf(os.Stderr, "[!] CTSEAL -> (R) -4 ! %s\n", retErr.Error())
+				return acMsgResponse, retErr
+			}
+			//reqBlob[bPtr : bPtr+bSize]
+		}
+		acBlobArray = append(acBlobArray, out)
 	}
+
+	/*
+			for b, offset := 1, msgLen; b < nBlock; b, offset = b+1, offset+msgLen {
+				fmt.Fprintf(os.Stderr, "b: %d - offset: %d => [%d:%d]\n", b, offset, offset-msgLen, offset)
+				// 0 : 289
+				//   : 289
+			}
+
+		//var acBlobArray = make([][]byte, nBlock)
+		fmt.Fprintf(os.Stderr, "b: %d - offset: %d => [%d:%d]\n", b, offset, offset-msgLen, offset)
+	*/
+
+	//func CreateACMessage(context * SecKey, msg, myNick []byte) (out []BYTE, ERR ERROR) {
+	/*
+		out, err := accp.CreateACMessage(acctx, acrnd, reqBlob, []byte(myNick))
+		if err != nil {
+			retErr := acpbError(-3, "CTSEAL_Handler(): CreateACMessage() error:", err)
+			acMsgResponse = &AcCipherTextMessageResponse{
+				Type:      &responseType,
+				Bada:      proto.Bool(false),
+				ErrorCode: proto.Int32(-3),
+			}
+			fmt.Fprintf(os.Stderr, "[!] CTSEAL -> (R) -3 ! %s\n", retErr.Error())
+			return acMsgResponse, retErr
+		}
+
+		// even with one reply it's now a [][]byte
+		acBlobArray = append(acBlobArray, out)
+	*/
 
 	acMsgResponse = &AcCipherTextMessageResponse{
 		Type:      &responseType,
 		Bada:      proto.Bool(true),
 		ErrorCode: proto.Int32(0), // should be good enough for now... but better have a separate field with correct type..
 		Nonce:     proto.Uint32(acctx.GetNonce()),
-		Blob:      out,
+		Blob:      acBlobArray,
 	}
 	fmt.Fprintf(os.Stderr, "[+] CTSEAL -> (R) 0 ! %s/%s %s's msg sealed\n", reqServ, reqChan, myNick)
 	return acMsgResponse, nil
@@ -94,6 +167,7 @@ func CTOPEN_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 	var responseType AcCipherTextMessageResponseAcCTRespMsgType
 	responseType = AcCipherTextMessageResponse_CTR_OPEN
 	var acctx *accp.SecKey
+	//var acBlobArray [][]byte
 
 	//    fmt.Fprintf(os.Stderr, "CTOPEN Message: let's give the key\n")
 	//    fmt.Fprintf(os.Stderr, "from nick: %s\n", acMessageCtReq.GetNick())
@@ -162,13 +236,15 @@ func CTOPEN_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 		return acMsgResponse, retErr
 	}
 
+	//acBlobArray = append(acBlobArray, out)
+
 	//fmt.Fprintf(os.Stderr, "OUT: %s\n", out)
 	acMsgResponse = &AcCipherTextMessageResponse{
 		Type:      &responseType,
 		Bada:      proto.Bool(true),
 		ErrorCode: proto.Int32(0),
 		Nonce:     proto.Uint32(acctx.GetNonce()),
-		Blob:      out,
+		Blob:      [][]byte{out},
 	}
 	fmt.Fprintf(os.Stderr, "[+] CTOPEN -> (R) 0 ! %s/%s %s's msg opened\n", reqServ, channel, peernick)
 	return acMsgResponse, nil
@@ -337,7 +413,8 @@ func CTADD_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *A
 		Type:      &responseType,
 		Bada:      proto.Bool(true),
 		ErrorCode: proto.Int32(0),
-		Blob:      []byte("OK"),
+		//Blob:      []byte("OK"),
+		Blob: [][]byte{[]byte("OK")}, // this is an array of []byte
 	}
 
 	fmt.Fprintf(os.Stderr, "[+] CTADD -> (R) 0 ! %s/%s key added (entropy: '%s')\n", reqServ, reqChan, reqBlob)

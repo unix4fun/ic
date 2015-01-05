@@ -2,10 +2,10 @@ package accp
 
 import (
 	"bytes"
-	"code.google.com/p/goprotobuf/proto"
+	//"code.google.com/p/goprotobuf/proto"
 	"compress/zlib"
 	"encoding/base64"
-	"fmt"
+	//"fmt"
 	"github.com/unix4fun/ac/obf"
 	"io"
 )

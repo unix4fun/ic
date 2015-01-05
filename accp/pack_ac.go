@@ -7,12 +7,67 @@ import (
 	"compress/zlib"
 	"encoding/base64"
 	"encoding/binary"
-	"encoding/hex"
+	//	"encoding/hex"
 	"fmt"
 	"github.com/unix4fun/ac/obf"
 	"io"
 	"os"
 )
+
+func packMessageAC(hdr, nonce *uint32, blob *[]byte) (out []byte, err error) {
+
+	acOut := &ACPackedMessage{}
+	acOut.Header = hdr
+	acOut.Nonce = proto.Uint32(*nonce)
+	acOut.Ciphertext = *blob
+	//acOut.Options = proto.Uint32(10034)
+
+	//fmt.Printf("Nonce: %d(%08x)\n", nonce, nonce)
+
+	acPackedMsg, err := proto.Marshal(acOut)
+	// XXX test for errors message..
+	//fmt.Printf("AC Message TEST #1 : %d (%v)\n", len(acPackedMsg), err)
+	//fmt.Printf("PACKED: %s\n", hex.EncodeToString(acPackedMsg))
+
+	out = B64EncodeData(acPackedMsg)
+	return out, nil
+}
+
+func unpackMessageAC(in []byte) (mNonce uint32, myHdr, ciphertext []byte, err error) {
+
+	acIn := &ACPackedMessage{}
+	err = proto.Unmarshal(in, acIn)
+	if err != nil {
+		return 0, nil, nil, err
+	}
+
+	myHdr, err = CheckHeader([]byte(msgHdrAC), acIn.GetHeader())
+	if err != nil {
+		return 0, nil, nil, err
+	}
+
+	//XXX TODO more meaningful updates from here...
+	//fmt.Printf("Nonce: %d(%08x)\n", acIn.GetNonce(), acIn.GetNonce())
+	return acIn.GetNonce(), myHdr, acIn.GetCiphertext(), nil
+}
+
+// A very pragmatic approach to protobuf encoding it's roughly true for most cases.
+func PredictLenNACL(input []byte) (outlen int) {
+	zipped, err := CompressData(input)
+	if err != nil {
+		return 0
+	}
+	sboxLen := len(zipped)        // zipped data
+	sboxLen += secretbox.Overhead // NACL hash appended
+	sboxLen += 3                  // 1 byte pb header value type + 2 bytes size  for the bytes part in PB message
+	sboxLen += 6                  // 1 byte pb header + 1 byte size + 4 bytes data for AC header in PB message
+	sboxLen += 7                  // 1 byte pb header value type + 2 byte size + 4 bytes nonce
+	sboxLen += 2                  // 1 byte pb header value type + 1 byte size
+	outlen = base64.StdEncoding.EncodedLen(sboxLen)
+	//outlen += 14
+	fmt.Fprintf(os.Stderr, "PredictLenNACL(%d): %d\n", len(input), outlen)
+	return outlen
+}
 
 //
 // AC Message OLD Format:
@@ -34,38 +89,22 @@ import (
 //
 //
 func CreateACMessageNACL(context *SecKey, rnd, msg, myNick []byte) (out []byte, err error) {
-	var noncebyte [24]byte
+	//var noncebyte [24]byte
 
 	/* lets build our header */
-	myHdr, err := obf.Obfuscate([]byte(msgHdrAC))
-	intHdr := binary.LittleEndian.Uint32(myHdr)
+	myHdr, intHdr, err := BuildHeader([]byte(msgHdrAC))
 	if err != nil {
-		return nil, &protoError{value: -1, msg: "CreateACMessageNACL().Obfuscate(): ", err: err}
+		return nil, &protoError{value: -1, msg: "CreateACMessageNACL().BuildHeader(): ", err: err}
 	}
-	fmt.Printf("PACKED HDR : %s\n", hex.EncodeToString(myHdr))
-	fmt.Printf("PACKED HDR INT : %08x\n", intHdr)
 
 	// first let's compress
-	myBody := new(bytes.Buffer)
-	zbuf, err := zlib.NewWriterLevel(myBody, zlib.BestCompression)
+	myBody, err := CompressData(msg)
 	if err != nil {
-		return nil, &protoError{value: -2, msg: "CreateACMessageNACL().zlib.NewWriterLevel(): ", err: err}
+		return nil, &protoError{value: -2, msg: "CreateACMessageNACL().CompressData(): ", err: err}
 	}
 
-	_, err = zbuf.Write(msg)
-	if err != nil {
-		return nil, &protoError{value: -3, msg: "CreateACMessageNACL().zlib.Write(): ", err: err}
-	}
-	zbuf.Close()
-
-	// current nonce building
-	myCounter := Nonce2Byte(context.nonce)
-
-	/* let's build the nonce */
-	nonce, err := NonceBuildAC(context.bob, myNick, myCounter, myHdr)
-	if err != nil {
-		return nil, &protoError{value: -3, msg: "CreateACMessageNACL().zlib.Write(): ", err: err}
-	}
+	//BuildNonceAC(inonce uint32, bob, mynick, myhdr []byte) (nonce []byte, noncebyte *[24]byte, err error)
+	_, noncebyte, err := BuildNonceAC(context.nonce, context.bob, myNick, myHdr)
 
 	// OPEN the key
 	// XXX new to check rnd and context.key are the same size
@@ -73,34 +112,17 @@ func CreateACMessageNACL(context *SecKey, rnd, msg, myNick []byte) (out []byte, 
 		context.key[j] = context.key[j] ^ rnd[j]
 	}
 
-	/* we just need 24 bytes nonce */
-	copy(noncebyte[:], nonce[:24])
-
 	// encrypt
-	cipher := secretbox.Seal(nil, myBody.Bytes(), &noncebyte, &context.key)
+	myCipher := secretbox.Seal(nil, myBody, noncebyte, &context.key)
 
 	// close the key
 	for j := 0; j < len(rnd); j++ {
 		context.key[j] = context.key[j] ^ rnd[j]
 	}
 
-	acOut := &ACPackedMessage{}
-	acOut.Header = &intHdr
-	acOut.Nonce = proto.Uint32(context.nonce)
-	acOut.Ciphertext = cipher
+	// XXX error checking
+	out, err = packMessageAC(&intHdr, &context.nonce, &myCipher)
 
-	fmt.Printf("Nonce: %d(%08x)\n", context.nonce, context.nonce)
-
-	acPackedMsg, n := proto.Marshal(acOut)
-	fmt.Printf("AC Message TEST #1 : %d %d\n", len(acPackedMsg), n)
-	fmt.Printf("PACKED: %s\n", hex.EncodeToString(acPackedMsg))
-
-	buffer := new(bytes.Buffer)
-	encoder := base64.NewEncoder(base64.StdEncoding, buffer)
-	encoder.Write(acPackedMsg)
-	encoder.Close()
-
-	out = buffer.Bytes()
 	fmt.Fprintf(os.Stderr, "AC MSG OUT[%d]: %s\n", len(out), out)
 	context.nonce++
 
@@ -108,38 +130,16 @@ func CreateACMessageNACL(context *SecKey, rnd, msg, myNick []byte) (out []byte, 
 }
 
 func OpenACMessageNACL(context *SecKey, rnd, cmsg, peerNick, myNick []byte) (out []byte, err error) {
-	var noncebyte [24]byte
-	var nonceval uint32
-
 	fmt.Fprintf(os.Stderr, "OpenACMessageNACL()\n")
-	b64str := make([]byte, base64.StdEncoding.DecodedLen(len(cmsg)))
-	fmt.Printf("BASE64 LEN:  %d\n", base64.StdEncoding.DecodedLen(len(cmsg)))
-
-	b64str_len, err := base64.StdEncoding.Decode(b64str, cmsg)
-	if err != nil || b64str_len <= 8 {
-		//fmt.Fprintf(os.Stderr, "DECODE FUCK || Too Small!\n")
-		//return nil, acprotoError(-1, "OpenACMessage().B64Decode()||TooSmall: ", err)
-		return nil, &protoError{value: -1, msg: "OpenACMessageNACL().B64Decode()||TooSmall: ", err: err}
-		//return
-	}
-
-	b64str = b64str[:b64str_len]
-	fmt.Printf("PACKED: %s\n", hex.EncodeToString(b64str))
-	acIn := &ACPackedMessage{}
-	err = proto.Unmarshal(b64str, acIn)
-
+	b64, err := B64DecodeData(cmsg)
 	if err != nil {
-		panic(err)
+		return nil, &protoError{value: -1, msg: "OpenACMessageNACL(): ", err: err}
 	}
 
-	myHdr := make([]byte, 4)
-	binary.LittleEndian.PutUint32(myHdr, acIn.GetHeader())
-	fmt.Printf("PACKED HDR : %s\n", hex.EncodeToString(myHdr))
-	fmt.Printf("PACKED HDR INT : %08x\n", acIn.GetHeader())
-
-	fmt.Printf("Nonce: %d(%08x)\n", acIn.GetNonce(), acIn.GetNonce())
-	// current nonce building
-	myCounter := Nonce2Byte(acIn.GetNonce())
+	cnonce, myHdr, ciphertext, err := unpackMessageAC(b64)
+	if err != nil {
+		return nil, &protoError{value: -2, msg: "OpenACMessageNACL(): ", err: err}
+	}
 
 	// XXX this is to handle private message instead of channel communication
 	// as the destination are assymetrical eau's dst is frl and frl's dst is eau
@@ -148,35 +148,21 @@ func OpenACMessageNACL(context *SecKey, rnd, cmsg, peerNick, myNick []byte) (out
 	ok_bob, _ := IsValidChannelName(ac_bob)
 	fmt.Fprintf(os.Stderr, "[+] OpenACMessage: is %s a valid channel: %t\n", ac_bob, ok_bob)
 	if ok_bob == false && len(myNick) > 0 {
-		//    // private channel building!
-		//    acb_build := new(bytes.Buffer)
-		//    acb_build.Write([]byte(ac_bob))
-		//    acb_build.WriteByte(byte('='))
-		//    acb_build.Write([]byte(peerNick))
-		//    ac_bob = acb_build.Bytes()
-		//    fmt.Printf("[+] OpenACMessage: not a channel, private conversation let's use this: %s\n", ac_bob)
 		ac_bob = myNick
 	}
 
 	/* let's build the nonce */
-	nonce, err := NonceBuildAC(ac_bob, peerNick, myCounter, myHdr)
-	if err != nil {
-		return nil, &protoError{value: -3, msg: "CreateACMessageNACL().zlib.Write(): ", err: err}
-	}
+	//BuildNonceAC(inonce uint32, bob, mynick, myhdr []byte) (nonce []byte, noncebyte *[24]byte, err error)
+	_, noncebyte, err := BuildNonceAC(cnonce, context.bob, peerNick, myHdr)
 
-	/* we just need 24 bytes nonce */
-	copy(noncebyte[:], nonce[:24])
-
-	fmt.Printf("NONCE OUT: %s\n", hex.EncodeToString(nonce))
 	// OPEN the key
 	// XXX new to check rnd and context.key are the same size
 	for j := 0; j < len(rnd); j++ {
 		context.key[j] = context.key[j] ^ rnd[j]
 	}
 
-	packed, ok := secretbox.Open(nil, acIn.GetCiphertext(), &noncebyte, &context.key)
-	//    fmt.Printf("C EST OK?!?!?\n")
-	//    fmt.Println(ok)
+	packed, ok := secretbox.Open(nil, ciphertext, noncebyte, &context.key)
+
 	// Close the key
 	for j := 0; j < len(rnd); j++ {
 		context.key[j] = context.key[j] ^ rnd[j]
@@ -184,37 +170,18 @@ func OpenACMessageNACL(context *SecKey, rnd, cmsg, peerNick, myNick []byte) (out
 
 	if ok == false {
 		//return nil, acprotoError(1, "OpenACMessage().SecretOpen(): false ", nil)
-		return nil, &protoError{value: -7, msg: "OpenACMessage().SecretOpen(): ", err: nil}
+		return nil, &protoError{value: -3, msg: "OpenACMessageNACL().SecretOpen(): ", err: nil}
 	}
-	//fmt.Fprintf(os.Stderr, "DECODED UNSEALED: %s\n", packed)
-	//fmt.Printf("DECODED UNSEALED: %s\n", ret)
 
-	zbuf := bytes.NewBuffer(packed)
-	plain, err := zlib.NewReader(zbuf)
+	out, err = DecompressData(packed)
 	if err != nil {
-
-		//        fmt.Println(err)
-		//return nil, acprotoError(-5, "OpenACMessage().zlib.NewReader(): ", err)
-		return nil, &protoError{value: -8, msg: "OpenACMessage().zlib.NewReader(): ", err: err}
-		//return
+		return nil, &protoError{value: -3, msg: "OpenACMessageNACL().DecompressData(): ", err: err}
 	}
 
-	//    fmt.Println(plain)
-	b := new(bytes.Buffer)
-	_, err = io.Copy(b, plain)
-	if err != nil {
-		//return nil, acprotoError(-6, "OpenACMessage().io.Copy(): ", err)
-		return nil, &protoError{value: -9, msg: "OpenACMessage().io.Copy(): ", err: err}
-		//panic(err)
-	}
-	//fmt.Fprintf(os.Stderr, "DECODED UNSEALED: %s\n", b.Bytes())
-	plain.Close()
-	out = b.Bytes()
-
-	nonceval = acIn.GetNonce()
+	//nonceval = acIn.GetNonce()
 	// update the nonce value
-	if nonceval > context.nonce {
-		context.nonce = nonceval + 1
+	if cnonce > context.nonce {
+		context.nonce = cnonce + 1
 	} else {
 		context.nonce++
 	}

@@ -8,11 +8,194 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"github.com/unix4fun/ac/obf"
 	"io"
 	"os"
 )
+
+func packMessageKX(hdr, nonce *uint32, dst, blob []byte) (out []byte, err error) {
+
+	acOut := &ACPackedMessage{}
+	acOut.Header = hdr
+	acOut.Nonce = proto.Uint32(*nonce)
+	//acOut.Dst = dst
+	acOut.Ciphertext = blob
+
+	//fmt.Printf("Nonce: %d(%08x)\n", nonce, nonce)
+
+	acPackedMsg, err := proto.Marshal(acOut)
+	if err != nil {
+		return nil, err
+	}
+	// XXX test for errors message..
+	//fmt.Printf("AC Message TEST #1 : %d (%v)\n", len(acPackedMsg), err)
+	//fmt.Printf("PACKED: %s\n", hex.EncodeToString(acPackedMsg))
+
+	out = B64EncodeData(acPackedMsg)
+	return out, nil
+}
+
+//func unpackMessageKX(in []byte) (mNonce uint32, myHdr, dst, ciphertext []byte, err error) {
+func unpackMessageKX(in []byte) (mNonce uint32, myHdr, ciphertext []byte, err error) {
+
+	acIn := &ACPackedMessage{}
+	err = proto.Unmarshal(in, acIn)
+	if err != nil {
+		return 0, nil, nil, err
+	}
+
+	myHdr, err = CheckHeader([]byte(msgHdrKX), acIn.GetHeader())
+	if err != nil {
+		return 0, nil, nil, err
+	}
+
+	//XXX TODO:
+	//check for valid source and destination (nicknames) or kex_lame_check here
+	//too..
+
+	//XXX TODO more meaningful updates from here...
+	//fmt.Printf("Nonce: %d(%08x)\n", acIn.GetNonce(), acIn.GetNonce())
+	//return acIn.GetNonce(), myHdr, acIn.GetDst(), acIn.GetCiphertext(), nil
+	return acIn.GetNonce(), myHdr, acIn.GetCiphertext(), nil
+}
+
+func IsChannelOrPriv(channel, myNick, peerNick []byte) []byte {
+	// XXX this handle the fact that it is a channel or a private message, it is
+	// very IRC specific as such, think again before modifying the format, you
+	// might break the crypto too...
+	kx_channel := channel
+	ok_channel, _ := IsValidChannelName(kx_channel)
+	fmt.Fprintf(os.Stderr, "[+] IsChannelOrPriv(): is %s a valid channel: %t\n", kx_channel, ok_channel)
+	if ok_channel == false {
+		//kx_channel := channel
+		// nonce building!
+		kxc_build := new(bytes.Buffer)
+		kxc_build.Write([]byte(myNick))
+		kxc_build.WriteByte(byte('='))
+		kxc_build.Write([]byte(peerNick))
+		kx_channel = kxc_build.Bytes()
+		fmt.Fprintf(os.Stderr, "[+] IsChannelOrPriv: not a channel, private conversation let's use this: %s\n", kx_channel)
+	}
+	return kx_channel
+}
+
+//
+// KX (Key eXchange) Message Format:
+// BASE64( 'KX' || 'NONCE_VALUE' || BOX( PEER_PUBKEY, ME_PRIVKEY, NONCE_AUTH, ZLIB( SECRET ) )
+//
+// Nonce AUTH Format:
+// SHA3( 'CHANNEL' || ':' || 'MY_NICK' || ':' || 'PEER_NICK' || ':' || 'NONCE_VALUE' || ':' || 'HDR_RAW' )
+//
+
+func CreateKXMessageNACL(context *SecKey, rnd []byte, peerPubkey, myPrivkey *[32]byte, channel, myNick, peerNick []byte) (out []byte, err error) {
+
+	/* lets build our header */
+	myHdr, intHdr, err := BuildHeader([]byte(msgHdrKX))
+	if err != nil {
+		return nil, &protoError{value: -1, msg: "CreateKXMessageNACL().BuildHeader(): ", err: err}
+	}
+
+	// Open the key
+	for j := 0; j < len(rnd); j++ {
+		context.key[j] = context.key[j] ^ rnd[j]
+	}
+
+	fmt.Fprintf(os.Stderr, "CREATE KX KEY: %s\n", hex.EncodeToString(context.key[:]))
+	// first let's compress
+	myBody, err := CompressData(context.key[:])
+	if err != nil {
+		return nil, &protoError{value: -2, msg: "CreateKXMessageNACL().CompressData(): ", err: err}
+	}
+
+	// Close the key
+	for j := 0; j < len(rnd); j++ {
+		context.key[j] = context.key[j] ^ rnd[j]
+	}
+
+	fmt.Fprintf(os.Stderr, "channel: %s context.bob: %s\n", channel, context.bob)
+
+	kx_channel := IsChannelOrPriv(channel, myNick, peerNick)
+	// XXX i can probably use context.bob instead of a specific channel specification...
+	//BuildNonceAC(inonce uint32, bob, mynick, myhdr []byte) (nonce []byte, noncebyte *[24]byte, err error)
+	_, noncebyte, err := BuildNonceKX(context.nonce, kx_channel, myNick, peerNick, myHdr)
+
+	fmt.Fprintf(os.Stderr, "peerpk : %p myprivkey: %p\n", peerPubkey, myPrivkey)
+	// XXX TODO: need serious cleanup and error checking!!
+	fmt.Fprintf(os.Stderr, "body.Bytes(): %p, noncebyte: %p, peerPub: %p myPriv: %p\n", myBody, &noncebyte, peerPubkey, myPrivkey)
+	cipherKex := box.Seal(nil, myBody, noncebyte, peerPubkey, myPrivkey)
+
+	//func packMessageKX(hdr, nonce *uint32, dst, blob *[]byte) (out []byte, err error) {
+	out, err = packMessageKX(&intHdr, &context.nonce, peerNick, cipherKex)
+
+	context.nonce++
+	return
+}
+
+func OpenKXMessageNACL(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerNick []byte) (context *SecKey, SecRnd []byte, err error) {
+	// check that we are indeed
+	if peerPubkey == nil || myPrivkey == nil {
+		//return nil, acprotoError(-1, "OpenKXMessage().invalidPubPrivKeys(): ", err)
+		return nil, nil, &protoError{value: -1, msg: "OpenKXMessageNACL().invalidPubPrivKeys(): ", err: err}
+	}
+
+	b64, err := B64DecodeData(cmsg)
+	if err != nil {
+		return nil, nil, &protoError{value: -2, msg: "OpenKXMessageNACL(): ", err: err}
+	}
+
+	cnonce, myHdr, ciphertext, err := unpackMessageKX(b64)
+	if err != nil {
+		return nil, nil, &protoError{value: -3, msg: "OpenKXMessageNACL(): ", err: err}
+	}
+
+	// XXX TODO: exact opposite of the one in CreateKXMessage
+	kx_channel := IsChannelOrPriv(channel, peerNick, myNick)
+
+	// XXX TODO: we should add the header like <ackx:peerNick> to avoid replay from
+	// other nickname on the channel... nonce building!
+	_, noncebyte, err := BuildNonceKX(cnonce, kx_channel, peerNick, myNick, myHdr)
+	if err != nil {
+		return nil, nil, &protoError{value: -4, msg: "OpenKXMessageNACL(): ", err: err}
+	}
+
+	packed, ok := box.Open(nil, ciphertext, noncebyte, peerPubkey, myPrivkey)
+	if ok == false {
+		return nil, nil, &protoError{value: -5, msg: "OpenKXMessageNACL().BoxOpen(): ", err: nil}
+	}
+
+	out, err := DecompressData(packed)
+	if err != nil {
+		return nil, nil, &protoError{value: -6, msg: "OpenKXMessageNACL(): ", err: err}
+	}
+
+	fmt.Fprintf(os.Stderr, "OPEN KX KEY: %s\n", hex.EncodeToString(out))
+	// XXX TODO are we at the end of the nonce value..
+	context, err = CreateACContext(channel, cnonce+1)
+	if err != nil {
+		return nil, nil, &protoError{value: -7, msg: "OpenKXMessage().CreateACContext(): ", err: err}
+	}
+
+	// XXX TODO
+	// get RANDOMNESS bytes, return the random bytes
+	newRnd := make([]byte, len(context.key))
+	_, err = rand.Read(newRnd)
+	if err != nil {
+		return nil, nil, &protoError{value: -8, msg: "OpenKXMessage() no randomness to protect the key in memory: ", err: err}
+	}
+
+	// XXX TODO: check the extracted buffer size... to sure we're not copying
+	// too much into a restricted buffer...
+	copy(context.key[:], out)
+
+	// Xor the key now..
+	for j := 0; j < len(newRnd); j++ {
+		context.key[j] = context.key[j] ^ newRnd[j]
+	}
+
+	return context, newRnd, nil
+}
 
 //
 // KX (Key eXchange) Message Format:

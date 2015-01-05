@@ -10,7 +10,6 @@ It is generated from these files:
 
 It has these top-level messages:
 	ACPackedMessage
-	PKPackedMessage
 */
 package accp
 
@@ -47,7 +46,7 @@ var _ = math.Inf
 //
 type ACPackedMessage struct {
 	Header           *uint32 `protobuf:"fixed32,1,req,name=header" json:"header,omitempty"`
-	Nonce            *uint32 `protobuf:"varint,2,req,name=nonce" json:"nonce,omitempty"`
+	Nonce            *uint32 `protobuf:"varint,2,opt,name=nonce" json:"nonce,omitempty"`
 	Ciphertext       []byte  `protobuf:"bytes,3,req,name=ciphertext" json:"ciphertext,omitempty"`
 	Options          *uint32 `protobuf:"varint,4,opt,name=options" json:"options,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
@@ -79,38 +78,6 @@ func (m *ACPackedMessage) GetCiphertext() []byte {
 }
 
 func (m *ACPackedMessage) GetOptions() uint32 {
-	if m != nil && m.Options != nil {
-		return *m.Options
-	}
-	return 0
-}
-
-type PKPackedMessage struct {
-	Header           *uint32 `protobuf:"fixed32,5,req,name=header" json:"header,omitempty"`
-	Publickey        []byte  `protobuf:"bytes,6,req,name=publickey" json:"publickey,omitempty"`
-	Options          *uint32 `protobuf:"varint,7,opt,name=options" json:"options,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
-}
-
-func (m *PKPackedMessage) Reset()         { *m = PKPackedMessage{} }
-func (m *PKPackedMessage) String() string { return proto.CompactTextString(m) }
-func (*PKPackedMessage) ProtoMessage()    {}
-
-func (m *PKPackedMessage) GetHeader() uint32 {
-	if m != nil && m.Header != nil {
-		return *m.Header
-	}
-	return 0
-}
-
-func (m *PKPackedMessage) GetPublickey() []byte {
-	if m != nil {
-		return m.Publickey
-	}
-	return nil
-}
-
-func (m *PKPackedMessage) GetOptions() uint32 {
 	if m != nil && m.Options != nil {
 		return *m.Options
 	}

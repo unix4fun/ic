@@ -2,15 +2,31 @@
 // source: ac.proto
 // DO NOT EDIT!
 
+/*
+Package acpb is a generated protocol buffer package.
+
+It is generated from these files:
+	ac.proto
+
+It has these top-level messages:
+	AcPublicKeyMessageRequest
+	AcPublicKey
+	AcPublicKeyMessageResponse
+	AcKeyExchangeMessageRequest
+	AcKeyExchangeMessageResponse
+	AcCipherTextMessageRequest
+	AcCipherTextMessageResponse
+	AcControlMessageRequest
+	AcControlMessageResponse
+	ArseneCryptoMessage
+*/
 package acpb
 
 import proto "code.google.com/p/goprotobuf/proto"
-import json "encoding/json"
 import math "math"
 
-// Reference proto, json, and math imports to suppress error if they are not otherwise used.
+// Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-var _ = &json.SyntaxError{}
 var _ = math.Inf
 
 type AcPublicKeyMessageRequestAcPKReqMsgType int32
@@ -722,7 +738,7 @@ type AcCipherTextMessageResponse struct {
 	Bada             *bool                                       `protobuf:"varint,2,req,name=bada" json:"bada,omitempty"`
 	Channel          *string                                     `protobuf:"bytes,3,req,name=channel" json:"channel,omitempty"`
 	Nick             *string                                     `protobuf:"bytes,4,req,name=nick" json:"nick,omitempty"`
-	Blob             []byte                                      `protobuf:"bytes,5,req,name=blob" json:"blob,omitempty"`
+	Blob             [][]byte                                    `protobuf:"bytes,5,rep,name=blob" json:"blob,omitempty"`
 	ErrorCode        *int32                                      `protobuf:"zigzag32,6,opt,name=error_code" json:"error_code,omitempty"`
 	Nonce            *uint32                                     `protobuf:"varint,7,opt,name=nonce" json:"nonce,omitempty"`
 	XXX_unrecognized []byte                                      `json:"-"`
@@ -760,7 +776,7 @@ func (m *AcCipherTextMessageResponse) GetNick() string {
 	return ""
 }
 
-func (m *AcCipherTextMessageResponse) GetBlob() []byte {
+func (m *AcCipherTextMessageResponse) GetBlob() [][]byte {
 	if m != nil {
 		return m.Blob
 	}
