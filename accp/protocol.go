@@ -99,7 +99,7 @@ func (pk *KexKey) SetPubkey(pubkey []byte) error {
 		return nil
 	}
 
-	return &protoError{value: -1, msg: "CreateMyKeys().GenerateKey(): ", err: err}
+	return &protoError{value: -1, msg: "SetPubkeys(weird size): ", err: nil}
 }
 
 // GetPrivkey retrieve and return the private key (privkey) of the current
