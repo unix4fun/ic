@@ -2,7 +2,7 @@ package accp
 
 import (
 	"bytes"
-	//"code.google.com/p/goprotobuf/proto"
+	"code.google.com/p/goprotobuf/proto"
 	"compress/zlib"
 	"encoding/base64"
 	//"fmt"
@@ -16,6 +16,95 @@ import (
 //
 // We need to encrypt/build encryption
 //
+func packMessagePK(hdr uint32, blob []byte) (out []byte, err error) {
+
+	acOut := &ACPackedMessage{}
+	acOut.Header = &hdr
+	//acOut.Nonce = proto.Uint32(*nonce)
+	//acOut.Dst = dst
+	acOut.Ciphertext = blob
+
+	//fmt.Printf("Nonce: %d(%08x)\n", nonce, nonce)
+
+	acPackedMsg, err := proto.Marshal(acOut)
+	if err != nil {
+		return nil, err
+	}
+	// XXX test for errors message..
+	//fmt.Printf("AC Message TEST #1 : %d (%v)\n", len(acPackedMsg), err)
+	//fmt.Printf("PACKED: %s\n", hex.EncodeToString(acPackedMsg))
+
+	out = B64EncodeData(acPackedMsg)
+	return out, nil
+}
+
+//func unpackMessageKX(in []byte) (mNonce uint32, myHdr, dst, ciphertext []byte, err error) {
+func unpackMessagePK(in []byte) (ciphertext []byte, err error) {
+
+	acIn := &ACPackedMessage{}
+
+	err = proto.Unmarshal(in, acIn)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = CheckHeader([]byte(msgHdrPK), acIn.GetHeader())
+	if err != nil {
+		return nil, err
+	}
+
+	//XXX TODO:
+	//check for valid source and destination (nicknames) or kex_lame_check here
+	//too..
+
+	//XXX TODO more meaningful updates from here...
+	//fmt.Printf("Nonce: %d(%08x)\n", acIn.GetNonce(), acIn.GetNonce())
+	//return acIn.GetNonce(), myHdr, acIn.GetDst(), acIn.GetCiphertext(), nil
+	ciphertext = acIn.GetCiphertext()
+	return ciphertext, nil
+}
+
+func CreatePKMessageNACL(pubkey []byte) (out []byte, err error) {
+	/* lets build our header */
+	_, intHdr, err := BuildHeader([]byte(msgHdrPK))
+	if err != nil {
+		return nil, &protoError{value: -1, msg: "CreatePKMessageNACL().BuildHeader(): ", err: err}
+	}
+
+	// first let's compress
+	myBody, err := CompressData(pubkey)
+	if err != nil {
+		return nil, &protoError{value: -2, msg: "CreatePKMessageNACL().CompressData(): ", err: err}
+	}
+
+	out, err = packMessagePK(intHdr, myBody)
+	if err != nil {
+		return nil, &protoError{value: -3, msg: "CreatePKMessageNACL().PackMsg(): ", err: err}
+	}
+
+	//fmt.Printf("Pubkey2Irc: %s\n", out)
+	return out, nil
+}
+
+func OpenPKMessageNACL(ircmsg []byte) (out []byte, err error) {
+
+	b64, err := B64DecodeData(ircmsg)
+	if err != nil {
+		return nil, &protoError{value: -1, msg: "OpenPKMessageNACL(): ", err: err}
+	}
+
+	ciphertext, err := unpackMessagePK(b64)
+	if err != nil {
+		return nil, &protoError{value: -2, msg: "OpenPKMessageNACL(): ", err: err}
+	}
+
+	out, err = DecompressData(ciphertext)
+	if err != nil {
+		return nil, &protoError{value: -3, msg: "OpenPKMessageNACL(): ", err: err}
+	}
+
+	return out, nil
+}
 
 //func Pubkey2Irc(pubkey []byte) (out []byte, err error) {
 func CreatePKMessage(pubkey []byte) (out []byte, err error) {

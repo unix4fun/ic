@@ -89,7 +89,7 @@ func PKADD_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 	newkey.HasPriv = false
 	newkey.CreaTime = time.Now()
 
-	pubk, err := accp.OpenPKMessage([]byte(reqPubkey))
+	pubk, err := accp.OpenPKMessageNACL([]byte(reqPubkey))
 	if err != nil {
 		retErr := acpbError(-2, "PKADD_Handler().OpenPKMessage(): ", err)
 		acMsgResponse = &AcPublicKeyMessageResponse{
@@ -101,9 +101,20 @@ func PKADD_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 		fmt.Fprintf(os.Stderr, "[!] PKADD -> (R) -2 ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
-	newkey.SetPubkey(pubk)
-	ACmap.SetPKMapEntry(reqServ, reqNick, newkey)
+	// XX check if it's a valid pubkey..
+	err = newkey.SetPubkey(pubk)
+	if err != nil {
+		retErr := acpbError(-3, "PKADD_Handler().OpenPKMessage(weird keysize): ", err)
+		acMsgResponse = &AcPublicKeyMessageResponse{
+			Type:      &responseType,
+			Bada:      proto.Bool(false),
+			ErrorCode: proto.Int32(-3),
+			Blob:      []byte(retErr.Error()),
+		}
+		return acMsgResponse, retErr
+	}
 
+	ACmap.SetPKMapEntry(reqServ, reqNick, newkey)
 	// PK_ADD = 12; // request: type && nick && host && server && blob  -> add or update a public key
 	acMsgResponse = &AcPublicKeyMessageResponse{
 		Type:      &responseType,

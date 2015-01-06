@@ -249,19 +249,19 @@ func DecompressData(in []byte) (out []byte, err error) {
 }
 
 func BuildHeader(in []byte) (bHdr []byte, iHdr uint32, err error) {
-	fmt.Printf("BuildHeader(\"%s\" (%s))\n", in, hex.EncodeToString(in))
+	//	fmt.Printf("BuildHeader(\"%s\" (%s))\n", in, hex.EncodeToString(in))
 	/* lets build our header */
 	bHdr, err = obf.Obfuscate([]byte(in))
 	iHdr = binary.LittleEndian.Uint32(bHdr)
 	if err != nil {
 		return nil, 0, &protoError{value: -1, msg: "BuildHeader(): ", err: err}
 	}
-	fmt.Printf("BuildHeader(\"%s\"): %s (0x%08x)\n", in, hex.EncodeToString(bHdr), iHdr)
+	//	fmt.Printf("BuildHeader(\"%s\"): %s (0x%08x)\n", in, hex.EncodeToString(bHdr), iHdr)
 	return bHdr, iHdr, err
 }
 
 func CheckHeader(inSlice []byte, in uint32) (rcvHdr []byte, err error) {
-	fmt.Printf("CheckHeader(\"%s\" (%08x))\n", inSlice, in)
+	//	fmt.Printf("CheckHeader(\"%s\" (%08x))\n", inSlice, in)
 	rcvHdr = make([]byte, 4)
 	binary.LittleEndian.PutUint32(rcvHdr, in)
 

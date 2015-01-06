@@ -86,18 +86,20 @@ func (pk *KexKey) GetPubkey() (pubkey *[32]byte) {
 
 // SetPubkey writes the argument provided public key (pubkey) of the current
 // AcMyKeys structure.
-func (pk *KexKey) SetPubkey(pubkey []byte) {
+func (pk *KexKey) SetPubkey(pubkey []byte) error {
 	if len(pubkey) == 32 {
 		pk.pubkey = new([32]byte)
 		copy(pk.pubkey[:], pubkey)
+
+		// XXX TODO: handle error here...
+		pubfp, _ := HashSHA3Data(pubkey)
+
+		// copy and store the public fingerprint..
+		copy(pk.pubfp[:], pubfp)
+		return nil
 	}
 
-	// XXX TODO: handle error here...
-	pubfp, _ := HashSHA3Data(pubkey)
-
-	// copy and store the public fingerprint..
-	copy(pk.pubfp[:], pubfp)
-	return
+	return &protoError{value: -1, msg: "CreateMyKeys().GenerateKey(): ", err: err}
 }
 
 // GetPrivkey retrieve and return the private key (privkey) of the current
@@ -181,7 +183,7 @@ func CreateMyKeys(rnd io.Reader, nickname, userhost, server string) (mykeys *Kex
 	// copy and store the public fingerprint..
 	copy(mykeys.pubfp[:], pubfp)
 
-	PK, err := CreatePKMessage(mykeys.pubkey[:])
+	PK, err := CreatePKMessageNACL(mykeys.pubkey[:])
 	if err != nil {
 		//return nil, acprotoError(-3, "CreateMyKeys().CreatePKMessage(): ", err)
 		return nil, &protoError{value: -3, msg: "CreateMyKeys().CreatePKMessage(): ", err: err}

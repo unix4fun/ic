@@ -123,7 +123,7 @@ func CreateACMessageNACL(context *SecKey, rnd, msg, myNick []byte) (out []byte, 
 	// XXX error checking
 	out, err = packMessageAC(&intHdr, &context.nonce, &myCipher)
 
-	fmt.Fprintf(os.Stderr, "AC MSG OUT[%d]: %s\n", len(out), out)
+	fmt.Fprintf(os.Stderr, "NACL PB == AC MSG OUT[%d]: %s\n", len(out), out)
 	context.nonce++
 
 	return out, nil

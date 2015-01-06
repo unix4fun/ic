@@ -86,7 +86,7 @@ func KXPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgResponse 
 	//    }
 
 	//fmt.Printf("KEY: %s\n", hex.EncodeToString(acctx.GetKey()))
-	kxMsg, err := accp.CreateKXMessage(acctx, acrnd, peer.GetPubkey(), me.GetPrivkey(), []byte(channel), []byte(mynick), []byte(peernick))
+	kxMsg, err := accp.CreateKXMessageNACL(acctx, acrnd, peer.GetPubkey(), me.GetPrivkey(), []byte(channel), []byte(mynick), []byte(peernick))
 	//fmt.Printf("kxMsg: %s\n", kxMsg)
 	if err != nil {
 		retErr := acpbError(-3, "KXPACK_Handler().CreateKXMessage(): ", err)
@@ -178,7 +178,7 @@ func KXUNPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgRespons
 	//        fmt.Printf("[+] KXUNPACK: not a channel, private conversation let's use this: %s\n", kx_channel)
 	//    }
 
-	acctx, acrnd, err := accp.OpenKXMessage(peer.GetPubkey(), me.GetPrivkey(), blobMsg, []byte(channel), []byte(mynick), []byte(peernick))
+	acctx, acrnd, err := accp.OpenKXMessageNACL(peer.GetPubkey(), me.GetPrivkey(), blobMsg, []byte(channel), []byte(mynick), []byte(peernick))
 	//    acctx, err := accp.OpenKXMessage(peer.GetPubkey(), me.GetPrivkey(), blobMsg, kx_channel, []byte(mynick), []byte(peernick))
 	if err != nil {
 		retErr := acpbError(-3, "KXUNPACK_Handler().OpenKXMessage(): ", err)
