@@ -123,7 +123,7 @@ func CreateACMessageNACL(context *SecKey, rnd, msg, myNick []byte) (out []byte, 
 	// XXX error checking
 	out, err = packMessageAC(&intHdr, &context.nonce, &myCipher)
 
-	fmt.Fprintf(os.Stderr, "NACL PB == AC MSG OUT[%d]: %s\n", len(out), out)
+	//fmt.Fprintf(os.Stderr, "NACL PB == AC MSG OUT[%d]: %s\n", len(out), out)
 	context.nonce++
 
 	return out, nil
@@ -153,7 +153,7 @@ func OpenACMessageNACL(context *SecKey, rnd, cmsg, peerNick, myNick []byte) (out
 
 	/* let's build the nonce */
 	//BuildNonceAC(inonce uint32, bob, mynick, myhdr []byte) (nonce []byte, noncebyte *[24]byte, err error)
-	_, noncebyte, err := BuildNonceAC(cnonce, context.bob, peerNick, myHdr)
+	_, noncebyte, err := BuildNonceAC(cnonce, ac_bob, peerNick, myHdr)
 
 	// OPEN the key
 	// XXX new to check rnd and context.key are the same size
@@ -271,7 +271,7 @@ func CreateACMessage(context *SecKey, rnd, msg, myNick []byte) (out []byte, err 
 	encoder.Close()
 
 	out = buffer.Bytes()
-	fmt.Fprintf(os.Stderr, "AC MSG OUT[%d]: %s\n", len(out), out)
+	//fmt.Fprintf(os.Stderr, "AC MSG OUT[%d]: %s\n", len(out), out)
 	context.nonce++
 	return
 }

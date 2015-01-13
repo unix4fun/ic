@@ -72,14 +72,14 @@ func nonceBuildAC(bob, myNick, myCounter, msgHdr []byte) (out []byte, err error)
 	nonceBuild.WriteByte(byte(':'))
 	nonceBuild.Write(hdrHash)
 
-	fmt.Fprintf(os.Stderr, "NonceBuildAC NonceBuild HEX(%d): %s\n", len(nonceBuild.Bytes()), hex.EncodeToString(nonceBuild.Bytes()))
+	//fmt.Fprintf(os.Stderr, "NonceBuildAC NonceBuild HEX(%d): %s\n", len(nonceBuild.Bytes()), hex.EncodeToString(nonceBuild.Bytes()))
 
 	nonceHash, nonceErr := HashSHA3Data(nonceBuild.Bytes())
 	if nonceErr != nil {
 		return nil, &protoError{value: -1, msg: "NonceBuildAC().nonceHash(): ", err: nonceErr}
 	}
 
-	fmt.Fprintf(os.Stderr, "NonceBuildAC HASH HEX(%d): %s\n", len(nonceHash), hex.EncodeToString(nonceHash))
+	//fmt.Fprintf(os.Stderr, "NonceBuildAC HASH HEX(%d): %s\n", len(nonceHash), hex.EncodeToString(nonceHash))
 	return nonceHash, nil
 }
 
@@ -147,7 +147,7 @@ func BuildNonceAC(inonce uint32, bob, mynick, myhdr []byte) (nonce []byte, nonce
 	// we just need 24 bytes nonce
 	copy(noncebyte[:], nonce[:24])
 
-	fmt.Fprintf(os.Stderr, "BuildNonceAC(%08x, %s, %s, %s) = %s (%s)\n", inonce, bob, mynick, hex.EncodeToString(myhdr), hex.EncodeToString(noncebyte[:]), hex.EncodeToString(nonce))
+	fmt.Fprintf(os.Stderr, "[+] BuildNonceAC(%08x, %s, %s, %s) = %s (%s)\n", inonce, bob, mynick, hex.EncodeToString(myhdr), hex.EncodeToString(noncebyte[:]), hex.EncodeToString(nonce))
 
 	return nonce, noncebyte, nil
 }
@@ -168,7 +168,7 @@ func BuildNonceKX(inonce uint32, bob, mynick, peernick, myhdr []byte) (nonce []b
 	// we just need 24 bytes nonce
 	copy(noncebyte[:], nonce[:24])
 
-	fmt.Fprintf(os.Stderr, "BuildNonceKX(%08x, %s, %s, %s, %s) = %s (%s)\n", inonce, bob, mynick, peernick, hex.EncodeToString(myhdr), hex.EncodeToString(noncebyte[:]), hex.EncodeToString(nonce))
+	fmt.Fprintf(os.Stderr, "[+] BuildNonceKX(%08x, %s, %s, %s, %s) = %s (%s)\n", inonce, bob, mynick, peernick, hex.EncodeToString(myhdr), hex.EncodeToString(noncebyte[:]), hex.EncodeToString(nonce))
 
 	return nonce, noncebyte, nil
 }

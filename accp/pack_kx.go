@@ -102,7 +102,7 @@ func CreateKXMessageNACL(context *SecKey, rnd []byte, peerPubkey, myPrivkey *[32
 		context.key[j] = context.key[j] ^ rnd[j]
 	}
 
-	fmt.Fprintf(os.Stderr, "CREATE KX KEY: %s\n", hex.EncodeToString(context.key[:]))
+	//fmt.Fprintf(os.Stderr, "CREATE KX KEY: %s\n", hex.EncodeToString(context.key[:]))
 	// first let's compress
 	myBody, err := CompressData(context.key[:])
 	if err != nil {
@@ -114,20 +114,23 @@ func CreateKXMessageNACL(context *SecKey, rnd []byte, peerPubkey, myPrivkey *[32
 		context.key[j] = context.key[j] ^ rnd[j]
 	}
 
-	fmt.Fprintf(os.Stderr, "channel: %s context.bob: %s\n", channel, context.bob)
+	//fmt.Fprintf(os.Stderr, "channel: %s context.bob: %s\n", channel, context.bob)
 
 	kx_channel := IsChannelOrPriv(channel, myNick, peerNick)
 	// XXX i can probably use context.bob instead of a specific channel specification...
 	//BuildNonceAC(inonce uint32, bob, mynick, myhdr []byte) (nonce []byte, noncebyte *[24]byte, err error)
 	_, noncebyte, err := BuildNonceKX(context.nonce, kx_channel, myNick, peerNick, myHdr)
 
-	fmt.Fprintf(os.Stderr, "peerpk : %p myprivkey: %p\n", peerPubkey, myPrivkey)
+	//fmt.Fprintf(os.Stderr, "peerpk : %p myprivkey: %p\n", peerPubkey, myPrivkey)
 	// XXX TODO: need serious cleanup and error checking!!
-	fmt.Fprintf(os.Stderr, "body.Bytes(): %p, noncebyte: %p, peerPub: %p myPriv: %p\n", myBody, &noncebyte, peerPubkey, myPrivkey)
+	//fmt.Fprintf(os.Stderr, "body.Bytes(): %p, noncebyte: %p, peerPub: %p myPriv: %p\n", myBody, &noncebyte, peerPubkey, myPrivkey)
 	cipherKex := box.Seal(nil, myBody, noncebyte, peerPubkey, myPrivkey)
 
 	//func packMessageKX(hdr, nonce *uint32, dst, blob *[]byte) (out []byte, err error) {
 	out, err = packMessageKX(&intHdr, &context.nonce, peerNick, cipherKex)
+	if err != nil {
+		return nil, &protoError{value: -3, msg: "CreateKXMessageNACL().packMessageKX(): ", err: err}
+	}
 
 	context.nonce++
 	return
@@ -170,7 +173,7 @@ func OpenKXMessageNACL(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, p
 		return nil, nil, &protoError{value: -6, msg: "OpenKXMessageNACL(): ", err: err}
 	}
 
-	fmt.Fprintf(os.Stderr, "OPEN KX KEY: %s\n", hex.EncodeToString(out))
+	//fmt.Fprintf(os.Stderr, "OPEN KX KEY: %s\n", hex.EncodeToString(out))
 	// XXX TODO are we at the end of the nonce value..
 	context, err = CreateACContext(channel, cnonce+1)
 	if err != nil {

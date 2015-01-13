@@ -93,16 +93,16 @@ func CTSEAL_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 	for j, bSize, bAll, bPtr := 0, len(reqBlob)/nBlock, len(reqBlob), 0; j < nBlock; j, bPtr = j+1, bPtr+bSize {
 		if bPtr+bSize+1 >= bAll {
 			reqBlobTmp = reqBlob[bPtr:]
-			fmt.Fprintf(os.Stderr, "** %d block[%d:%d]: %s \n", j, bPtr, bAll, reqBlobTmp)
+			//fmt.Fprintf(os.Stderr, "** %d block[%d:%d]: %s \n", j, bPtr, bAll, reqBlobTmp)
 			//fmt.Fprintf(os.Stderr, ">> %d => %c || %d => %c\n", bAll, reqBlob[bAll-1], bAll+1, reqBlob[bAll+1])
 			//reqBlob[bPtr:bAll]
 		} else {
 			reqBlobTmp = reqBlob[bPtr : bPtr+bSize]
-			fmt.Fprintf(os.Stderr, ">>#%d block[%d:%d]: %s \n", j, bPtr, bPtr+bSize, reqBlobTmp)
+			//fmt.Fprintf(os.Stderr, ">>#%d block[%d:%d]: %s \n", j, bPtr, bPtr+bSize, reqBlobTmp)
 			//reqBlob[bPtr : bPtr+bSize]
 		} // END OF ELSE
 
-		fmt.Fprintf(os.Stderr, ">> NEW #%d block[%d:%d]: %s \n", j, bPtr, bPtr+len(reqBlobTmp), reqBlobTmp)
+		//fmt.Fprintf(os.Stderr, ">> NEW #%d block[%d:%d]: %s \n", j, bPtr, bPtr+len(reqBlobTmp), reqBlobTmp)
 		out, err = accp.CreateACMessageNACL(acctx, acrnd, reqBlobTmp, []byte(myNick))
 		if err != nil {
 			retErr := acpbError(-4, "CTSEAL_Handler(): CreateACMessage() error:", err)
