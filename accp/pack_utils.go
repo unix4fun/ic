@@ -1,3 +1,4 @@
+// +build go1.2
 package accp
 
 import (

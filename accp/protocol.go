@@ -1,24 +1,16 @@
-//package acproto
-//accp == AC Crypto Protocol
+// +build go1.2
+// accp == AC Crypto Protocol
+//go:generate protoc --go_out=. pack.proto
 package accp
 
 import (
-	"fmt"
-	//"os"
-	//    "log"
 	"bytes"
 	"code.google.com/p/go.crypto/nacl/box"
 	"code.google.com/p/go.crypto/nacl/secretbox"
-	//"code.google.com/p/go.crypto/sha3"
-	//"code.google.com/p/goprotobuf/proto"
-	//"compress/zlib"
 	"crypto/rand"
-	//"encoding/base64"
-	//"encoding/binary"
 	"encoding/hex"
-	//"github.com/unix4fun/ac/obf"
+	"fmt"
 	"io"
-	//"regexp"
 	"time"
 )
 

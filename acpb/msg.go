@@ -1,3 +1,5 @@
+// +build go1.2
+//go:generate protoc --go_out=. ac.proto
 package acpb
 
 import (

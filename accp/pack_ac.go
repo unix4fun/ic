@@ -1,3 +1,4 @@
+// +build go1.2
 package accp
 
 import (
@@ -7,7 +8,6 @@ import (
 	"compress/zlib"
 	"encoding/base64"
 	"encoding/binary"
-	//	"encoding/hex"
 	"fmt"
 	"github.com/unix4fun/ac/obf"
 	"io"
@@ -25,6 +25,9 @@ func packMessageAC(hdr, nonce *uint32, blob *[]byte) (out []byte, err error) {
 	//fmt.Printf("Nonce: %d(%08x)\n", nonce, nonce)
 
 	acPackedMsg, err := proto.Marshal(acOut)
+	if err != nil {
+		return nil, err
+	}
 	// XXX test for errors message..
 	//fmt.Printf("AC Message TEST #1 : %d (%v)\n", len(acPackedMsg), err)
 	//fmt.Printf("PACKED: %s\n", hex.EncodeToString(acPackedMsg))

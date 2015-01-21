@@ -2,22 +2,15 @@
 // source: pack.proto
 // DO NOT EDIT!
 
-/*
-Package accp is a generated protocol buffer package.
-
-It is generated from these files:
-	pack.proto
-
-It has these top-level messages:
-	ACPackedMessage
-*/
 package accp
 
 import proto "code.google.com/p/goprotobuf/proto"
+import json "encoding/json"
 import math "math"
 
-// Reference imports to suppress errors if they are not otherwise used.
+// Reference proto, json, and math imports to suppress error if they are not otherwise used.
 var _ = proto.Marshal
+var _ = &json.SyntaxError{}
 var _ = math.Inf
 
 //

@@ -1,21 +1,18 @@
+// +build go1.2
 package acpb
 
 import (
-	"fmt"
-	"os"
-	//    "log"
-	//    "net"
-	//    "time"
 	"bytes"
-	"crypto/rand"
-	"hash"
-	"io"
-	//    "encoding/hex"
 	"code.google.com/p/go.crypto/hkdf"
 	"code.google.com/p/go.crypto/pbkdf2"
 	"code.google.com/p/go.crypto/sha3"
 	"code.google.com/p/goprotobuf/proto"
+	"crypto/rand"
+	"fmt"
 	"github.com/unix4fun/ac/accp"
+	"hash"
+	"io"
+	"os"
 )
 
 func CTSEAL_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *AcCipherTextMessageResponse, err error) {

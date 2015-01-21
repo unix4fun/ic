@@ -1,3 +1,4 @@
+// +build go1.2
 package accp
 
 import (
@@ -8,7 +9,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/binary"
-//	"encoding/hex"
 	"fmt"
 	"github.com/unix4fun/ac/obf"
 	"io"

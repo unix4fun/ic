@@ -1,27 +1,17 @@
+// +build go1.2
 package acpb
 
 import (
-	"fmt"
-	"os"
-	//    "bytes"
-	//    "log"
-	//    "net"
-	//    "time"
-	//    "crypto/rand"
 	"code.google.com/p/goprotobuf/proto"
 	"encoding/hex"
+	"fmt"
 	"github.com/unix4fun/ac/accp"
+	"os"
 )
 
 func KXPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgResponse *AcKeyExchangeMessageResponse, err error) {
 	var responseType AcKeyExchangeMessageResponseAcKXRespMsgType
 	responseType = AcKeyExchangeMessageResponse_KXR_PACK
-	//var acctx * accp.ACMsgContext
-
-	//fmt.Printf("KXPACK Message: let's give the key\n")
-	//fmt.Printf("from myNick: %s\n", acMessageKxReq.GetMynick())
-	//fmt.Printf("to peerNick: %s\n", acMessageKxReq.GetPeernick())
-	//fmt.Printf("channel: %s\n", acMessageKxReq.GetChannel())
 
 	channel := acMessageKxReq.GetChannel()
 	mynick := acMessageKxReq.GetMynick()

@@ -1,5 +1,7 @@
-// acpb == AC Protocol Buffer
+// +build go1.2
 package acpb
+
+// acpb == AC Protocol Buffer
 
 import (
 	"fmt"

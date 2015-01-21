@@ -1,9 +1,9 @@
+// +build go1.2
 // ACD: Arsene Crypto Daemon main file
 package main
 
 import (
 	"fmt"
-	//"net"
 	"os"
 	"os/signal" // XXX deactivated
 	//    "time"
@@ -15,6 +15,7 @@ import (
 	"syscall" // XXX deactivated
 
 	//"runtime/pprof"
+	//"go/build"
 )
 
 func usage(mycmd string) {
