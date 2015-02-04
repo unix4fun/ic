@@ -1,15 +1,14 @@
-// +build go1.2
+// +build go1.4
 package acpb
 
 // acpb == AC Protocol Buffer
-
 import (
 	"fmt"
 	"os"
 	//    "log"
 	//    "net"
-	"code.google.com/p/goprotobuf/proto"
 	"crypto/rand"
+	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ac/accp"
 	"time"
 )

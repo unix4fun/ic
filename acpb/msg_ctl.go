@@ -1,8 +1,9 @@
+// +build go1.4
 package acpb
 
 import (
-	"code.google.com/p/goprotobuf/proto"
 	"fmt"
+	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"os"
 	"time"
 )
@@ -61,6 +62,17 @@ func CTLSAVE_Handler(acMessageCtlReq *AcControlMessageRequest) (acMsgResponse *A
 
 	fmt.Fprintf(os.Stderr, "[+] SAVECTX '%s'\n", reqFilename)
 
+	//func (psk PSKMap) Map2FileBlob(outfilestr string, salt []byte, keystr []byte) (bool, error) {
+	ok, err := ACmap.Map2File(reqFilename, []byte("proutprout"), []byte("proutkey"))
+	if err != nil && ok != false {
+		retErr := acpbError(-1, "CTLSAVE_Handler().args(outfile, salt, keystr): 0 bytes", nil)
+		acMsgResponse = &AcControlMessageResponse{
+			Type:      &responseType,
+			Bada:      proto.Bool(false),
+			ErrorCode: proto.Int32(-1),
+		}
+		return acMsgResponse, retErr
+	}
 	acMsgResponse = &AcControlMessageResponse{
 		Type:      &responseType,
 		Bada:      proto.Bool(true),

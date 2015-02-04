@@ -1,5 +1,4 @@
-// +build go1.2
-//go:generate protoc --go_out=. ac.proto
+// +build go1.4
 package acpb
 
 import (
@@ -9,7 +8,7 @@ import (
 	//    "net"
 	//    "encoding/hex"
 	//    "arsene/ac/proto"
-	"code.google.com/p/goprotobuf/proto"
+	"github.com/golang/protobuf/proto" // protobuf is now here.
 )
 
 // it's temporary until my design looks better

@@ -1,15 +1,15 @@
-// +build go1.2
+// +build go1.4
 package accp
 
 import (
 	"bytes"
-	"code.google.com/p/go.crypto/sha3"
 	"compress/zlib"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"github.com/unix4fun/ac/obf"
+	"golang.org/x/crypto/sha3" // sha3 is now here.
 	"io"
 	"io/ioutil"
 	"os"

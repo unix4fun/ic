@@ -1,15 +1,14 @@
-// +build go1.2
+// +build go1.4
 // accp == AC Crypto Protocol
-//go:generate protoc --go_out=. pack.proto
 package accp
 
 import (
 	"bytes"
-	"code.google.com/p/go.crypto/nacl/box"
-	"code.google.com/p/go.crypto/nacl/secretbox"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"golang.org/x/crypto/nacl/box"       // nacl is now here.
+	"golang.org/x/crypto/nacl/secretbox" // nacl is now here.
 	"io"
 	"time"
 )

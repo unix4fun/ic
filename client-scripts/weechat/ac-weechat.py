@@ -37,10 +37,11 @@
 # 25/09/2014 - bugfixes and added select() on subprocess stdout polling.
 # 07/10/2014 - fixed the double allocation of acwee object
 # 01/01/2015 - changing the marshalling of the messages to put it all on protobuf, also fixed potential collision vuln and introduced long message handling
+# 03/02/2015 - moving to go1.4 and also moving to the new repository of go.crypto and goprotobuf, adding Makefile for installation of the script
 
 SCRIPT_NAME    = 'ac-weechat'
 SCRIPT_AUTHOR  = 'eau <eau-code@unix4fun.net>'
-SCRIPT_VERSION = '20150105'
+SCRIPT_VERSION = '20150203'
 SCRIPT_LICENSE = 'BSD'
 SCRIPT_DESC    = 'AC script'
 
@@ -1452,6 +1453,23 @@ class AcPbCom(object):
             acctreq.server = args[self.KEY_SERVER]
         return acctreq.SerializeToString()
 
+    def msgCtlPing(self, args):
+        acctreq = ac_pb2.acControlMessageRequest()
+        acctreq.type = ac_pb2.acControlMessageRequest.CTL_PING
+        # bleh
+        return acctreq.SerializeToString()
+
+    def msgCtlLoad(self, args):
+        acctreq = ac_pb2.acControlMessageRequest()
+        acctreq.type = ac_pb2.acControlMessageRequest.CTL_LOAD
+        # bleh
+        return acctreq.SerializeToString()
+
+    def msgCtlSave(self, args):
+        acctreq = ac_pb2.acControlMessageRequest()
+        acctreq.type = ac_pb2.acControlMessageRequest.CTL_SAVE
+        # bleh
+        return acctreq.SerializeToString()
 
     def acPkMsg(self, subtype, args):
         if subtype == self.ACMSG_SUBTYPE_PKGEN:
@@ -1477,6 +1495,14 @@ class AcPbCom(object):
             return self.msgCtOpen(args)
         if subtype == self.ACMSG_SUBTYPE_CTADD:
             return self.msgCtAdd(args)
+    def acControlMsg(self, subtype, args):
+        if subtype == self.ACMSG_SUBTYPE_CTLPING:
+            return self.msgCtlPing(args)
+        if subtype == self.ACMSG_SUBTYPE_CTLLOAD:
+            return self.msgCtlLoad(args)
+        if subtype == self.ACMSG_SUBTYPE_CTLSAVE:
+            return self.msgCtlSave(args)
+
 
     def acQuitMsg(self, subtype, args):
         print "QUIT subtype message builder."

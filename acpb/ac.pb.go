@@ -22,7 +22,7 @@ It has these top-level messages:
 */
 package acpb
 
-import proto "code.google.com/p/goprotobuf/proto"
+import proto "github.com/golang/protobuf/proto"
 import math "math"
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -260,17 +260,20 @@ const (
 	AcControlMessageRequest_CTL_PING    AcControlMessageRequestAcCTLReqMsgType = 40
 	AcControlMessageRequest_CTL_SAVECTX AcControlMessageRequestAcCTLReqMsgType = 41
 	AcControlMessageRequest_CTL_LOADCTX AcControlMessageRequestAcCTLReqMsgType = 42
+	AcControlMessageRequest_CTL_VERSION AcControlMessageRequestAcCTLReqMsgType = 43
 )
 
 var AcControlMessageRequestAcCTLReqMsgType_name = map[int32]string{
 	40: "CTL_PING",
 	41: "CTL_SAVECTX",
 	42: "CTL_LOADCTX",
+	43: "CTL_VERSION",
 }
 var AcControlMessageRequestAcCTLReqMsgType_value = map[string]int32{
 	"CTL_PING":    40,
 	"CTL_SAVECTX": 41,
 	"CTL_LOADCTX": 42,
+	"CTL_VERSION": 43,
 }
 
 func (x AcControlMessageRequestAcCTLReqMsgType) Enum() *AcControlMessageRequestAcCTLReqMsgType {

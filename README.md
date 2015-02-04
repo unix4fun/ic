@@ -1,5 +1,5 @@
+# **A**(nother) **C**(rypto) = AC
 # WORK IN PROGRESS
-# **A**(nother) **C**(rypto)  (the daemon part..)
 
 An attempt to provide a rather simple (to use and maintain) IRC encryption mechanism, but hopefully better than plaintext and current used ones..
 with (hopefully) no "false" sense of security.
@@ -7,6 +7,10 @@ with (hopefully) no "false" sense of security.
 It is inspired from previous/known/alternative projects that has been done by "pioneers" or e-settlers.. as well as in underground and take account that IRC have some *limitations*.
 
 It's my first project in an inspiring and pragmatic new language : Go
+
+## This Package
+* the AC pipe binary: 'ac'
+* client scripts (weechat)
 
 ## Goals
 
@@ -92,13 +96,13 @@ where <NonceInt32Value> is:
  a non repeating 32bit counter starting at 0, for each new channel key.
 
 where <NONCE_AUTH> is:
- SHA3( 'CHANNEL' || 
+ SHA3( SHA3('CHANNEL') || 
        ':' || 
-       'SRC_NICK' || 
+       SHA3('SRC_NICK') || 
        ':' || 
-       'NONCE_VALUE' || 
+       SHA3('NONCE_VALUE') || 
        ':' || 
-       'ACheader'
+       SHA3('ACheader')
  )
 
 ```
@@ -162,8 +166,8 @@ The daemon is implemented in Go langage and will produce a binary.
 
 ## Requirements:
 
-* protobuf-2.5.0+ (if you need to regenerate the go part)
-* go-1.2+ (svn, mercurial, git along with go in fact..)
+* protobuf-2.4.1+ (if you need to regenerate the go part)
+* go-1.4+ (svn, mercurial, git along with go in fact.. / it works compile with go1.2+ but I want to be able to use go generate which is present since 1.4 release, so let's use it...)
 
 (go get should do the rest of the magic...)
 
@@ -174,6 +178,40 @@ correctly, the following should work:
 
     go get github.com/unix4fun/ac
 
+if any issues occurs, just :
+    cd $GOPATH/src/github.com/unix4fun/ac
+    go generate
+    go build
+    go install
+
 Binary `ac` should then be in `$GOPATH/bin`
 
+    cd $GOPATH/src/github.com/unix4fun/ac && make install
 
+It will copy the following files into :
+ac_pb2.py       -> ~/.weechat/python/
+ac-weechat.py   -> ~/.weechat/python/autoload/
+
+## Usage
+
+3 main commands:
+    /pk
+    '/pk' is used to manage Public Keys (ECC key exchange)
+
+    /sk
+    '/sk' is used to manage Secret Keys (channel/query keys)
+
+    /ac
+    '/ac' is used to enable disable crypto on a specific (weechat) buffer
+
+the flow is simple, when you join the channel, you _GENERATE_ and then _BROADCAST_ you public key, so that other channel members are aware of your public key,
+other channel members should also _BROADCAST_ their own key, someone on the channel _GENERATE_A_SECRET_  Key (for the current channel and then _EXCHANGE_ the newly created secret key with other members.
+
+
+_GENERATE_  : /pk gen
+_BROADCAST_ : /pk
+_GENERATE_A_SECRET_ : /sk gen <entropy input>
+_EXCHANGE_  : /sk give <nickname>
+
+
+Use /pk help, /sk help or /achelp to access the help.

@@ -139,6 +139,7 @@ message acControlMessageRequest {
         CTL_PING = 40;
         CTL_SAVECTX = 41;
         CTL_LOADCTX = 42;
+        CTL_VERSION = 43;
 //        CTL_LOAD_AUTH = 43;
 //        CTL_LOAD_RSA =
     }

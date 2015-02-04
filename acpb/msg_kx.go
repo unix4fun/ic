@@ -1,10 +1,10 @@
-// +build go1.2
+// +build go1.4
 package acpb
 
 import (
-	"code.google.com/p/goprotobuf/proto"
 	"encoding/hex"
 	"fmt"
+	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ac/accp"
 	"os"
 )

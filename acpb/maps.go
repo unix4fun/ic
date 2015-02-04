@@ -1,7 +1,9 @@
-// +build go1.2
+// +build go1.4
 package acpb
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"github.com/unix4fun/ac/accp"
 	"os"
@@ -17,6 +19,40 @@ var ACrun bool
 // its not perfect but it avoid basic one-client-multiple-network-same-nick-same-channels scenarios.
 // is it too complicated? hmm we need to make it clear
 type PSKMap map[string](*AcCOMM)
+
+func (psk PSKMap) Map2File(outfilestr string, salt []byte, keystr []byte) (bool, error) {
+
+	/*
+	 *
+	 * here is the plan:
+	 * 1. derive the key using salt and keystr.
+	 * 2. prepare file format [ salt || encrypted_blob ].
+	 * 3. marshal the PSKMap.
+	 * 4. auth-encrypt the mashalled data.
+	 * 5. write to file.
+	 * 6. RSA sign the file.
+	 */
+
+	outfile, err := os.OpenFile(outfilestr, os.O_TRUNC, 0700)
+	if err != nil {
+		return false, err
+	}
+	defer outfile.Close()
+
+	buff := new(bytes.Buffer)
+	enc := gob.NewEncoder(buff)
+
+	err = enc.Encode(ACmap)
+	if err != nil {
+		return false, err
+	}
+
+	fmt.Fprintf(os.Stderr, "marshalled : %d bytes\n", len(buff.Bytes()))
+	return false, nil
+}
+
+func (psk PSKMap) File2Map(salt []byte, key []byte) {
+}
 
 //
 // RDMaps

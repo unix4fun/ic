@@ -1,15 +1,15 @@
-// +build go1.2
+// +build go1.4
 package accp
 
 import (
 	"bytes"
-	"code.google.com/p/go.crypto/nacl/secretbox"
-	"code.google.com/p/goprotobuf/proto"
 	"compress/zlib"
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
+	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ac/obf"
+	"golang.org/x/crypto/nacl/secretbox"
 	"io"
 	"os"
 )

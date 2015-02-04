@@ -1,12 +1,12 @@
-// +build go1.2
+// +build go1.4
 package accp
 
 import (
 	"bytes"
-	"code.google.com/p/goprotobuf/proto"
 	"compress/zlib"
 	"encoding/base64"
 	//"fmt"
+	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ac/obf"
 	"io"
 )

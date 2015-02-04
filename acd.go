@@ -1,4 +1,8 @@
-// +build go1.2
+// +build go1.4
+//go:generate protoc --go_out=accp -Iaccp accp/accp.proto
+//go:generate protoc --go_out=acpb -Iacpb acpb/ac.proto
+//go:generate protoc --python_out=client-scripts/weechat/ -Iacpb acpb/ac.proto
+// echo "var Version string '`date +%Y%m%d`'" >> version.go
 // ACD: Arsene Crypto Daemon main file
 package main
 
@@ -15,7 +19,6 @@ import (
 	"syscall" // XXX deactivated
 
 	//"runtime/pprof"
-	//"go/build"
 )
 
 func usage(mycmd string) {
@@ -48,7 +51,9 @@ func handleStdin() (err error) {
 }
 
 func main() {
-	fmt.Fprintf(os.Stderr, "[+] acd daemon start\n")
+	Version := string("20150203")
+
+	fmt.Fprintf(os.Stderr, "[+] ac-%s\nstart\n", Version)
 
 	/*
 	   if len(os.Args) != 1 {

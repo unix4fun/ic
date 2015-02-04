@@ -1,15 +1,15 @@
-// +build go1.2
+// +build go1.4
 package acpb
 
 import (
 	"bytes"
-	"code.google.com/p/go.crypto/hkdf"
-	"code.google.com/p/go.crypto/pbkdf2"
-	"code.google.com/p/go.crypto/sha3"
-	"code.google.com/p/goprotobuf/proto"
 	"crypto/rand"
 	"fmt"
+	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ac/accp"
+	"golang.org/x/crypto/hkdf"   // sha3 is now here.
+	"golang.org/x/crypto/pbkdf2" // sha3 is now here.
+	"golang.org/x/crypto/sha3"   // sha3 is now here.
 	"hash"
 	"io"
 	"os"
@@ -293,6 +293,8 @@ func (skgen *ACSecretKeyGen) Init(input []byte, channel []byte, nick []byte, ser
 	//    fmt.Fprintf(os.Stderr, "PBKDF LEN: %d\n", len(skgen.input_pbkdf))
 
 	// in Read() we will apply the HKDF function.. onto the PBKDF2 derived key.
+	// XXX TODO: just to be sure implement HASH of each value instead of values
+	// only.
 	str_build := new(bytes.Buffer)
 	str_build.Write(serv)
 	str_build.WriteByte(byte(':'))
@@ -302,12 +304,9 @@ func (skgen *ACSecretKeyGen) Init(input []byte, channel []byte, nick []byte, ser
 
 	skgen.info_hkdf, err = accp.HashSHA3Data(str_build.Bytes())
 	if err != nil {
-		//fmt.Fprintf(os.Stderr, "HashSHA3ERRORRRR\n")
-		//        fmt.Println(err)
 		return err
 	}
 
-	//    fmt.Fprintf(os.Stderr, "eveyrthing is inited corectly!\n")
 	return nil
 }
 
