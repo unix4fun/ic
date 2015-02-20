@@ -273,7 +273,7 @@ def ac_get_userinfo(buffer, nick, channel, server):
 
 def acMessageParsePrintmsg(raw_tags, print_msg):
 #    ret_bool = False
-#    print raw_tags
+    print raw_tags
 #    print print_msg
     plug, name, tags = raw_tags.split(';')
     taglist = tags.split(',')
@@ -340,47 +340,49 @@ def ac_checktimer_cb(data, remaining_calls):
     weechat.prnt("", "timer! data=%r" % acProcess.returncode)
     return weechat.WEECHAT_RC_OK
 
-def cmd_achelp_cb(data, dabuffer, args):
-    #acwee = data
-    acwee.pmb(dabuffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$ /ac help %%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
-    acwee.pmb(dabuffer, "args: %s", args)
-    acwee.pmb(dabuffer, "/pk [<cmd>]\tpublic key commands")
-    acwee.pmb(dabuffer, "where <cmd> is")
-    acwee.pmb(dabuffer, "\t\thelp      :\thelp/examples about pk (Public Key)")
-    acwee.pmb(dabuffer, "\t\tls        :\tlist pk(/sk) key(s)")
-    acwee.pmb(dabuffer, "\t\trm <nick> :\tdel pk(/sk) key(s)")
-    acwee.pmb(dabuffer, "\t\tgen       :\tgenerate my pk pair")
-    acwee.pmb(dabuffer, "\t\t<empty>   :\tbroadcast my pk on the current channel/query buffer")
-    acwee.pmb(dabuffer, "/sk [<cmd>|nick]\tsecret key commands")
-    acwee.pmb(dabuffer, "where <cmd> is")
-    acwee.pmb(dabuffer, "\t\thelp                :\thelp/examples about sk (Secret Key)")
-    acwee.pmb(dabuffer, "\t\tls                  :\tlist current secret key(s)")
-    acwee.pmb(dabuffer, "\t\tgen <entropy bytes> :\tPBKDF2() generate current buffer secret key")
-    acwee.pmb(dabuffer, "\t\trm <nick>           :\tremove associated secret key")
-    acwee.pmb(dabuffer, "\t\tuse                 :\tuse Key Exchange secret key received on this buffer (u need sender's public key)")
-    acwee.pmb(dabuffer, "\t\tgive <nick>         :\tsend Key Exchange secret key with <nick> (u need <nick>'s public key)")
-    acwee.pmb(dabuffer, "/ac [<cmd>]\tencryption control")
-    acwee.pmb(dabuffer, "\t\thelp                :\thelp about ac (this help)")
-    acwee.pmb(dabuffer, "\t\t<empty>   :\tenable/disable encryption in the current buffer (channel/query)")
-    # /ac           : enable/disable buffer (chan/query) encryption
-    # /ac help      : help on ac
-    # /ac stat      : daemon stat + heartbeat stat
-    # /ac bah       : rekey/reshuffle the internal memory protection
-    acwee.pmb(dabuffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$%%@#$%%@#$%%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
+#
+#
+# 
+# PK commands
+# 
+# /pk gen 
+# /pk ls 
+# /pk rm
+# /ac help
+# /pk ===> DEFAULT BEHAVIOUR
+#
+#
+#
 
-#    weechat.prnt(dabuffer, "%sAC\tAC help:%s" % ( SCRIPT_COLOR, args))
-#    weechat.prnt(dabuffer, "%sAC\t/pk\tbroadcast our public key" % ( SCRIPT_COLOR ))
-#    weechat.prnt(dabuffer, "%sAC\t/pkgen\tgenerate our key pair" % ( SCRIPT_COLOR ))
-#    weechat.prnt(dabuffer, "%sAC\t/pklist\tlist running public keys" % ( SCRIPT_COLOR ))
-#    weechat.prnt(dabuffer, "%sAC\t/sk <nick>\tsend #channel key to <nick>" % ( SCRIPT_COLOR ))
-#    weechat.prnt(dabuffer, "%sAC\t/skadd <entropy>\tcreate #channel key" % ( SCRIPT_COLOR ))
-#    weechat.prnt(dabuffer, "%sAC\t/skuse\tuse/accept the key that has been received on the current buffer" % ( SCRIPT_COLOR ))
-#    weechat.prnt(dabuffer, "%sAC\taliases:" % (SCRIPT_COLOR))
+def cmd_pubkey_cb(data, dabuffer, args):
+    # /pk   ========> DEFAULT BEHAVIOUR (broadcast)
+    # /pk ls
+    # /pk rm <nick>
+    # /pk gen
 
-    return weechat.WEECHAT_RC_OK
+    # XXX TODO: that split(" ") create an issue with entropy than contain more
+    # than one space, however we should not need it for pk
+    cb_argv = args.split()
+    cb_argc = len(cb_argv)
 
+#    acwee.pmb(dabuffer, "ARGS[%d]: %r (raw:%s)\n", cb_argc, cb_argv, args)
 
-def cmdPubkeyHelp(data, dabuffer, newargv):
+    if cb_argc == 0:
+        return pkCmdBroadcast(data, dabuffer, args)
+    if cb_argc >= 1:
+        cmd = cb_argv[0]
+        newargv = " ".join(cb_argv[1:])
+        if cmd == 'ls':
+            return pkCmdList(data, dabuffer, newargv)
+        elif cmd == 'gen':
+            return pkCmdGeneratePair(data, dabuffer, newargv)
+        elif cmd == "rm":
+            return pkCmdDel(data, dabuffer, newargv)
+        elif cmd == "help":
+            return pkCmdHelp(data, dabuffer, newargv)
+    return pkCmdBroadcast(data, dabuffer, newargv)
+
+def pkCmdHelp(data, dabuffer, newargv):
     acwee.pmb(dabuffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$ /pk help %%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
     acwee.pmb(dabuffer, "Public key commands:")
     acwee.pmb(dabuffer, "\t\t")
@@ -407,7 +409,161 @@ def cmdPubkeyHelp(data, dabuffer, newargv):
     acwee.pmb(dabuffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$%%@#$%%@#$%%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
     return weechat.WEECHAT_RC_OK
 
-def cmdSecretkeyHelp(data, dabuffer, newargv):
+#
+# PK generation
+#
+
+def pkCmdGeneratePair(data, dabuffer, args):
+    # KEY INFOS..
+    inf = ac_get_buflocalinfo(dabuffer)
+    if len(inf[BI_NICK]) == 0 or len(inf[BI_SERV]) == 0:
+        acwee.pmbac(dabuffer, "could not generate ephemeral key pair, you're connected nowhere!")
+        acwee.pmbac(dabuffer, "remember your key pair is associated with your server/nickname pair")
+        return weechat.WEECHAT_RC_OK
+
+    # XXX TODO: TO CHANGE
+#    userhost = "unavailable"
+    userhost = ac_get_userinfo(dabuffer, inf[BI_NICK], inf[BI_CHAN], inf[BI_SERV])
+
+#    weechat.prnt(dabuffer, "%sAC\tnick: %s" % ( weechat.color("yellow,blue"), nick))
+#    weechat.prnt(dabuffer, "%sAC\tchannel: %s" % ( weechat.color("yellow,blue"), channel))
+#    weechat.prnt(dabuffer, "%sAC\tserver: %s" % ( weechat.color("yellow,blue"), server))
+#    weechat.prnt(dabuffer, "%sAC\tuserhost: %s" % ( weechat.color("yellow,blue"), userhost))
+#    weechat.prnt(dabuffer, "%sAC\tplugin: %s" % ( weechat.color("yellow,blue"), plugin))
+#    weechat.prnt(dabuffer, "%sAC\ttype: %s" % ( weechat.color("yellow,blue"), gtype))
+#
+
+    if ( inf[BI_TYPE] == "channel" or inf[BI_TYPE] == "private" ) and len(inf[BI_NICK]) > 0:
+        myargs = { acwee.KEY_NICK:inf[BI_NICK], acwee.KEY_HOST:userhost, acwee.KEY_SERVER:inf[BI_SERV], acwee.KEY_BLOB:"" }
+        ac_pkr, err = acwee.acRequest(acwee.ACMSG_TYPE_PK, acwee.ACMSG_SUBTYPE_PKGEN, myargs, acwee.BUF_SMALL)
+        if ac_pkr and ac_pkr.bada == True:
+            acwee.pmbac(dabuffer, "generated a new ECC 25519 public/private keypair ('/pk ls' to see it)")
+#            acwee.pmb(dabuffer, "genkey rc: %s", str(ac_pkr.bada))
+#            acwee.pmb(dabuffer, "genkey error_code: %s",  str(ac_pkr.error_code))
+        else:
+            acwee.pmbac(dabuffer, "could not generate key (%d -> check daemon logs?)!", ac_pkr.error_code)
+        return weechat.WEECHAT_RC_OK
+    acwee.pmbac(dabuffer, "could not generate key (missing something?)!")
+    return weechat.WEECHAT_RC_OK
+
+
+# 
+# XXX TODO: we need to add the parsing of argument to allow one or several nicks!?
+#
+def pkCmdList(data, dabuffer, args):
+    nick = weechat.buffer_get_string(dabuffer,"localvar_nick")
+    gtype = weechat.buffer_get_string(dabuffer,"localvar_type")
+    server = weechat.buffer_get_string(dabuffer,"localvar_server")
+
+    if args <> None and len(args) > 0:
+        myargs = { acwee.KEY_NICK:args, acwee.KEY_SERVER:server } 
+    else: # XXX TODO: this is not clean...
+        myargs = { acwee.KEY_SERVER:server } 
+
+    ac_pkr, err = acwee.acRequest(acwee.ACMSG_TYPE_PK, acwee.ACMSG_SUBTYPE_PKLIST, myargs, acwee.BUF_LARGE)
+    if ac_pkr:
+        if len(ac_pkr.public_keys) > 0:
+            for t in ac_pkr.public_keys:
+                acwee.prtAcPk(dabuffer, t, nick)
+        else:
+            acwee.pmbac(dabuffer, "NO KEYS FOUND :(")
+        return weechat.WEECHAT_RC_OK
+    return weechat.WEECHAT_RC_ERROR
+
+# 
+# XXX TODO: we need to add the parsing of argument to allow one or several nicks!?
+#
+def pkCmdDel(data, dabuffer, args):
+    nick = weechat.buffer_get_string(dabuffer,"localvar_nick")
+    gtype = weechat.buffer_get_string(dabuffer,"localvar_type")
+    server = weechat.buffer_get_string(dabuffer,"localvar_server")
+
+
+    if args <> None and len(args) == 0:
+        acwee.pmbac("look for some help, you don't understand what you want...")
+        return weechat.WEECHAT_RC_OK
+
+    myargs = { acwee.KEY_NICK:args, acwee.KEY_SERVER:server } 
+    ac_pkr, err = acwee.acRequest(acwee.ACMSG_TYPE_PK, acwee.ACMSG_SUBTYPE_PKDEL, myargs, acwee.BUF_SMALL)
+    if ac_pkr and ac_pkr.bada == True:
+        acwee.pmbac(dabuffer, "'%s''s key removed", args)
+    else:
+        acwee.pmbac(dabuffer, "NO KEY FOUND :(")
+    return weechat.WEECHAT_RC_OK
+
+#
+# broadcast key
+#
+# we do NOTICE for public key broadcast and for kex
+#
+def pkCmdBroadcast(data, dabuffer, args):
+
+    inf = ac_get_buflocalinfo(dabuffer)
+    # XXX TODO: check if channel or private message and IRC
+    if inf and inf.has_key(BI_TYPE) and inf.has_key(BI_NICK) and inf.has_key(BI_SERV) and inf.has_key(BI_CHAN):
+
+        # now request my key..
+        myargs = { acwee.KEY_NICK:inf[BI_NICK], acwee.KEY_SERVER:inf[BI_SERV] } 
+        ac_pkr, err = acwee.acRequest(acwee.ACMSG_TYPE_PK, acwee.ACMSG_SUBTYPE_PKLIST, myargs, acwee.BUF_LARGE)
+        if ac_pkr and ac_pkr.bada == True:
+            if len(ac_pkr.public_keys) == 1:
+                for t in ac_pkr.public_keys:
+                    acwee.pmbac(dabuffer, "broadcasting my key on %s", inf[BI_CHAN])
+                    weechat.command(dabuffer, "/notice %s %s %s" % (inf[BI_CHAN], acKeyPrefix, t.pubkey))
+                return weechat.WEECHAT_RC_OK
+        acwee.pmbac(dabuffer, "NO KEY /pk gen first")
+        return weechat.WEECHAT_RC_OK
+    else:
+        acwee.pmbac(dabuffer, "/pk only works in a channel/privmsg buffer")
+        return weechat.WEECHAT_RC_OK
+
+
+
+#
+#
+#
+#
+# 
+# KEX implementation
+# 
+# /sk <nick>
+# /sk add <entropy>
+# /sk rm <hash>
+# /sk use
+# /sk ls ===> DEFAULT BEHAVIOUR
+#
+#
+#
+#
+#
+
+def cmd_secretkey_cb(data, dabuffer, args):
+    cb_argv = args.split()
+    cb_argc = len(cb_argv)
+
+#    acwee.pmb(dabuffer, "ARGS[%d]: %r (raw:%s)", cb_argc, cb_argv, args)
+    if cb_argc == 0:
+        return skCmdList(data, dabuffer, args)
+    if cb_argc >= 1:
+        newargv = " ".join(cb_argv[1:])
+        cmd = cb_argv[0]
+#        acwee.pmb(dabuffer, "CMD: %s NEWARGS: %s", cmd, newargv)
+        if cmd == "gen":
+            return skCmdAddKey(data, dabuffer, newargv)
+        elif cmd == "rm":
+            acwee.pmb(dabuffer, "not implemented yet!")
+        elif cmd == "use":
+            return skCmdUseKey(data, dabuffer, newargv)
+        elif cmd == "ls":
+            return skCmdList(data, dabuffer, newargv)
+        elif cmd == "help":
+            return skCmdHelp(data, dabuffer, newargv)
+        elif cmd == "give":
+            if re.match(acNicknameRE, newargv[0], re.M) <> None:
+                return skCmdSendKey(data, dabuffer, newargv)
+    return skCmdList(data, dabuffer, args)
+
+def skCmdHelp(data, dabuffer, newargv):
     acwee.pmb(dabuffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$ /sk help %%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
     acwee.pmb(dabuffer, "Secret/Symmetric key commands:")
     acwee.pmb(dabuffer, "\t\t")
@@ -449,99 +605,9 @@ def cmdSecretkeyHelp(data, dabuffer, newargv):
     acwee.pmb(dabuffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$%%@#$%%@#$%%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
     return weechat.WEECHAT_RC_OK
 
-def cmd_pubkey_cb(data, dabuffer, args):
-    # /pk   ========> DEFAULT BEHAVIOUR (broadcast)
-    # /pk ls
-    # /pk rm <nick>
-    # /pk gen
-
-    # XXX TODO: that split(" ") create an issue with entropy than contain more
-    # than one space, however we should not need it for pk
-    cb_argv = args.split()
-    cb_argc = len(cb_argv)
-
-#    acwee.pmb(dabuffer, "ARGS[%d]: %r (raw:%s)\n", cb_argc, cb_argv, args)
-
-    if cb_argc == 0:
-        return cmdPubkeyBroadcast(data, dabuffer, args)
-    if cb_argc >= 1:
-        cmd = cb_argv[0]
-        newargv = " ".join(cb_argv[1:])
-        if cmd == 'ls':
-            return cmdPubkeyList(data, dabuffer, newargv)
-        elif cmd == 'gen':
-            return cmdPubkeyGeneratePair(data, dabuffer, newargv)
-        elif cmd == "rm":
-            return cmdPubkeyDel(data, dabuffer, newargv)
-        elif cmd == "help":
-            return cmdPubkeyHelp(data, dabuffer, newargv)
-    return cmdPubkeyBroadcast(data, dabuffer, newargv)
-
-#
-# broadcast key
-#
-# we do NOTICE for public key broadcast and for kex
-#
-def cmdPubkeyBroadcast(data, dabuffer, args):
-
-    inf = ac_get_buflocalinfo(dabuffer)
-    # XXX TODO: check if channel or private message and IRC
-    if inf and inf.has_key(BI_TYPE) and inf.has_key(BI_NICK) and inf.has_key(BI_SERV) and inf.has_key(BI_CHAN):
-
-        # now request my key..
-        myargs = { acwee.KEY_NICK:inf[BI_NICK], acwee.KEY_SERVER:inf[BI_SERV] } 
-        ac_pkr, err = acwee.acRequest(acwee.ACMSG_TYPE_PK, acwee.ACMSG_SUBTYPE_PKLIST, myargs, acwee.BUF_LARGE)
-        if ac_pkr and ac_pkr.bada == True:
-            if len(ac_pkr.public_keys) == 1:
-                for t in ac_pkr.public_keys:
-                    acwee.pmbac(dabuffer, "broadcasting my key on %s", inf[BI_CHAN])
-                    weechat.command(dabuffer, "/notice %s %s %s" % (inf[BI_CHAN], acKeyPrefix, t.pubkey))
-                return weechat.WEECHAT_RC_OK
-        acwee.pmbac(dabuffer, "NO KEY /pk gen first")
-        return weechat.WEECHAT_RC_OK
-    else:
-        acwee.pmbac(dabuffer, "/pk only works in a channel/privmsg buffer")
-        return weechat.WEECHAT_RC_OK
-
-# 
-# KEX implementation
-# 
-# /sk <nick>
-# /sk add <entropy>
-# /sk rm <hash>
-# /sk use
-# /sk ls ===> DEFAULT BEHAVIOUR
-
-def cmd_secretkey_cb(data, dabuffer, args):
-    cb_argv = args.split()
-    cb_argc = len(cb_argv)
-
-#    acwee.pmb(dabuffer, "ARGS[%d]: %r (raw:%s)", cb_argc, cb_argv, args)
-    if cb_argc == 0:
-        return acSecretKeyList(data, dabuffer, args)
-    if cb_argc >= 1:
-        newargv = " ".join(cb_argv[1:])
-        cmd = cb_argv[0]
-#        acwee.pmb(dabuffer, "CMD: %s NEWARGS: %s", cmd, newargv)
-        if cmd == "gen":
-            return cmd_addkey_cb(data, dabuffer, newargv)
-        elif cmd == "rm":
-            acwee.pmb(dabuffer, "not implemented yet!")
-        elif cmd == "use":
-            return cmd_usekey_cb(data, dabuffer, newargv)
-        elif cmd == "ls":
-            return acSecretKeyList(data, dabuffer, newargv)
-        elif cmd == "help":
-#            acwee.pmb(dabuffer, "not implemented yet!")
-            return cmdSecretkeyHelp(data, dabuffer, newargv)
-        elif cmd == "give":
-            if re.match(acNicknameRE, newargv[0], re.M) <> None:
-                return cmd_sendkey_cb(data, dabuffer, newargv)
-    return acSecretKeyList(data, dabuffer, args)
 
 
-
-def cmd_sendkey_cb(data, dabuffer, args):
+def skCmdSendKey(data, dabuffer, args):
     cb_argv = args.split()
     cb_argc = len(cb_argv)
     # the command has only one argument.
@@ -574,24 +640,27 @@ def cmd_sendkey_cb(data, dabuffer, args):
 
 
 # XXX TODO: more sanity checks...
-def cmd_addkey_cb(data, dabuffer, args):
+def skCmdAddKey(data, dabuffer, args):
     cb_argv = args.split()
     cb_argc = len(cb_argv)
     if cb_argc <= 0:
         return weechat.WEECHAT_RC_ERROR
 
     inf = ac_get_buflocalinfo(dabuffer)
-    if inf and inf.has_key(BUF_INFO_NICK) and inf.has_key(BUF_INFO_CHAN) and inf.has_key(BUF_INFO_SERV):
-        myargs = { acwee.KEY_NICK:inf[BI_NICK], acwee.KEY_BLOB:args, acwee.KEY_CHANNEL:inf[BI_CHAN], acwee.KEY_SERVER:inf[BI_SERV] } 
-        ac_ctr, err = acwee.acRequest(acwee.ACMSG_TYPE_CRYPTO, acwee.ACMSG_SUBTYPE_CTADD, myargs, acwee.BUF_LARGE)
-        if ac_ctr:
-            if ac_ctr.bada == True:
-                return acwee.acEnable(dabuffer, inf[BI_SERV], inf[BI_CHAN])
+    if inf and inf.has_key(BUF_INFO_NICK) and inf.has_key(BUF_INFO_CHAN) and inf.has_key(BUF_INFO_SERV) and inf.has_key(BI_TYPE):
+        if inf[BI_TYPE] == "channel" or inf[BI_TYPE] == "private":
+            myargs = { acwee.KEY_NICK:inf[BI_NICK], acwee.KEY_BLOB:args, acwee.KEY_CHANNEL:inf[BI_CHAN], acwee.KEY_SERVER:inf[BI_SERV] } 
+            ac_ctr, err = acwee.acRequest(acwee.ACMSG_TYPE_CRYPTO, acwee.ACMSG_SUBTYPE_CTADD, myargs, acwee.BUF_LARGE)
+            if ac_ctr:
+                if ac_ctr.bada == True:
+#                return acwee.acEnable(dabuffer, inf[BI_SERV], inf[BI_CHAN])
+                    return acCmdToggle(data, dabuffer, "")
+    acwee.pmbac(dabuffer, "make sure the buffer you want to add a key to is either a query or a channel buffer, here is : '%s'", inf[BI_TYPE])
     return weechat.WEECHAT_RC_ERROR
 
 
 
-def cmd_usekey_cb(data, dabuffer, args):
+def skCmdUseKey(data, dabuffer, args):
     inf = ac_get_buflocalinfo(dabuffer)
 #    XXX replace with rcvKexPop
     if inf and inf.has_key(BUF_INFO_CHAN) and inf.has_key(BUF_INFO_SERV):
@@ -611,21 +680,69 @@ def cmd_usekey_cb(data, dabuffer, args):
     acwee.pmbac(dabuffer, "you're willing to use a key, but may be in the wrong place! (hint: the buffer where you received the key)")
     return weechat.WEECHAT_RC_OK
 
+
+
 # XXX TODO this is a debug command so to remove anyway...
-def acSecretKeyList(data, dabuffer, args):
+def skCmdList(data, dabuffer, args):
 #    acwee = data
     # XXX using acHashList
     acwee.acHashList(dabuffer)
     return weechat.WEECHAT_RC_OK
 
-def cmd_ac_cb(data, dabuffer, args):
+
+
+# 
+# AC commands
+# 
+# /ac save <filename>
+# /ac load <filename>
+# /ac ping
+# /ac help
+# /ac ===> DEFAULT BEHAVIOUR
+
+def acCmd_CB(data, dabuffer, args):
+    cb_argv = args.split()
+    cb_argc = len(cb_argv)
+
+#    acwee.pmb(dabuffer, "ARGS[%d]: %r (raw:%s)", cb_argc, cb_argv, args)
+    if cb_argc == 0:
+        return acCmdToggle(data, dabuffer, args)
+    if cb_argc >= 1:
+        newargv = " ".join(cb_argv[1:])
+        cmd = cb_argv[0]
+#        acwee.pmb(dabuffer, "CMD: %s NEWARGS: %s", cmd, newargv)
+        if cmd == "save":
+            return acCmdSave(data, dabuffer, newargv)
+        elif cmd == "help":
+            return acCmdHelp(data, dabuffer, args)
+        else:
+            return acCmdToggle(data, dabuffer, args)
+
+
+def acCmdSave(data, dabuffer, args):
+    cb_argv = args.split()
+    cb_argc = len(cb_argv)
+
+    
+    if cb_argc == 0:
+        acwee.pmbac(dabuffer, "no filename give for saving! /ac save <filename> or /ac help for more information")
+    else:
+        acwee.pmbac(dabuffer, "NOW SAVING on %s!!", cb_argv[0])
+        myargs = { acwee.KEY_FILENAME:cb_argv[0] } 
+        ac_ctlr, err = acwee.acRequest(acwee.ACMSG_TYPE_CTL, acwee.ACMSG_SUBTYPE_CTLSAVE, myargs, acwee.BUF_LARGE)
+        if ac_ctlr:
+            if ac_ctlr.bada == True:
+                acwee.pmbac(dabuffer, "saved in  [%s]", cb_argv[0])
+
+    return weechat.WEECHAT_RC_OK
+
+def acCmdToggle(data, dabuffer, args):
     inf = ac_get_buflocalinfo(dabuffer)
     chanRetObj = re.match(acChannelRE, inf[BI_CHAN], re.M)
     nickRetObj = re.match(acNicknameRE, inf[BI_CHAN], re.M)
 #    print chanRetObj
 #    print nickRetObj
     if inf and inf.has_key(BI_CHAN) and inf.has_key(BI_SERV) and inf.has_key(BI_TYPE) and len(inf[BI_CHAN]) > 0 and len(inf[BI_SERV]) > 0 and (inf[BI_TYPE] == "channel" or inf[BI_TYPE] == "private") and (chanRetObj <> None or nickRetObj <> None):
-
         if acwee.isAcEnabled(inf[BI_SERV], inf[BI_CHAN]):
             # XXX using acEnable or acDisable here..
             acwee.acDisable(dabuffer, inf[BI_SERV], inf[BI_CHAN])
@@ -635,88 +752,46 @@ def cmd_ac_cb(data, dabuffer, args):
         acwee.pmbac(dabuffer, "cannot encrypt this buffer...")
     return weechat.WEECHAT_RC_OK
 
+def acCmdHelp(data, dabuffer, args):
+    #acwee = data
+    acwee.pmb(dabuffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$ /ac help %%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
+    acwee.pmb(dabuffer, "args: %s", args)
+    acwee.pmb(dabuffer, "/pk [<cmd>]\tpublic key commands")
+    acwee.pmb(dabuffer, "where <cmd> is")
+    acwee.pmb(dabuffer, "\t\thelp      :\thelp/examples about pk (Public Key)")
+    acwee.pmb(dabuffer, "\t\tls        :\tlist pk(/sk) key(s)")
+    acwee.pmb(dabuffer, "\t\trm <nick> :\tdel pk(/sk) key(s)")
+    acwee.pmb(dabuffer, "\t\tgen       :\tgenerate my pk pair")
+    acwee.pmb(dabuffer, "\t\t<empty>   :\tbroadcast my pk on the current channel/query buffer")
+    acwee.pmb(dabuffer, "/sk [<cmd>|nick]\tsecret key commands")
+    acwee.pmb(dabuffer, "where <cmd> is")
+    acwee.pmb(dabuffer, "\t\thelp                :\thelp/examples about sk (Secret Key)")
+    acwee.pmb(dabuffer, "\t\tls                  :\tlist current secret key(s)")
+    acwee.pmb(dabuffer, "\t\tgen <entropy bytes> :\tPBKDF2() generate current buffer secret key")
+    acwee.pmb(dabuffer, "\t\trm <nick>           :\tremove associated secret key")
+    acwee.pmb(dabuffer, "\t\tuse                 :\tuse Key Exchange secret key received on this buffer (u need sender's public key)")
+    acwee.pmb(dabuffer, "\t\tgive <nick>         :\tsend Key Exchange secret key with <nick> (u need <nick>'s public key)")
+    acwee.pmb(dabuffer, "/ac [<cmd>]\tencryption control")
+    acwee.pmb(dabuffer, "\t\thelp                :\thelp about ac (this help)")
+    acwee.pmb(dabuffer, "\t\t<empty>   :\tenable/disable encryption in the current buffer (channel/query)")
+    # /ac           : enable/disable buffer (chan/query) encryption
+    # /ac help      : help on ac
+    # /ac stat      : daemon stat + heartbeat stat
+    # /ac bah       : rekey/reshuffle the internal memory protection
+    acwee.pmb(dabuffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$%%@#$%%@#$%%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
 
+#    weechat.prnt(dabuffer, "%sAC\tAC help:%s" % ( SCRIPT_COLOR, args))
+#    weechat.prnt(dabuffer, "%sAC\t/pk\tbroadcast our public key" % ( SCRIPT_COLOR ))
+#    weechat.prnt(dabuffer, "%sAC\t/pkgen\tgenerate our key pair" % ( SCRIPT_COLOR ))
+#    weechat.prnt(dabuffer, "%sAC\t/pklist\tlist running public keys" % ( SCRIPT_COLOR ))
+#    weechat.prnt(dabuffer, "%sAC\t/sk <nick>\tsend #channel key to <nick>" % ( SCRIPT_COLOR ))
+#    weechat.prnt(dabuffer, "%sAC\t/skadd <entropy>\tcreate #channel key" % ( SCRIPT_COLOR ))
+#    weechat.prnt(dabuffer, "%sAC\t/skuse\tuse/accept the key that has been received on the current buffer" % ( SCRIPT_COLOR ))
+#    weechat.prnt(dabuffer, "%sAC\taliases:" % (SCRIPT_COLOR))
 
-#
-# PK generation
-#
-def cmdPubkeyGeneratePair(data, dabuffer, args):
-    # KEY INFOS..
-    inf = ac_get_buflocalinfo(dabuffer)
-    if len(inf[BI_NICK]) == 0 or len(inf[BI_SERV]) == 0:
-        acwee.pmbac(dabuffer, "could not generate ephemeral key pair, you're connected nowhere!")
-        acwee.pmbac(dabuffer, "remember your key pair is associated with your server/nickname pair")
-        return weechat.WEECHAT_RC_OK
-
-    # XXX TODO: TO CHANGE
-#    userhost = "unavailable"
-    userhost = ac_get_userinfo(dabuffer, inf[BI_NICK], inf[BI_CHAN], inf[BI_SERV])
-
-#    weechat.prnt(dabuffer, "%sAC\tnick: %s" % ( weechat.color("yellow,blue"), nick))
-#    weechat.prnt(dabuffer, "%sAC\tchannel: %s" % ( weechat.color("yellow,blue"), channel))
-#    weechat.prnt(dabuffer, "%sAC\tserver: %s" % ( weechat.color("yellow,blue"), server))
-#    weechat.prnt(dabuffer, "%sAC\tuserhost: %s" % ( weechat.color("yellow,blue"), userhost))
-#    weechat.prnt(dabuffer, "%sAC\tplugin: %s" % ( weechat.color("yellow,blue"), plugin))
-#    weechat.prnt(dabuffer, "%sAC\ttype: %s" % ( weechat.color("yellow,blue"), gtype))
-#
-
-    if ( inf[BI_TYPE] == "channel" or inf[BI_TYPE] == "private" ) and len(inf[BI_NICK]) > 0:
-        myargs = { acwee.KEY_NICK:inf[BI_NICK], acwee.KEY_HOST:userhost, acwee.KEY_SERVER:inf[BI_SERV], acwee.KEY_BLOB:"" }
-        ac_pkr, err = acwee.acRequest(acwee.ACMSG_TYPE_PK, acwee.ACMSG_SUBTYPE_PKGEN, myargs, acwee.BUF_SMALL)
-        if ac_pkr and ac_pkr.bada == True:
-            acwee.pmbac(dabuffer, "generated a new ECC 25519 public/private keypair ('/pk ls' to see it)")
-#            acwee.pmb(dabuffer, "genkey rc: %s", str(ac_pkr.bada))
-#            acwee.pmb(dabuffer, "genkey error_code: %s",  str(ac_pkr.error_code))
-        else:
-            acwee.pmbac(dabuffer, "could not generate key (%d -> check daemon logs?)!", ac_pkr.error_code)
-        return weechat.WEECHAT_RC_OK
-    acwee.pmbac(dabuffer, "could not generate key (missing something?)!")
     return weechat.WEECHAT_RC_OK
 
 
-# 
-# XXX TODO: we need to add the parsing of argument to allow one or several nicks!?
-#
-def cmdPubkeyList(data, dabuffer, args):
-    nick = weechat.buffer_get_string(dabuffer,"localvar_nick")
-    gtype = weechat.buffer_get_string(dabuffer,"localvar_type")
-    server = weechat.buffer_get_string(dabuffer,"localvar_server")
-
-    if args <> None and len(args) > 0:
-        myargs = { acwee.KEY_NICK:args, acwee.KEY_SERVER:server } 
-    else: # XXX TODO: this is not clean...
-        myargs = { acwee.KEY_SERVER:server } 
-
-    ac_pkr, err = acwee.acRequest(acwee.ACMSG_TYPE_PK, acwee.ACMSG_SUBTYPE_PKLIST, myargs, acwee.BUF_LARGE)
-    if ac_pkr:
-        if len(ac_pkr.public_keys) > 0:
-            for t in ac_pkr.public_keys:
-                acwee.prtAcPk(dabuffer, t, nick)
-        else:
-            acwee.pmbac(dabuffer, "NO KEYS FOUND :(")
-        return weechat.WEECHAT_RC_OK
-    return weechat.WEECHAT_RC_ERROR
-
-# 
-# XXX TODO: we need to add the parsing of argument to allow one or several nicks!?
-#
-def cmdPubkeyDel(data, dabuffer, args):
-    nick = weechat.buffer_get_string(dabuffer,"localvar_nick")
-    gtype = weechat.buffer_get_string(dabuffer,"localvar_type")
-    server = weechat.buffer_get_string(dabuffer,"localvar_server")
-
-
-    if args <> None and len(args) == 0:
-        acwee.pmbac("look for some help, you don't understand what you want...")
-        return weechat.WEECHAT_RC_OK
-
-    myargs = { acwee.KEY_NICK:args, acwee.KEY_SERVER:server } 
-    ac_pkr, err = acwee.acRequest(acwee.ACMSG_TYPE_PK, acwee.ACMSG_SUBTYPE_PKDEL, myargs, acwee.BUF_SMALL)
-    if ac_pkr and ac_pkr.bada == True:
-        acwee.pmbac(dabuffer, "'%s''s key removed", args)
-    else:
-        acwee.pmbac(dabuffer, "NO KEY FOUND :(")
-    return weechat.WEECHAT_RC_OK
 
 #
 # SIGNAL CALLBACKS
@@ -1269,6 +1344,9 @@ class AcPbCom(object):
     # for CT mMessages
     KEY_OPT = 'opt'
 
+    # for CTL messages
+    KEY_FILENAME = "filename"
+
     # the subtypes of public key msg generation
     ACMSG_SUBTYPE_PKGEN     = 0
     ACMSG_SUBTYPE_PKGET     = 1
@@ -1280,12 +1358,16 @@ class AcPbCom(object):
     ACMSG_SUBTYPE_CTSEAL    = 7
     ACMSG_SUBTYPE_CTOPEN    = 8
     ACMSG_SUBTYPE_CTADD     = 9
+    ACMSG_SUBTYPE_CTLPING   = 10
+    ACMSG_SUBTYPE_CTLLOAD   = 11
+    ACMSG_SUBTYPE_CTLSAVE   = 12
 
     # the message types / used for ac_msg() 
     ACMSG_TYPE_PK       = 0
     ACMSG_TYPE_KEX      = 1
     ACMSG_TYPE_CRYPTO   = 2
-    ACMSG_TYPE_QUIT     = 3
+    ACMSG_TYPE_CTL      = 3
+    ACMSG_TYPE_QUIT     = 4
 
     # depending on the type of data  we might need more space
     BUF_SMALL   = 2048
@@ -1461,13 +1543,14 @@ class AcPbCom(object):
 
     def msgCtlLoad(self, args):
         acctreq = ac_pb2.acControlMessageRequest()
-        acctreq.type = ac_pb2.acControlMessageRequest.CTL_LOAD
+        acctreq.type = ac_pb2.acControlMessageRequest.CTL_LOADCTX
         # bleh
         return acctreq.SerializeToString()
 
     def msgCtlSave(self, args):
         acctreq = ac_pb2.acControlMessageRequest()
-        acctreq.type = ac_pb2.acControlMessageRequest.CTL_SAVE
+        acctreq.filename = args[self.KEY_FILENAME]
+        acctreq.type = ac_pb2.acControlMessageRequest.CTL_SAVECTX
         # bleh
         return acctreq.SerializeToString()
 
@@ -1495,6 +1578,7 @@ class AcPbCom(object):
             return self.msgCtOpen(args)
         if subtype == self.ACMSG_SUBTYPE_CTADD:
             return self.msgCtAdd(args)
+
     def acControlMsg(self, subtype, args):
         if subtype == self.ACMSG_SUBTYPE_CTLPING:
             return self.msgCtlPing(args)
@@ -1521,6 +1605,9 @@ class AcPbCom(object):
         elif type == self.ACMSG_TYPE_CRYPTO:
             acMsgObj.type = ac_pb2.ArseneCryptoMessage.AC_CRYPTO
             acMsgObj.blob = self.acCryptoMsg(subtype, args)
+        elif type == self.ACMSG_TYPE_CTL:
+            acMsgObj.type = ac_pb2.ArseneCryptoMessage.AC_CTL
+            acMsgObj.blob = self.acControlMsg(subtype, args)
         elif type == self.ACMSG_TYPE_QUIT:
             acMsgObj.type = ac_pb2.ArseneCryptoMessage.AC_QUIT
             acMsgObj.blob = "" #ac_quit_msg(subtype, args)
@@ -1719,10 +1806,10 @@ class AcWeechat(AcCore):
     CMD_HKEY_NAME = "name"
     CMD_HKEY_CB = "cb"
 
-    CMD_HELP    = { CMD_HKEY_NAME:"achelp", CMD_HKEY_CB: "cmd_achelp_cb" }
+#    CMD_HELP    = { CMD_HKEY_NAME:"achelp", CMD_HKEY_CB: "cmd_achelp_cb" }
     CMD_PUBKEY  = { CMD_HKEY_NAME:"pk",     CMD_HKEY_CB: "cmd_pubkey_cb" }
     CMD_SNDKEY  = { CMD_HKEY_NAME:"sk",     CMD_HKEY_CB: "cmd_secretkey_cb" }
-    CMD_ACCMD   = { CMD_HKEY_NAME:"ac",     CMD_HKEY_CB: "cmd_ac_cb" }
+    CMD_ACCMD   = { CMD_HKEY_NAME:"ac",     CMD_HKEY_CB: "acCmd_CB" }
 
     def __init__(self, acBin, acDbg):
         AcCore.__init__(self, "", acBin, acDbg)
@@ -1732,7 +1819,7 @@ class AcWeechat(AcCore):
 #
 #
     def acCmdHooks(self):
-        weechat.hook_command(self.CMD_HELP[self.CMD_HKEY_NAME], "AC help command", "", "", "", self.CMD_HELP[self.CMD_HKEY_CB], "")
+#        weechat.hook_command(self.CMD_HELP[self.CMD_HKEY_NAME], "AC help command", "", "", "", self.CMD_HELP[self.CMD_HKEY_CB], "")
         weechat.hook_command(self.CMD_PUBKEY[self.CMD_HKEY_NAME], "/pk help for more infos", "", "", "", self.CMD_PUBKEY[self.CMD_HKEY_CB], "")
         weechat.hook_command(self.CMD_SNDKEY[self.CMD_HKEY_NAME], "/sk help for more infos", "", "", "nick", self.CMD_SNDKEY[self.CMD_HKEY_CB], "")
         weechat.hook_command(self.CMD_ACCMD[self.CMD_HKEY_NAME], "enable/disable encryption on the current buffer", "", "", "", self.CMD_ACCMD[self.CMD_HKEY_CB], "")

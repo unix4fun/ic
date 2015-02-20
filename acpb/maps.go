@@ -32,12 +32,14 @@ func (psk PSKMap) Map2File(outfilestr string, salt []byte, keystr []byte) (bool,
 	 * 5. write to file.
 	 * 6. RSA sign the file.
 	 */
+	fmt.Fprintf(os.Stderr, "Map2FILE CALL to  %s", outfilestr)
 
-	outfile, err := os.OpenFile(outfilestr, os.O_TRUNC, 0700)
+	outfile, err := os.OpenFile(outfilestr, os.O_CREATE|os.O_WRONLY, 0700)
+	//defer outfile.Close()
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "ERROR: %v", err)
 		return false, err
 	}
-	defer outfile.Close()
 
 	buff := new(bytes.Buffer)
 	enc := gob.NewEncoder(buff)
@@ -48,10 +50,18 @@ func (psk PSKMap) Map2File(outfilestr string, salt []byte, keystr []byte) (bool,
 	}
 
 	fmt.Fprintf(os.Stderr, "marshalled : %d bytes\n", len(buff.Bytes()))
-	return false, nil
+	n, err := outfile.Write(buff.Bytes())
+	fmt.Fprintf(os.Stderr, "marshalled : %d bytes\n", len(buff.Bytes()))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "ERROR: %v", err)
+		return false, err
+	}
+	fmt.Fprintf(os.Stderr, "writtent: %d bytes\n", n)
+	return true, nil
 }
 
-func (psk PSKMap) File2Map(salt []byte, key []byte) {
+func (psk PSKMap) File2Map(infilestr string, salt []byte, key []byte) {
+	//fmt.Fprintf(os.Stderr, "File2Map CALL to  %s", outfilestr)
 }
 
 //

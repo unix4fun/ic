@@ -45,7 +45,6 @@ func CTLLOAD_Handler(acMessageCtlReq *AcControlMessageRequest) (acMsgResponse *A
 	reqFilename := acMessageCtlReq.GetFilename()
 
 	fmt.Fprintf(os.Stderr, "[+] LOADCTX '%s'\n", reqFilename)
-
 	acMsgResponse = &AcControlMessageResponse{
 		Type:      &responseType,
 		Bada:      proto.Bool(true),
@@ -64,7 +63,7 @@ func CTLSAVE_Handler(acMessageCtlReq *AcControlMessageRequest) (acMsgResponse *A
 
 	//func (psk PSKMap) Map2FileBlob(outfilestr string, salt []byte, keystr []byte) (bool, error) {
 	ok, err := ACmap.Map2File(reqFilename, []byte("proutprout"), []byte("proutkey"))
-	if err != nil && ok != false {
+	if err != nil || ok != false {
 		retErr := acpbError(-1, "CTLSAVE_Handler().args(outfile, salt, keystr): 0 bytes", nil)
 		acMsgResponse = &AcControlMessageResponse{
 			Type:      &responseType,
