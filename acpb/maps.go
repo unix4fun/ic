@@ -35,7 +35,7 @@ func (psk PSKMap) Map2File(outfilestr string, salt []byte, keystr []byte) (bool,
 	fmt.Fprintf(os.Stderr, "Map2FILE CALL to  %s", outfilestr)
 
 	outfile, err := os.OpenFile(outfilestr, os.O_CREATE|os.O_WRONLY, 0700)
-	//defer outfile.Close()
+	defer outfile.Close()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: %v", err)
 		return false, err
@@ -60,8 +60,24 @@ func (psk PSKMap) Map2File(outfilestr string, salt []byte, keystr []byte) (bool,
 	return true, nil
 }
 
-func (psk PSKMap) File2Map(infilestr string, salt []byte, key []byte) {
-	//fmt.Fprintf(os.Stderr, "File2Map CALL to  %s", outfilestr)
+func (psk PSKMap) File2Map(infilestr string, salt []byte, keystr []byte) (bool, error) {
+	fmt.Fprintf(os.Stderr, "File2Map CALL to  %s", infilestr)
+	infile, err := os.Open(infilestr)
+	defer infile.Close()
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "ERROR: %v", err)
+		return false, err
+	}
+
+	dec := gob.NewDecoder(infile)
+	err = dec.Decode(&ACmap)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "ERROR: %v", err)
+		return false, err
+	}
+
+	return true, nil
 }
 
 //

@@ -45,6 +45,17 @@ func CTLLOAD_Handler(acMessageCtlReq *AcControlMessageRequest) (acMsgResponse *A
 	reqFilename := acMessageCtlReq.GetFilename()
 
 	fmt.Fprintf(os.Stderr, "[+] LOADCTX '%s'\n", reqFilename)
+
+	ok, err := ACmap.File2Map(reqFilename, []byte("proutprout"), []byte("proutkey"))
+	if err != nil || ok != false {
+		retErr := acpbError(-1, "CTLLOAD_Handler().args(outfile, salt, keystr): 0 bytes", nil)
+		acMsgResponse = &AcControlMessageResponse{
+			Type:      &responseType,
+			Bada:      proto.Bool(false),
+			ErrorCode: proto.Int32(-1),
+		}
+		return acMsgResponse, retErr
+	}
 	acMsgResponse = &AcControlMessageResponse{
 		Type:      &responseType,
 		Bada:      proto.Bool(true),

@@ -273,7 +273,7 @@ def ac_get_userinfo(buffer, nick, channel, server):
 
 def acMessageParsePrintmsg(raw_tags, print_msg):
 #    ret_bool = False
-    print raw_tags
+#    print raw_tags
 #    print print_msg
     plug, name, tags = raw_tags.split(';')
     taglist = tags.split(',')
@@ -307,8 +307,6 @@ def acMessageParsePrintmsg(raw_tags, print_msg):
                 return [ True, message ]
 
         return [ False, print_msg ]
-
-
 
 
 
@@ -713,6 +711,8 @@ def acCmd_CB(data, dabuffer, args):
 #        acwee.pmb(dabuffer, "CMD: %s NEWARGS: %s", cmd, newargv)
         if cmd == "save":
             return acCmdSave(data, dabuffer, newargv)
+        elif cmd == "load":
+            return acCmdLoad(data, dabuffer, newargv)
         elif cmd == "help":
             return acCmdHelp(data, dabuffer, args)
         else:
@@ -725,7 +725,7 @@ def acCmdSave(data, dabuffer, args):
 
     
     if cb_argc == 0:
-        acwee.pmbac(dabuffer, "no filename give for saving! /ac save <filename> or /ac help for more information")
+        acwee.pmbac(dabuffer, "no filename given for saving! /ac save <filename> or /ac help for more information")
     else:
         acwee.pmbac(dabuffer, "NOW SAVING on %s!!", cb_argv[0])
         myargs = { acwee.KEY_FILENAME:cb_argv[0] } 
@@ -734,6 +734,22 @@ def acCmdSave(data, dabuffer, args):
             if ac_ctlr.bada == True:
                 acwee.pmbac(dabuffer, "saved in  [%s]", cb_argv[0])
 
+    return weechat.WEECHAT_RC_OK
+
+def acCmdLoad(data, dabuffer, args):
+    cb_argv = args.split()
+    cb_argc = len(cb_argv)
+
+    
+    if cb_argc == 0:
+        acwee.pmbac(dabuffer, "no filename given for loading! /ac load <filename> or /ac help for more information")
+    else:
+        acwee.pmbac(dabuffer, "NOW LOADING from %s!!", cb_argv[0])
+        myargs = { acwee.KEY_FILENAME:cb_argv[0] } 
+        ac_ctlr, err = acwee.acRequest(acwee.ACMSG_TYPE_CTL, acwee.ACMSG_SUBTYPE_CTLLOAD, myargs, acwee.BUF_LARGE)
+        if ac_ctlr:
+            if ac_ctlr.bada == True:
+                acwee.pmbac(dabuffer, "saved in  [%s]", cb_argv[0])
     return weechat.WEECHAT_RC_OK
 
 def acCmdToggle(data, dabuffer, args):
@@ -1543,6 +1559,7 @@ class AcPbCom(object):
 
     def msgCtlLoad(self, args):
         acctreq = ac_pb2.acControlMessageRequest()
+        acctreq.filename = args[self.KEY_FILENAME]
         acctreq.type = ac_pb2.acControlMessageRequest.CTL_LOADCTX
         # bleh
         return acctreq.SerializeToString()
