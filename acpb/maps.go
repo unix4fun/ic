@@ -21,7 +21,6 @@ var ACrun bool
 type PSKMap map[string](*AcCOMM)
 
 func (psk PSKMap) Map2File(outfilestr string, salt []byte, keystr []byte) (bool, error) {
-
 	/*
 	 *
 	 * here is the plan:
@@ -31,6 +30,7 @@ func (psk PSKMap) Map2File(outfilestr string, salt []byte, keystr []byte) (bool,
 	 * 4. auth-encrypt the mashalled data.
 	 * 5. write to file.
 	 * 6. RSA sign the file.
+	 *
 	 */
 	fmt.Fprintf(os.Stderr, "Map2FILE CALL to  %s", outfilestr)
 
@@ -41,22 +41,22 @@ func (psk PSKMap) Map2File(outfilestr string, salt []byte, keystr []byte) (bool,
 		return false, err
 	}
 
-	buff := new(bytes.Buffer)
-	enc := gob.NewEncoder(buff)
+	//buff := new(bytes.Buffer)
+	enc := gob.NewEncoder(outfile)
 
 	err = enc.Encode(ACmap)
 	if err != nil {
 		return false, err
 	}
 
-	fmt.Fprintf(os.Stderr, "marshalled : %d bytes\n", len(buff.Bytes()))
-	n, err := outfile.Write(buff.Bytes())
-	fmt.Fprintf(os.Stderr, "marshalled : %d bytes\n", len(buff.Bytes()))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "ERROR: %v", err)
-		return false, err
-	}
-	fmt.Fprintf(os.Stderr, "writtent: %d bytes\n", n)
+	//	fmt.Fprintf(os.Stderr, "marshalled : %d bytes\n", len(buff.Bytes()))
+	//	n, err := outfile.Write(buff.Bytes())
+	//	fmt.Fprintf(os.Stderr, "marshalled : %d bytes\n", len(buff.Bytes()))
+	//	if err != nil {
+	//		fmt.Fprintf(os.Stderr, "ERROR: %v", err)
+	//		return false, err
+	//	}
+	//	fmt.Fprintf(os.Stderr, "writtent: %d bytes\n", n)
 	return true, nil
 }
 
@@ -281,4 +281,8 @@ func (ac *AcCOMM) Init() {
 	ac.Pk = make(PKMap)
 	ac.Sk = make(SKMap)
 	ac.Rd = make(RDMap)
+}
+
+/* AcCOMM display function.. */
+func (ac *AcCOMM) String() {
 }

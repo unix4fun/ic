@@ -9,13 +9,17 @@
 # irc.look.notice_as_pv = auto => always
 # - display/clear acCipherReady / acRecvKeyBlobs commands
 # - detect running process detach / implement that via a timer_cb and heartbeat request to the process
-# - PK/SKmaps encryption.
+# - PK/SKmaps encryption. [ PARTIAL DONE / SATISFACTORY? ]
 # - statistics requests to the daemon
 # - flood limit on number of receiving challenges/kx
 # - flood limit on receiving public keys to avoid resources consumption
 # - weechat.unhook_all() on exit or unload of the script [ DONE ]
 # - do we want to be able to uncipher even when not there...? [ DONE ]
 # - weechat_bar_item_new () to use for displaying more info in the bar [ DONE for nonce ]
+# - [SECURITY XXX]: when loading from file the nonce value is back to zero.. security vulnerability
+# - [SECURITY XXX]: passphrase for load/save should be stored in the "secure" storage of weechat.
+# - [CLIENT]: start irssi version
+# - [FEATURES]: start adding configuration variables
 
 #
 # ChangeLog:
@@ -38,6 +42,7 @@
 # 07/10/2014 - fixed the double allocation of acwee object
 # 01/01/2015 - changing the marshalling of the messages to put it all on protobuf, also fixed potential collision vuln and introduced long message handling
 # 03/02/2015 - moving to go1.4 and also moving to the new repository of go.crypto and goprotobuf, adding Makefile for installation of the script
+# 23/02/2015 - added load/save basic functionnalities, files are NOT encrypted YET / starting to implement AES-GCM as symmetric crypto mode and cstate file.
 
 SCRIPT_NAME    = 'ac-weechat'
 SCRIPT_AUTHOR  = 'eau <eau-code@unix4fun.net>'
@@ -557,7 +562,7 @@ def cmd_secretkey_cb(data, dabuffer, args):
         elif cmd == "help":
             return skCmdHelp(data, dabuffer, newargv)
         elif cmd == "give":
-            if re.match(acNicknameRE, newargv[0], re.M) <> None:
+            if len(newargv) > 0 and re.match(acNicknameRE, newargv[0], re.M) <> None:
                 return skCmdSendKey(data, dabuffer, newargv)
     return skCmdList(data, dabuffer, args)
 
