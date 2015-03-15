@@ -179,6 +179,7 @@ correctly, the following should work:
     go get github.com/unix4fun/ac
 
 if any issues occurs, just :
+
     cd $GOPATH/src/github.com/unix4fun/ac
     go generate
     go build
@@ -189,12 +190,14 @@ Binary `ac` should then be in `$GOPATH/bin`
     cd $GOPATH/src/github.com/unix4fun/ac && make install
 
 It will copy the following files into :
-ac_pb2.py       -> ~/.weechat/python/
-ac-weechat.py   -> ~/.weechat/python/autoload/
+
+    ~/.weechat/python/ac_pb2.py
+    ~/.weechat/python/autoload/ac-weechat.py
 
 ## Usage
 
 3 main commands:
+
     /pk
     '/pk' is used to manage Public Keys (ECC key exchange)
 
@@ -204,14 +207,13 @@ ac-weechat.py   -> ~/.weechat/python/autoload/
     /ac
     '/ac' is used to enable disable crypto on a specific (weechat) buffer
 
-the flow is simple, when you join the channel, you _GENERATE_ and then _BROADCAST_ you public key, so that other channel members are aware of your public key,
-other channel members should also _BROADCAST_ their own key, someone on the channel _GENERATE_A_SECRET_  Key (for the current channel and then _EXCHANGE_ the newly created secret key with other members.
+the flow is simple, when you join the channel, you *_GENERATE_* and then *_BROADCAST_* you public key, so that other channel members are aware of your public key,
+other channel members should also *_BROADCAST_* their own key, someone on the channel *_GENERATE A SECRET_*  Key for the current channel and then *_EXCHANGE_* the newly created secret key with other members.
 
 
-_GENERATE_  : /pk gen
-_BROADCAST_ : /pk
-_GENERATE_A_SECRET_ : /sk gen <entropy input>
-_EXCHANGE_  : /sk give <nickname>
+_GENERATE_|_BROADCAST_|_GENERATE A SECRET_|_EXCHANGE_|_Public Key Help_|_Secret Key Help
+/pk gen   | /pk       | /sk gen <someinput> | /sk give <nickname>|/pk help | /sk help
+
 
 
 Use /pk help, /sk help or /achelp to access the help.
