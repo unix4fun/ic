@@ -212,6 +212,7 @@ other channel members should also *_BROADCAST_* their own key, someone on the ch
 
 
 _GENERATE_|_BROADCAST_|_GENERATE A SECRET_|_EXCHANGE_|_Public Key Help_|_Secret Key Help
+----------|-----------|-------------------|----------|-----------------|----------------
 /pk gen   | /pk       | /sk gen <someinput> | /sk give <nickname>|/pk help | /sk help
 
 
