@@ -116,7 +116,7 @@ func CreateACMessageNACL(context *SecKey, rnd, msg, myNick []byte) (out []byte, 
 	}
 
 	// encrypt
-	myCipher := secretbox.Seal(nil, myBody, noncebyte, &context.key)
+	myCipher := secretbox.Seal(nil, myBody, noncebyte, context.key)
 
 	// close the key
 	for j := 0; j < len(rnd); j++ {
@@ -164,7 +164,7 @@ func OpenACMessageNACL(context *SecKey, rnd, cmsg, peerNick, myNick []byte) (out
 		context.key[j] = context.key[j] ^ rnd[j]
 	}
 
-	packed, ok := secretbox.Open(nil, ciphertext, noncebyte, &context.key)
+	packed, ok := secretbox.Open(nil, ciphertext, noncebyte, context.key)
 
 	// Close the key
 	for j := 0; j < len(rnd); j++ {
@@ -259,7 +259,7 @@ func CreateACMessage(context *SecKey, rnd, msg, myNick []byte) (out []byte, err 
 		context.key[j] = context.key[j] ^ rnd[j]
 	}
 	// encrypt
-	cipher := secretbox.Seal(nil, body.Bytes(), &noncebyte, &context.key)
+	cipher := secretbox.Seal(nil, body.Bytes(), &noncebyte, context.key)
 
 	// close the key
 	for j := 0; j < len(rnd); j++ {
@@ -382,7 +382,7 @@ func OpenACMessage(context *SecKey, rnd, cmsg, peerNick, myNick []byte) (out []b
 	//fmt.Printf("B64 LEN %d CIPHER TEXT : %d\n", len(b64str[4:8]), len(bounce))
 	//    fmt.Printf("NONCE LEN: %d\n", len(noncebyte))
 	//    fmt.Printf("KEY LEN: %d\n", len(context.key))
-	packed, ok := secretbox.Open(nil, b64str[8:b64str_len], &noncebyte, &context.key)
+	packed, ok := secretbox.Open(nil, b64str[8:b64str_len], &noncebyte, context.key)
 	//    fmt.Printf("C EST OK?!?!?\n")
 	//    fmt.Println(ok)
 	// Close the key

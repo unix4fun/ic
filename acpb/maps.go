@@ -20,6 +20,15 @@ var ACrun bool
 // is it too complicated? hmm we need to make it clear
 type PSKMap map[string](*AcCOMM)
 
+func (psk PSKMap) String() string {
+	buf := new(bytes.Buffer)
+	for k, v := range psk {
+		// for each AcCOMM structure call String() of AcCOMM
+		_, _ = buf.WriteString(fmt.Sprintf("-[%s]-\n%v\n", k, v))
+	}
+	return buf.String()
+}
+
 func (psk PSKMap) Map2File(outfilestr string, salt []byte, keystr []byte) (bool, error) {
 	/*
 	 *
@@ -33,6 +42,8 @@ func (psk PSKMap) Map2File(outfilestr string, salt []byte, keystr []byte) (bool,
 	 *
 	 */
 	fmt.Fprintf(os.Stderr, "Map2FILE CALL to  %s", outfilestr)
+
+	fmt.Fprintf(os.Stderr, "<< ACMAP DISPLAY:\n%v\n", ACmap)
 
 	outfile, err := os.OpenFile(outfilestr, os.O_CREATE|os.O_WRONLY, 0700)
 	defer outfile.Close()
@@ -64,7 +75,6 @@ func (psk PSKMap) File2Map(infilestr string, salt []byte, keystr []byte) (bool, 
 	fmt.Fprintf(os.Stderr, "File2Map CALL to  %s", infilestr)
 	infile, err := os.Open(infilestr)
 	defer infile.Close()
-
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: %v", err)
 		return false, err
@@ -76,6 +86,9 @@ func (psk PSKMap) File2Map(infilestr string, salt []byte, keystr []byte) (bool, 
 		fmt.Fprintf(os.Stderr, "ERROR: %v", err)
 		return false, err
 	}
+
+	/* let's display all SKMap */
+	fmt.Fprintf(os.Stderr, ">> ACMAP DISPLAY:\n%v\n", ACmap)
 
 	return true, nil
 }
@@ -223,6 +236,16 @@ func (pkm PKMap) Init() {
 	pkm = make(PKMap)
 }
 
+func (pkm PKMap) String() string {
+	buf := new(bytes.Buffer)
+
+	for k, v := range pkm {
+		buf.WriteString(fmt.Sprintf("\\%s/\n%v\n", k, v))
+	}
+
+	return buf.String()
+}
+
 func (pkm PKMap) GetPK(nick string) *accp.KexKey {
 	pk, ok := pkm[nick]
 	if ok == true {
@@ -243,6 +266,16 @@ type SKMap map[string](*accp.SecKey)
 
 func (skm SKMap) Init() {
 	skm = make(SKMap)
+}
+
+func (skm SKMap) String() string {
+	buf := new(bytes.Buffer)
+
+	for k, v := range skm {
+		buf.WriteString(fmt.Sprintf("\\%s/\n%v\n", k, v))
+	}
+
+	return buf.String()
 }
 
 func (skm SKMap) GetSK(channel string) *accp.SecKey {
@@ -284,5 +317,28 @@ func (ac *AcCOMM) Init() {
 }
 
 /* AcCOMM display function.. */
-func (ac *AcCOMM) String() {
+func (ac *AcCOMM) String() string {
+	buf := new(bytes.Buffer)
+
+	_, _ = buf.WriteString(fmt.Sprintf("---\n"))
+	// Public Keys
+	buf.WriteString(fmt.Sprintf("- PK\n"))
+	for k, v := range ac.Pk {
+		_, _ = buf.WriteString(fmt.Sprintf("{%s}\n%v\n", k, v))
+	}
+
+	// Secret/Symmetric Keys
+	buf.WriteString(fmt.Sprintf("- SK\n"))
+	for k, v := range ac.Sk {
+		_, _ = buf.WriteString(fmt.Sprintf("{%s}\n%v\n", k, v))
+	}
+
+	// Random values
+	buf.WriteString(fmt.Sprintf("- RD\n"))
+	for k, v := range ac.Rd {
+		_, _ = buf.WriteString(fmt.Sprintf("{%s}\n%v\n", k, v))
+	}
+
+	_, _ = buf.WriteString(fmt.Sprintf("---\n"))
+	return buf.String()
 }

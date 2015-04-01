@@ -207,11 +207,11 @@ It will copy the following files into :
     /ac
     '/ac' is used to enable disable crypto on a specific (weechat) buffer
 
-the flow is simple, when you join the channel, you *_GENERATE_* and then *_BROADCAST_* you public key, so that other channel members are aware of your public key,
-other channel members should also *_BROADCAST_* their own key, someone on the channel *_GENERATE A SECRET_*  Key for the current channel and then *_EXCHANGE_* the newly created secret key with other members.
+the flow is simple, when you join the channel, you **GENERATE** and then **BROADCAST** you public key, so that other channel members are aware of your public key,
+other channel members should also **BROADCAST** their own key, someone on the channel **GENERATE A SECRET**  Key for the current channel and then **EXCHANGE** the newly created secret key with other members.
 
 
-_GENERATE_|_BROADCAST_|_GENERATE A SECRET_|_EXCHANGE_|_Public Key Help_|_Secret Key Help
+_GENERATE Public Key_|_BROADCAST Public Key_|_GENERATE Symmetric Key_|_EXCHANGE_|_Public Key Help_|_Secret Key Help_
 ----------|-----------|-------------------|----------|-----------------|----------------
 /pk gen   | /pk       | /sk gen <someinput> | /sk give <nickname>|/pk help | /sk help
 

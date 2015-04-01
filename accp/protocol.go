@@ -110,7 +110,7 @@ func (pk *KexKey) GetPubfp() (pubfp []byte) {
 // if you Println() the struct then it call this as part of the type.
 func (pk *KexKey) String() string {
 	var b bytes.Buffer
-	fmt.Fprintf(&b, "----\n")
+	fmt.Fprintf(&b, "-\n")
 	fmt.Fprintf(&b, "KexKey struct @ %p\n", pk)
 	fmt.Fprintf(&b, "nick: %s @ %s on %s\n", pk.Nickname, pk.Userhost, pk.Server)
 	fmt.Fprintf(&b, "pubkey: %s\n", pk.Pubkey)
@@ -122,7 +122,7 @@ func (pk *KexKey) String() string {
 type SecKey struct {
 	nonce    uint32
 	bob      []byte
-	key      [32]byte
+	key      *[32]byte
 	CreaTime time.Time
 	Overhead int
 }
@@ -130,7 +130,7 @@ type SecKey struct {
 // if you Println() the struct then it call this as part of the type.
 func (sk *SecKey) String() string {
 	var b bytes.Buffer
-	fmt.Fprintf(&b, "----\n")
+	fmt.Fprintf(&b, "-\n")
 	fmt.Fprintf(&b, "SecKey struct @ %p\n", sk)
 	fmt.Fprintf(&b, "-> bob : %s\n", sk.bob)
 	fmt.Fprintf(&b, "-> key : %s\n", hex.EncodeToString(sk.key[:]))
@@ -196,6 +196,7 @@ func CreateACContext(channel []byte, nonce uint32) (context *SecKey, err error) 
 	// and also update the nonce on every received message
 	context.nonce = nonce
 	context.bob = channel
+	context.key = new([32]byte)
 	context.Overhead = secretbox.Overhead
 	return context, nil
 }
