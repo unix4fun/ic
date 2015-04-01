@@ -24,21 +24,10 @@ ACW_PYTHON=$(ACW_ROOT)/python
 ACW_AUTOLOAD=$(ACW_PYTHON)/autoload
 
 
-#PROTOC=`which protoc`
-#ACROOT=/Users/eau/dev/go/src/github.com/unix4fun/ac
-#ACROOT=.
-#ACPB=${ACROOT}/acpb
-#ACCP=${ACROOT}/accp
-#ACWEECHAT=${ACROOT}/client-scripts/weechat
-
-#ifneq ("/Users/eau/tools/go/bin/go", "")
-#else
-#endif
-
-
 #all: ac-weechat
 #	@echo "you can now use AC!"
 
+all: gen install
 
 clean:
 	@echo "cleaning"
@@ -47,20 +36,10 @@ clean:
 update:
 	@echo "updating"
 
-#help:
-#	@echo "help"
-#
-#acwcpb: ${ACPB}/ac.proto
-#	@echo "generate AC Weechat Protobuf"
-#	${PROTOC} --python_out=${ACWEECHAT} -Iacpb ${ACPB}/ac.proto
+gen:
+	@echo "generating using your protobuf"
+	go generate
 
-#ac:
-#	@echo "generate AC Go Protobuf"
-#	${PROTOC} --go_out=${ACPB} -Iacpb ${ACPB}/ac.proto
-#	${PROTOC} --go_out=${ACCP} -Iaccp ${ACCP}/ac.proto
-# XXX TODO:
-# - test GOBIN existence
-# - test ACW_ROOT and _PYTHON existence
 
 install: 
 	@echo "go: ${GOBIN}"
