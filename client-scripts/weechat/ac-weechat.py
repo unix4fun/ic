@@ -335,12 +335,12 @@ def acMessageParsePrintmsg(raw_tags, print_msg):
 #
 def ac_checktimer_cb(data, remaining_calls):
     weechat.prnt("", "timer! data=%s" % data)
-    global acProcess
-    acProcess.poll()
-    if acProcess.returncode is not None:
-        weechat.prnt("", "code is dead let's restart! data=%r" % acProcess.returncode)
-        ac_start_daemon()
-    weechat.prnt("", "timer! data=%r" % acProcess.returncode)
+#    global acProcess
+#    acProcess.poll()
+#    if acProcess.returncode is not None:
+#        weechat.prnt("", "code is dead let's restart! data=%r" % acProcess.returncode)
+#        ac_start_daemon()
+#    weechat.prnt("", "timer! data=%r" % acProcess.returncode)
     return weechat.WEECHAT_RC_OK
 
 #
@@ -357,7 +357,8 @@ def ac_checktimer_cb(data, remaining_calls):
 #
 #
 
-def cmd_pubkey_cb(data, dabuffer, args):
+#def cmd_pubkey_cb(data, dabuffer, args):
+def pkCmd_CB(data, dabuffer, args):
     # /pk   ========> DEFAULT BEHAVIOUR (broadcast)
     # /pk ls
     # /pk rm <nick>
@@ -446,7 +447,7 @@ def pkCmdGeneratePair(data, dabuffer, args):
         else:
             acwee.pmbac(dabuffer, "could not generate key (%d -> check daemon logs?)!", ac_pkr.error_code)
         return weechat.WEECHAT_RC_OK
-    acwee.pmbac(dabuffer, "could not generate key (missing something?)!")
+    acwee.pmbac(dabuffer, "could not generate key you are NOT in a (connected) channel/query buffer!")
     return weechat.WEECHAT_RC_OK
 
 
@@ -540,7 +541,8 @@ def pkCmdBroadcast(data, dabuffer, args):
 #
 #
 
-def cmd_secretkey_cb(data, dabuffer, args):
+#def cmd_secretkey_cb(data, dabuffer, args):
+def skCmd_CB(data, dabuffer, args):
     cb_argv = args.split()
     cb_argc = len(cb_argv)
 
@@ -1712,7 +1714,7 @@ class AcCore(AcDisplay, AcPbCom):
         self.pmb(buffer, "%s Crypto %s %s (c) 2013-2014 Security Gigolos ", random.choice(self.A_title), random.choice(self.S_title), SCRIPT_VERSION)
         self.pmb(buffer, "by %s", SCRIPT_AUTHOR)
         self.pmb(buffer, "Implements AEAD: NaCL/ECC Curve 25519 w/ Salsa20/Poly1305 (more later)")
-        self.pmb(buffer, "type: /achelp to get HELP!")
+        self.pmb(buffer, "type: /ac help to get HELP!")
         self.pmb(buffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$%%@#$%%@#$%%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
 
     def _buildHash(self, serv, chan):
@@ -1828,9 +1830,8 @@ class AcWeechat(AcCore):
     CMD_HKEY_NAME = "name"
     CMD_HKEY_CB = "cb"
 
-#    CMD_HELP    = { CMD_HKEY_NAME:"achelp", CMD_HKEY_CB: "cmd_achelp_cb" }
-    CMD_PUBKEY  = { CMD_HKEY_NAME:"pk",     CMD_HKEY_CB: "cmd_pubkey_cb" }
-    CMD_SNDKEY  = { CMD_HKEY_NAME:"sk",     CMD_HKEY_CB: "cmd_secretkey_cb" }
+    CMD_PUBKEY  = { CMD_HKEY_NAME:"pk",     CMD_HKEY_CB: "pkCmd_CB" }
+    CMD_SNDKEY  = { CMD_HKEY_NAME:"sk",     CMD_HKEY_CB: "skCmd_CB" }
     CMD_ACCMD   = { CMD_HKEY_NAME:"ac",     CMD_HKEY_CB: "acCmd_CB" }
 
     def __init__(self, acBin, acDbg):

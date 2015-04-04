@@ -2,7 +2,8 @@
 //go:generate protoc --go_out=accp -Iaccp accp/accp.proto
 //go:generate protoc --go_out=acpb -Iacpb acpb/ac.proto
 //go:generate protoc --python_out=client-scripts/weechat/ -Iacpb acpb/ac.proto
-// echo "var Version string '`date +%Y%m%d`'" >> version.go
+//go:generate make version
+//echo "package main\nvar Version string '`date +%Y%m%d`'\n" > version.go
 // ACD: Arsene Crypto Daemon main file
 package main
 
@@ -51,7 +52,7 @@ func handleStdin() (err error) {
 }
 
 func main() {
-	Version := string("20150203")
+	Version := acVersion
 
 	fmt.Fprintf(os.Stderr, "[+] ac-%s\nstart\n", Version)
 

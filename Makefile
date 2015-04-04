@@ -42,17 +42,15 @@ ACW_AUTOLOAD=$(ACW_PYTHON)/autoload
 
 clean:
 	@echo "cleaning"
+	rm -rf ac ac.debug.txt
 
 
-update:
-	@echo "updating"
+update: version
+	@echo "updating proto & version"
+	@go generate
 
-#help:
-#	@echo "help"
-#
-#acwcpb: ${ACPB}/ac.proto
-#	@echo "generate AC Weechat Protobuf"
-#	${PROTOC} --python_out=${ACWEECHAT} -Iacpb ${ACPB}/ac.proto
+version:
+	@echo "package main\nconst acVersion string = \"`date +%Y%m%d`\"\n" > version.go
 
 #ac:
 #	@echo "generate AC Go Protobuf"
@@ -67,7 +65,7 @@ install:
 	@echo "AC Weechat Root: ${ACW_ROOT}"
 	@echo "AC Weechat Python: ${ACW_PYTHON}"
 	@echo "AC Weechat Autoload: ${ACW_AUTOLOAD}"
-	${RMBIN} ${ACW_PYTHON}/ac_pb2.py ${ACW_AUTOLOAD}/ac-weechat.py
-	${LNBIN} -s ${ACROOT}/acpb/ac_pb2.py ${ACW_PYTHON}/ac_pb2.py
+	${RMBIN} -f ${ACW_PYTHON}/ac_pb2.py ${ACW_AUTOLOAD}/ac-weechat.py
+	${LNBIN} -s ${ACWSCRIPT}/ac_pb2.py ${ACW_PYTHON}/ac_pb2.py
 	${LNBIN} -s ${ACWSCRIPT}/ac-weechat.py ${ACW_AUTOLOAD}/ac-weechat.py
 	@${LSBIN} -la ${ACW_AUTOLOAD}/ac-weechat.py ${ACW_PYTHON}/ac_pb2.py
