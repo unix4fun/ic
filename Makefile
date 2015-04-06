@@ -17,7 +17,7 @@ RMBIN=/bin/rm
 
 ACBIN=$(GOPATH)/bin/ac
 ACROOT=$(GOPATH)/src/github.com/unix4fun/ac
-ACWSCRIPT=${ACROOT}/client-scripts/weechat/
+ACWSCRIPT=${ACROOT}/client-scripts/weechat
 
 ACW_ROOT=$(HOME)/.weechat
 ACW_PYTHON=$(ACW_ROOT)/python
@@ -38,24 +38,28 @@ CURRENT=$(shell date +%Y%m%d)
 #endif
 
 
-#all: ac-weechat
-#	@echo "you can now use AC!"
-
+all: update
+	@echo "you can test/use AC && commit!"
 
 clean:
 	@echo "cleaning"
 	rm -rf ac ac.debug.txt
 
-
 update: version
 	@echo "updating proto & version"
 	@go generate
 
+# might not work on windows while it should
+# XXX TODO: windows support
 version:
-	@echo ${CURRENT}
+	@echo "Generating ${CURRENT}"
 	@echo "package main\nconst acVersion string = \"`date +%Y%m%d`\"\n" > version.go
 	@sed s/SCRIPT_VERSION\ =\ '.*'/SCRIPT_VERSION\ =\ \'${CURRENT}\'/g  ${ACWSCRIPT}/ac-weechat.py > ${ACWSCRIPT}/ac-weechat.py.${CURRENT}
-	@diff -ru ${ACWSCRIPT}/ac-weechat.py ${ACWSCRIPT}/ac-weechat.py.${CURRENT}
+	@diff -sru ${ACWSCRIPT}/ac-weechat.py ${ACWSCRIPT}/ac-weechat.py.${CURRENT} 
+	@if [ $$? -eq 1 ]; then echo "Ok/Ctrl+C" && read t; else exit 0; fi
+	#|| [ $$? -eq 1 ]; then echo "$(?) Ok/Ctrl+C?" && read t
+#	@echo "OK Ctrl-C to stop"
+#	@read t
 	@cat ${ACWSCRIPT}/ac-weechat.py.${CURRENT} > ${ACWSCRIPT}/ac-weechat.py
 	@rm -i ${ACWSCRIPT}/ac-weechat.py.${CURRENT}
 
