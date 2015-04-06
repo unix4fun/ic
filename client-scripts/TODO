@@ -1,0 +1,22 @@
+TODO :
+- irc.look.part_closes_buffer = off => on
+- irc.look.notice_as_pv = auto => always
+- display/clear acCipherReady / acRecvKeyBlobs commands
+- detect running process detach / implement that via a timer_cb and heartbeat request to the process
+- statistics requests to the daemon
+- flood limit on number of receiving challenges/kx
+- flood limit on receiving public keys to avoid resources consumption
+- [SECURITY XXX]: when loading from file the nonce value is back to zero.. security vulnerability
+- [SECURITY XXX]: passphrase for load/save should be stored in the "secure" storage of weechat.
+- [CLIENT]: start irssi version
+- [FEATURES]: start adding configuration variables
+
+
+
+DONE:
+- PK/SKmaps encryption. [ PARTIAL DONE / SATISFACTORY? ]
+- weechat.unhook_all() on exit or unload of the script [ DONE ]
+- do we want to be able to uncipher even when not there...? [ DONE ]
+- weechat_bar_item_new () to use for displaying more info in the bar [ DONE for nonce ]
+
+

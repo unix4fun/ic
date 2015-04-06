@@ -2,51 +2,15 @@
 #
 # who cares who did this fucking code, read it, debug it, fix it
 # you can send an email can you?
+#
+# feedback and constructive comments:
+# eau <eau-code@unix4fun.net>
 # 
 #
-# TODO :
-# irc.look.part_closes_buffer = off => on
-# irc.look.notice_as_pv = auto => always
-# - display/clear acCipherReady / acRecvKeyBlobs commands
-# - detect running process detach / implement that via a timer_cb and heartbeat request to the process
-# - PK/SKmaps encryption. [ PARTIAL DONE / SATISFACTORY? ]
-# - statistics requests to the daemon
-# - flood limit on number of receiving challenges/kx
-# - flood limit on receiving public keys to avoid resources consumption
-# - weechat.unhook_all() on exit or unload of the script [ DONE ]
-# - do we want to be able to uncipher even when not there...? [ DONE ]
-# - weechat_bar_item_new () to use for displaying more info in the bar [ DONE for nonce ]
-# - [SECURITY XXX]: when loading from file the nonce value is back to zero.. security vulnerability
-# - [SECURITY XXX]: passphrase for load/save should be stored in the "secure" storage of weechat.
-# - [CLIENT]: start irssi version
-# - [FEATURES]: start adding configuration variables
-
-#
-# ChangeLog:
-# 30/04/2014 - we have a basic version running, let's tag 0.1 and say this is 0.1 to move to 0.2-dev
-# 12/06/2014 - we have decision made, user decide what to cipher or not, daemon decide if it can do it or not, client decide depending on daemon response and user decision.
-# v0.2
-# 16/06/2014 - fixed the privmsg_out callback to be sure NOTHING is sent if encryptor is NOT OK or encryptor is not answering requests... display is not defined yet...
-# v0.3
-# 04/07/2014 - removed socket connection moved to stdin/stdout instead of Unix socket like initially, it should make things much simpler...
-#            - bumped to 0.3-dev
-# 23/07/2014 - tagged 0.3 as working, now moving to 0.4-dev, all is implemented through one global class, I need to implement the callbacks in
-#              the same way.
-#            - changed /pk, /pklist, /pkgen into /pk ls|gen|rm and same for /sk commands
-# 06/08/2014 - nonce is now displayed in the bar, pk rm implemented, protocol
-#              has been slightly changed for the nonce purpose
-# 11/08/2014 - introducing control messages for heartbeat, load, save & quit
-# 14/08/2014 - posted on github, now we need to clean/debug/optimize/package/document and finally release officially
-# 23/09/2014 - changing display
-# 25/09/2014 - bugfixes and added select() on subprocess stdout polling.
-# 07/10/2014 - fixed the double allocation of acwee object
-# 01/01/2015 - changing the marshalling of the messages to put it all on protobuf, also fixed potential collision vuln and introduced long message handling
-# 03/02/2015 - moving to go1.4 and also moving to the new repository of go.crypto and goprotobuf, adding Makefile for installation of the script
-# 23/02/2015 - added load/save basic functionnalities, files are NOT encrypted YET / starting to implement AES-GCM as symmetric crypto mode and cstate file.
 
 SCRIPT_NAME    = 'ac-weechat'
 SCRIPT_AUTHOR  = 'eau <eau-code@unix4fun.net>'
-SCRIPT_VERSION = '20150203'
+SCRIPT_VERSION = '20150405'
 SCRIPT_LICENSE = 'BSD'
 SCRIPT_DESC    = 'AC script'
 

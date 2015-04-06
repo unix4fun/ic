@@ -23,6 +23,8 @@ ACW_ROOT=$(HOME)/.weechat
 ACW_PYTHON=$(ACW_ROOT)/python
 ACW_AUTOLOAD=$(ACW_PYTHON)/autoload
 
+CURRENT=$(shell date +%Y%m%d)
+
 
 #PROTOC=`which protoc`
 #ACROOT=/Users/eau/dev/go/src/github.com/unix4fun/ac
@@ -50,7 +52,12 @@ update: version
 	@go generate
 
 version:
+	@echo ${CURRENT}
 	@echo "package main\nconst acVersion string = \"`date +%Y%m%d`\"\n" > version.go
+	@sed s/SCRIPT_VERSION\ =\ '.*'/SCRIPT_VERSION\ =\ \'${CURRENT}\'/g  ${ACWSCRIPT}/ac-weechat.py > ${ACWSCRIPT}/ac-weechat.py.${CURRENT}
+	@diff -ru ${ACWSCRIPT}/ac-weechat.py ${ACWSCRIPT}/ac-weechat.py.${CURRENT}
+	@cat ${ACWSCRIPT}/ac-weechat.py.${CURRENT} > ${ACWSCRIPT}/ac-weechat.py
+	@rm -i ${ACWSCRIPT}/ac-weechat.py.${CURRENT}
 
 #ac:
 #	@echo "generate AC Go Protobuf"
