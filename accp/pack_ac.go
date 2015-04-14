@@ -2,16 +2,16 @@
 package accp
 
 import (
-	"bytes"
-	"compress/zlib"
 	"encoding/base64"
-	"encoding/binary"
 	"fmt"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
-	"github.com/unix4fun/ac/obf"
 	"golang.org/x/crypto/nacl/secretbox"
-	"io"
 	"os"
+	//	"bytes"
+	//	"compress/zlib"
+	//	"encoding/binary"
+	//	"github.com/unix4fun/ac/obf"
+	//	"io"
 )
 
 func packMessageAC(hdr, nonce *uint32, blob *[]byte) (out []byte, err error) {
@@ -55,6 +55,7 @@ func unpackMessageAC(in []byte) (mNonce uint32, myHdr, ciphertext []byte, err er
 }
 
 // A very pragmatic approach to protobuf encoding it's roughly true for most cases.
+// XXX TODO: need to fix/clean that!
 func PredictLenNACL(input []byte) (outlen int) {
 	zipped, err := CompressData(input)
 	if err != nil {
@@ -192,6 +193,7 @@ func OpenACMessageNACL(context *SecKey, rnd, cmsg, peerNick, myNick []byte) (out
 	//return nil, nil
 }
 
+/*
 func CreateACMessage(context *SecKey, rnd, msg, myNick []byte) (out []byte, err error) {
 	var noncebyte [24]byte
 	hdr, err := obf.Obfuscate([]byte(msgHdrAC))
@@ -428,3 +430,4 @@ func OpenACMessage(context *SecKey, rnd, cmsg, peerNick, myNick []byte) (out []b
 	return out, nil
 	//return
 }
+*/

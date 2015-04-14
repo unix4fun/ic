@@ -9,7 +9,7 @@ import (
 	//    "crypto/rand"
 	//    "arsene/ac/proto"
 	//    "code.google.com/p/goprotobuf/proto"
-	"arsene/ac/acpb"
+	"github.com/unix4fun/ac/acpb"
 )
 
 //

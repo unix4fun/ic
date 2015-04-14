@@ -2,13 +2,13 @@
 package accp
 
 import (
-	"bytes"
-	"compress/zlib"
-	"encoding/base64"
+	//	"bytes"
+	//	"compress/zlib"
+	//	"encoding/base64"
 	//"fmt"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
-	"github.com/unix4fun/ac/obf"
-	"io"
+	//	"github.com/unix4fun/ac/obf"
+	//	"io"
 )
 
 //
@@ -107,6 +107,7 @@ func OpenPKMessageNACL(ircmsg []byte) (out []byte, err error) {
 	return out, nil
 }
 
+/*
 //func Pubkey2Irc(pubkey []byte) (out []byte, err error) {
 func CreatePKMessage(pubkey []byte) (out []byte, err error) {
 	hdr, _ := obf.Obfuscate([]byte(msgHdrPK))
@@ -187,13 +188,15 @@ func OpenPKMessage(ircmsg []byte) (out []byte, err error) {
 		//return nil, acprotoError(-5, "OpenPKMessage().zlib.NewReader(): ", err)
 		return nil, &protoError{value: -6, msg: "OpenPKMessage().zlib.NewReader(): ", err: err}
 	}
-	/*
-	   if err != nil {
-	       log.Fatal(err)
-	       return
-	   }
-	*/
+*/
+/*
+   if err != nil {
+       log.Fatal(err)
+       return
+   }
+*/
 
+/*
 	b := new(bytes.Buffer)
 	_, err = io.Copy(b, data)
 	if err != nil {
@@ -212,3 +215,4 @@ func OpenPKMessage(ircmsg []byte) (out []byte, err error) {
 
 	return
 }
+*/

@@ -3,15 +3,15 @@ package accp
 
 import (
 	"bytes"
-	"compress/zlib"
+	//	"compress/zlib"
 	"crypto/rand"
-	"encoding/base64"
-	"encoding/binary"
+	//	"encoding/base64"
+	//	"encoding/binary"
 	"fmt"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
-	"github.com/unix4fun/ac/obf"
+	//"github.com/unix4fun/ac/obf"
 	"golang.org/x/crypto/nacl/box" // nacl is now here.
-	"io"
+	//"io"
 	"os"
 )
 
@@ -208,6 +208,7 @@ func OpenKXMessageNACL(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, p
 // SHA3( 'CHANNEL' || ':' || 'MY_NICK' || ':' || 'PEER_NICK' || ':' || 'NONCE_VALUE' || ':' || 'HDR_RAW' )
 //
 
+/*
 func CreateKXMessage(context *SecKey, rnd []byte, peerPubkey, myPrivkey *[32]byte, channel, myNick, peerNick []byte) (out []byte, err error) {
 	var noncebyte [24]byte
 
@@ -479,3 +480,4 @@ func OpenKXMessage(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerN
 	//    out = b.Bytes()
 	return context, newRnd, nil
 }
+*/

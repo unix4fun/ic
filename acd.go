@@ -16,6 +16,7 @@ import (
 	// XXX temporary..
 	//"crypto/rand"
 	//"github.com/unix4fun/ac/accp"
+	"flag"
 	"github.com/unix4fun/ac/acpb"
 	"syscall" // XXX deactivated
 
@@ -154,28 +155,50 @@ func main() {
 
 	//os.Exit(1)
 
-	// memory storage maps init..
-	acpb.ACmap = make(acpb.PSKMap)
-	acpb.ACrun = true
+	// parsing the RSA code...
+	rsaFlag := flag.Bool("rsagen", false, "generate RSA identity keys")
+	// we cannot use more than 2048K anyway why bother with a flag then
+	//bitOpt := flag.Int("client", 2048, "generate Client SSL Certificate")
+	flag.Parse()
 
-	// XXX TODO: this is not stable enough but should do the trick for now..
-	// it is not clear what happens if the ACrun = false is done first
-	// but i close the socket on both sides.. and it should clean the
-	// socket file running... let's test with the script now :)
-	// XXX deactivated
-	sig := make(chan os.Signal, 2)
-	signal.Notify(sig, os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGKILL, syscall.SIGQUIT, syscall.SIGSEGV, syscall.SIGINT)
-	//    signal.Notify(sig, nil)
-	go func() {
-		<-sig
-		acpb.ACrun = false
-		fmt.Fprintf(os.Stderr, "[+] exiting...!\n")
-		os.Exit(3)
-	}()
+	fmt.Printf("rsaFlag: %v\n", *rsaFlag)
+	fmt.Printf("argc: %d\n", len(flag.Args()))
 
-	for acpb.ACrun == true {
-		handleStdin()
+	if len(flag.Args()) != 0 {
+		usage(os.Args[0])
+		flag.PrintDefaults()
+		os.Exit(1)
 	}
 
+	if rsaFlag == true {
+		// generate a set of identity RSA keys and save them to file encrypted
+		accp.GenRSAKeys()
+	} else {
+		// find and load the keys in memory to sign our requests
+		// private key will need to be unlocked using PB request
+		accp.LoadRSAKeys()
+		// memory storage maps init..
+		acpb.ACmap = make(acpb.PSKMap)
+		acpb.ACrun = true
+
+		// XXX TODO: this is not stable enough but should do the trick for now..
+		// it is not clear what happens if the ACrun = false is done first
+		// but i close the socket on both sides.. and it should clean the
+		// socket file running... let's test with the script now :)
+		// XXX deactivated
+		sig := make(chan os.Signal, 2)
+		signal.Notify(sig, os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGKILL, syscall.SIGQUIT, syscall.SIGSEGV, syscall.SIGINT)
+		//    signal.Notify(sig, nil)
+		go func() {
+			<-sig
+			acpb.ACrun = false
+			fmt.Fprintf(os.Stderr, "[+] exiting...!\n")
+			os.Exit(3)
+		}()
+
+		for acpb.ACrun == true {
+			handleStdin()
+		}
+	}
 	os.Exit(0)
 }
