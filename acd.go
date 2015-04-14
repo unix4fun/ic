@@ -170,13 +170,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	if rsaFlag == true {
+	if *rsaFlag == true {
 		// generate a set of identity RSA keys and save them to file encrypted
-		accp.GenRSAKeys()
+		//accp.GenRSAKeys()
 	} else {
 		// find and load the keys in memory to sign our requests
 		// private key will need to be unlocked using PB request
-		accp.LoadRSAKeys()
+		//accp.LoadRSAKeys()
 		// memory storage maps init..
 		acpb.ACmap = make(acpb.PSKMap)
 		acpb.ACrun = true
