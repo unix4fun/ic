@@ -42,6 +42,7 @@ message PKPackedMessage {
     required fixed32 header = 5;    // obfuscate('PK')
     required bytes publickey = 6;   // public key blob (Ec25519 Curve).
     optional uint32 options = 7;    // options: proto version (1st nibble), proto options (2nd nibble: AES-GCM / NaCL) 
+    optional bytes signature = 10;  // options: RSA/ECDSA signature
 }
 
 message KXPackedMessage {
@@ -52,5 +53,6 @@ message KXPackedMessage {
     required bytes ciphertext = 12; // resulting public key encrypted blob (fixed size!)
     //optional bytes idsignature = 13;// resulting digitally signed hash of data being encrypted
     optional uint32 options = 14;   // options: proto version (1st nibble), proto options (2nd nibble: AES-GCM / NaCL)
+    optional bytes signature = 11;  // options: RSA/ECDSA signature
 }
 */

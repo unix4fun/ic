@@ -10,6 +10,7 @@ import (
 	"crypto/rand"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ac/accp"
+	"github.com/unix4fun/ac/ackp"
 	"time"
 )
 
@@ -82,7 +83,7 @@ func PKADD_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 		return acMsgResponse, retErr
 	}
 
-	newkey := new(accp.KexKey)
+	newkey := new(ackp.KexKey)
 	newkey.Nickname = reqNick
 	newkey.Userhost = reqHost
 	newkey.Server = reqServ

@@ -1,11 +1,11 @@
 // +build go1.4
-package acpb
+package ackp
 
 import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"github.com/unix4fun/ac/accp"
+	//"github.com/unix4fun/ac/accp"
 	"os"
 )
 
@@ -137,7 +137,7 @@ func (psk PSKMap) initRDMapWith(server string, channel string, rnd []byte) {
 //
 // SKMaps
 //
-func (psk PSKMap) GetSKMapEntry(server string, channel string) (*accp.SecKey, bool) {
+func (psk PSKMap) GetSKMapEntry(server string, channel string) (*SecKey, bool) {
 	skmap, ok := psk.GetSKMap(server)
 	fmt.Fprintf(os.Stderr, "===---=-=-=--==- GetSKMapEntry (serv: %s channel: %s) ! skmap: %p ok: %t --==-=---=-=-=-==-\n", server, channel, skmap, ok)
 	if ok == true {
@@ -148,7 +148,7 @@ func (psk PSKMap) GetSKMapEntry(server string, channel string) (*accp.SecKey, bo
 	return nil, false
 }
 
-func (psk PSKMap) SetSKMapEntry(server string, channel string, sk *accp.SecKey) {
+func (psk PSKMap) SetSKMapEntry(server string, channel string, sk *SecKey) {
 	skmap, ok := psk.GetSKMap(server)
 	if ok == true {
 		delete(skmap, channel) // NO OP in case of nil..
@@ -169,7 +169,7 @@ func (psk PSKMap) GetSKMap(server string) (SKMap, bool) {
 }
 
 // call only if SKMap s empty
-func (psk PSKMap) initSKMapWith(server string, channel string, sk *accp.SecKey) {
+func (psk PSKMap) initSKMapWith(server string, channel string, sk *SecKey) {
 	ac := new(AcCOMM)
 	ac.Init()
 	psk[server] = ac
@@ -180,7 +180,7 @@ func (psk PSKMap) initSKMapWith(server string, channel string, sk *accp.SecKey) 
 //
 // PKMaps
 //
-func (psk PSKMap) GetPKMapEntry(server string, nick string) (*accp.KexKey, bool) {
+func (psk PSKMap) GetPKMapEntry(server string, nick string) (*KexKey, bool) {
 	pkmap, ok := psk.GetPKMap(server)
 	fmt.Fprintf(os.Stderr, "===---=-=-=--==- GetPKMapEntry (serv: %s nick: %s) ! pkmap: %p ok: %t --==-=---=-=-=-==-\n", server, nick, pkmap, ok)
 	if ok == true {
@@ -193,7 +193,7 @@ func (psk PSKMap) GetPKMapEntry(server string, nick string) (*accp.KexKey, bool)
 	return nil, false
 }
 
-func (psk PSKMap) SetPKMapEntry(server string, nick string, pk *accp.KexKey) {
+func (psk PSKMap) SetPKMapEntry(server string, nick string, pk *KexKey) {
 	pkmap, ok := psk.GetPKMap(server)
 	if ok == true {
 		delete(pkmap, nick) // NO OP in case of nil..
@@ -214,7 +214,7 @@ func (psk PSKMap) GetPKMap(server string) (PKMap, bool) {
 }
 
 // call only if PKMap s empty
-func (psk PSKMap) initPKMapWith(server string, nick string, pk *accp.KexKey) {
+func (psk PSKMap) initPKMapWith(server string, nick string, pk *KexKey) {
 	ac := new(AcCOMM)
 	ac.Init()
 	psk[server] = ac
@@ -230,7 +230,7 @@ func (psk PSKMap) initPKMapWith(server string, nick string, pk *accp.KexKey) {
 //
 //
 // XXX Pk map[string](*KexKey)
-type PKMap map[string](*accp.KexKey)
+type PKMap map[string](*KexKey)
 
 func (pkm PKMap) Init() {
 	pkm = make(PKMap)
@@ -246,7 +246,7 @@ func (pkm PKMap) String() string {
 	return buf.String()
 }
 
-func (pkm PKMap) GetPK(nick string) *accp.KexKey {
+func (pkm PKMap) GetPK(nick string) *KexKey {
 	pk, ok := pkm[nick]
 	if ok == true {
 		return pk
@@ -262,7 +262,7 @@ func (pkm PKMap) GetPK(nick string) *accp.KexKey {
 //
 //
 //
-type SKMap map[string](*accp.SecKey)
+type SKMap map[string](*SecKey)
 
 func (skm SKMap) Init() {
 	skm = make(SKMap)
@@ -278,7 +278,7 @@ func (skm SKMap) String() string {
 	return buf.String()
 }
 
-func (skm SKMap) GetSK(channel string) *accp.SecKey {
+func (skm SKMap) GetSK(channel string) *SecKey {
 	sk, ok := skm[channel]
 	if ok == true {
 		return sk

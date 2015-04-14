@@ -17,7 +17,7 @@ import (
 	//"crypto/rand"
 	//"github.com/unix4fun/ac/accp"
 	"flag"
-	"github.com/unix4fun/ac/acpb"
+	"github.com/unix4fun/ac/ackp"
 	"syscall" // XXX deactivated
 
 	//"runtime/pprof"
@@ -180,8 +180,8 @@ func main() {
 		// private key will need to be unlocked using PB request
 		//accp.LoadRSAKeys()
 		// memory storage maps init..
-		acpb.ACmap = make(acpb.PSKMap)
-		acpb.ACrun = true
+		ackp.ACmap = make(ackp.PSKMap)
+		ackp.ACrun = true
 
 		// XXX TODO: this is not stable enough but should do the trick for now..
 		// it is not clear what happens if the ACrun = false is done first
@@ -193,12 +193,12 @@ func main() {
 		//    signal.Notify(sig, nil)
 		go func() {
 			<-sig
-			acpb.ACrun = false
+			ackp.ACrun = false
 			fmt.Fprintf(os.Stderr, "[+] exiting...!\n")
 			os.Exit(3)
 		}()
 
-		for acpb.ACrun == true {
+		for ackb.ACrun == true {
 			handleStdin()
 		}
 	}

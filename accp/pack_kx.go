@@ -3,16 +3,16 @@ package accp
 
 import (
 	"bytes"
-	//	"compress/zlib"
 	"crypto/rand"
-	//	"encoding/base64"
-	//	"encoding/binary"
 	"fmt"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
-	//"github.com/unix4fun/ac/obf"
+	"github.com/unix4fun/ac/ackp"
 	"golang.org/x/crypto/nacl/box" // nacl is now here.
-	//"io"
 	"os"
+	//	"compress/zlib"
+	//"io"
+	//	"encoding/base64"
+	//	"encoding/binary"
 )
 
 func packMessageKX(hdr, nonce *uint32, dst, blob []byte) (out []byte, err error) {
@@ -89,7 +89,7 @@ func IsChannelOrPriv(channel, myNick, peerNick []byte) []byte {
 // SHA3( 'CHANNEL' || ':' || 'MY_NICK' || ':' || 'PEER_NICK' || ':' || 'NONCE_VALUE' || ':' || 'HDR_RAW' )
 //
 
-func CreateKXMessageNACL(context *SecKey, rnd []byte, peerPubkey, myPrivkey *[32]byte, channel, myNick, peerNick []byte) (out []byte, err error) {
+func CreateKXMessageNACL(context *ackp.SecKey, rnd []byte, peerPubkey, myPrivkey *[32]byte, channel, myNick, peerNick []byte) (out []byte, err error) {
 
 	/* lets build our header */
 	myHdr, intHdr, err := BuildHeader([]byte(msgHdrKX))
@@ -136,7 +136,7 @@ func CreateKXMessageNACL(context *SecKey, rnd []byte, peerPubkey, myPrivkey *[32
 	return
 }
 
-func OpenKXMessageNACL(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerNick []byte) (context *SecKey, SecRnd []byte, err error) {
+func OpenKXMessageNACL(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerNick []byte) (context *ackp.SecKey, SecRnd []byte, err error) {
 	// check that we are indeed
 	if peerPubkey == nil || myPrivkey == nil {
 		//return nil, acprotoError(-1, "OpenKXMessage().invalidPubPrivKeys(): ", err)

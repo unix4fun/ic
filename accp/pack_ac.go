@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
+	"github.com/unix4fun/ac/ackp"
 	"golang.org/x/crypto/nacl/secretbox"
 	"os"
 	//	"bytes"
@@ -92,7 +93,7 @@ func PredictLenNACL(input []byte) (outlen int) {
 // 0x?0 = PROTO VERSION [ 0 - 15 ]
 //
 //
-func CreateACMessageNACL(context *SecKey, rnd, msg, myNick []byte) (out []byte, err error) {
+func CreateACMessageNACL(context *ackp.SecKey, rnd, msg, myNick []byte) (out []byte, err error) {
 	//var noncebyte [24]byte
 
 	/* lets build our header */
@@ -133,7 +134,7 @@ func CreateACMessageNACL(context *SecKey, rnd, msg, myNick []byte) (out []byte, 
 	return out, nil
 }
 
-func OpenACMessageNACL(context *SecKey, rnd, cmsg, peerNick, myNick []byte) (out []byte, err error) {
+func OpenACMessageNACL(context *ackp.SecKey, rnd, cmsg, peerNick, myNick []byte) (out []byte, err error) {
 	fmt.Fprintf(os.Stderr, "OpenACMessageNACL()\n")
 	b64, err := B64DecodeData(cmsg)
 	if err != nil {
