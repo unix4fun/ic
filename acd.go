@@ -161,8 +161,10 @@ func main() {
 	//bitOpt := flag.Int("client", 2048, "generate Client SSL Certificate")
 	flag.Parse()
 
-	fmt.Printf("rsaFlag: %v\n", *rsaFlag)
-	fmt.Printf("argc: %d\n", len(flag.Args()))
+	/*
+		fmt.Printf("rsaFlag: %v\n", *rsaFlag)
+		fmt.Printf("argc: %d\n", len(flag.Args()))
+	*/
 
 	if len(flag.Args()) != 0 {
 		usage(os.Args[0])
