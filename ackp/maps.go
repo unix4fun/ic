@@ -13,6 +13,51 @@ import (
 var ACmap PSKMap
 var ACrun bool
 
+//
+//
+// we hash our data based on server we're connected to
+// each entry will host channel keys and public keys within that server context
+//
+//
+type AcCOMM struct {
+	Pk PKMap
+	Sk SKMap
+	Rd RDMap
+}
+
+func (ac *AcCOMM) Init() {
+	ac.Pk = make(PKMap)
+	ac.Sk = make(SKMap)
+	ac.Rd = make(RDMap)
+}
+
+/* AcCOMM display function.. */
+func (ac *AcCOMM) String() string {
+	buf := new(bytes.Buffer)
+
+	_, _ = buf.WriteString(fmt.Sprintf("---\n"))
+	// Public Keys
+	buf.WriteString(fmt.Sprintf("- PK\n"))
+	for k, v := range ac.Pk {
+		_, _ = buf.WriteString(fmt.Sprintf("{%s}\n%v\n", k, v))
+	}
+
+	// Secret/Symmetric Keys
+	buf.WriteString(fmt.Sprintf("- SK\n"))
+	for k, v := range ac.Sk {
+		_, _ = buf.WriteString(fmt.Sprintf("{%s}\n%v\n", k, v))
+	}
+
+	// Random values
+	buf.WriteString(fmt.Sprintf("- RD\n"))
+	for k, v := range ac.Rd {
+		_, _ = buf.WriteString(fmt.Sprintf("{%s}\n%v\n", k, v))
+	}
+
+	_, _ = buf.WriteString(fmt.Sprintf("---\n"))
+	return buf.String()
+}
+
 // this type is a map[string](*AcCOMM)
 // it's a map defining a set of Public/Session Keys used for encrypting and KEX
 // on a specific network based on the server name as hash key.
@@ -298,47 +343,3 @@ func (rdm RDMap) GetRD(channel string) []byte {
 	return nil
 }
 
-//
-//
-// we hash our data based on server we're connected to
-// each entry will host channel keys and public keys within that server context
-//
-//
-type AcCOMM struct {
-	Pk PKMap
-	Sk SKMap
-	Rd RDMap
-}
-
-func (ac *AcCOMM) Init() {
-	ac.Pk = make(PKMap)
-	ac.Sk = make(SKMap)
-	ac.Rd = make(RDMap)
-}
-
-/* AcCOMM display function.. */
-func (ac *AcCOMM) String() string {
-	buf := new(bytes.Buffer)
-
-	_, _ = buf.WriteString(fmt.Sprintf("---\n"))
-	// Public Keys
-	buf.WriteString(fmt.Sprintf("- PK\n"))
-	for k, v := range ac.Pk {
-		_, _ = buf.WriteString(fmt.Sprintf("{%s}\n%v\n", k, v))
-	}
-
-	// Secret/Symmetric Keys
-	buf.WriteString(fmt.Sprintf("- SK\n"))
-	for k, v := range ac.Sk {
-		_, _ = buf.WriteString(fmt.Sprintf("{%s}\n%v\n", k, v))
-	}
-
-	// Random values
-	buf.WriteString(fmt.Sprintf("- RD\n"))
-	for k, v := range ac.Rd {
-		_, _ = buf.WriteString(fmt.Sprintf("{%s}\n%v\n", k, v))
-	}
-
-	_, _ = buf.WriteString(fmt.Sprintf("---\n"))
-	return buf.String()
-}

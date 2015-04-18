@@ -5,13 +5,13 @@ package acpb
 import (
 	"fmt"
 	"os"
-	//    "log"
-	//    "net"
-	"crypto/rand"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ac/accp"
 	"github.com/unix4fun/ac/ackp"
 	"time"
+//    "log"
+//    "net"
+//"crypto/rand"
 )
 
 func PKGEN_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *AcPublicKeyMessageResponse, err error) {
@@ -37,7 +37,7 @@ func PKGEN_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 		return acMsgResponse, retErr
 	}
 
-	myNewKeys, err := accp.CreateMyKeys(rand.Reader, reqNick, reqHost, reqServ)
+	myNewKeys, err := ackp.CreateKxKeys(reqNick, reqHost, reqServ)
 	if err != nil {
 		retErr := acpbError(-2, "PKGEN_Handler().CreateMyKeys(): ", err)
 		acMsgResponse = &AcPublicKeyMessageResponse{
@@ -49,6 +49,20 @@ func PKGEN_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 		//fmt.Fprintf(os.Stderr, "[!] PKGEN -> (R) -2 ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
+	// create the cached version instead of in CreateMyKeys()
+	PK, err := accp.CreatePKMessageNACL(myNewKeys.GetPubkey()[:])
+	if err != nil {
+		retErr := acpbError(-3, "PKGEN_Handler().CreateCachePubkey: ", err)
+		acMsgResponse = &AcPublicKeyMessageResponse{
+			Type:      &responseType,
+			Bada:      proto.Bool(false),
+			ErrorCode: proto.Int32(-3),
+			Blob:      []byte(retErr.Error()),
+		}
+		//fmt.Fprintf(os.Stderr, "[!] PKGEN -> (R) -2 ! %s\n", retErr.Error())
+		return acMsgResponse, retErr
+	}
+	myNewKeys.Pubkey = string(PK)
 
 	// create the Public Key storage if it's empty...
 	ACmap.SetPKMapEntry(reqServ, reqNick, myNewKeys)

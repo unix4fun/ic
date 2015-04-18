@@ -15,9 +15,9 @@ import (
 	//    "log" // XXX deactivated
 	// XXX temporary..
 	//"crypto/rand"
-	//"github.com/unix4fun/ac/accp"
 	"flag"
 	"github.com/unix4fun/ac/ackp"
+	"github.com/unix4fun/ac/acpb"
 	"syscall" // XXX deactivated
 
 	//"runtime/pprof"
@@ -54,6 +54,7 @@ func handleStdin() (err error) {
 
 func main() {
 	Version := acVersion
+
 
 	fmt.Fprintf(os.Stderr, "[+] ac-%s\nstart\n", Version)
 
@@ -198,7 +199,7 @@ func main() {
 			os.Exit(3)
 		}()
 
-		for ackb.ACrun == true {
+		for ackp.ACrun == true {
 			handleStdin()
 		}
 	}

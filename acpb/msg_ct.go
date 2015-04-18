@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ac/accp"
+	"github.com/unix4fun/ac/ackp"
+	"github.com/unix4fun/ac/acutl"
 	"golang.org/x/crypto/hkdf"   // sha3 is now here.
 	"golang.org/x/crypto/pbkdf2" // sha3 is now here.
 	"golang.org/x/crypto/sha3"   // sha3 is now here.
@@ -15,10 +17,11 @@ import (
 	"os"
 )
 
+
 func CTSEAL_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *AcCipherTextMessageResponse, err error) {
 	var responseType AcCipherTextMessageResponseAcCTRespMsgType
 	responseType = AcCipherTextMessageResponse_CTR_SEAL
-	var acctx *accp.SecKey
+	var acctx *ackp.SecKey
 	var acBlobArray [][]byte
 	var out []byte
 	var reqBlobTmp []byte
@@ -157,7 +160,7 @@ func CTSEAL_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 func CTOPEN_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *AcCipherTextMessageResponse, err error) {
 	var responseType AcCipherTextMessageResponseAcCTRespMsgType
 	responseType = AcCipherTextMessageResponse_CTR_OPEN
-	var acctx *accp.SecKey
+	var acctx *ackp.SecKey
 	//var acBlobArray [][]byte
 
 	//    fmt.Fprintf(os.Stderr, "CTOPEN Message: let's give the key\n")
@@ -302,7 +305,7 @@ func (skgen *ACSecretKeyGen) Init(input []byte, channel []byte, nick []byte, ser
 	str_build.WriteByte(byte(':'))
 	str_build.Write(channel)
 
-	skgen.info_hkdf, err = accp.HashSHA3Data(str_build.Bytes())
+	skgen.info_hkdf, err = acutl.HashSHA3Data(str_build.Bytes())
 	if err != nil {
 		return err
 	}
@@ -371,7 +374,7 @@ func CTADD_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *A
 
 	//acctx := new(accp.SecKey)
 	// XXX TODO: handle error...
-	acctx, _ := accp.CreateACContext([]byte(reqChan), 0)
+	acctx, _ := ackp.CreateACContext([]byte(reqChan), 0)
 
 	key := make([]byte, 32)
 	io.ReadFull(skgen, key)

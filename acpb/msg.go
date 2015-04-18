@@ -8,8 +8,12 @@ import (
 	//    "net"
 	//    "encoding/hex"
 	//    "arsene/ac/proto"
+	"github.com/unix4fun/ac/ackp"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
 )
+
+var ACmap ackp.PSKMap = ackp.ACmap
+var ACrun bool = ackp.ACrun
 
 // it's temporary until my design looks better
 type AcPBError struct {
