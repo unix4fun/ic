@@ -3,17 +3,12 @@ package accp
 
 import (
 	"bytes"
-	//"crypto/rand"
 	"fmt"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ac/ackp"
 	"github.com/unix4fun/ac/acutl"
 	"golang.org/x/crypto/nacl/box" // nacl is now here.
 	"os"
-	//	"compress/zlib"
-	//"io"
-	//	"encoding/base64"
-	//	"encoding/binary"
 )
 
 func packMessageKX(hdr *uint32, nonce uint32, dst, blob []byte) (out []byte, err error) {
@@ -202,11 +197,3 @@ func OpenKXMessageNACL(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, p
 
 	return context, newRnd, nil
 }
-
-//
-// KX (Key eXchange) Message Format:
-// BASE64( 'KX' || 'NONCE_VALUE' || BOX( PEER_PUBKEY, ME_PRIVKEY, NONCE_AUTH, ZLIB( SECRET ) )
-//
-// Nonce AUTH Format:
-// SHA3( 'CHANNEL' || ':' || 'MY_NICK' || ':' || 'PEER_NICK' || ':' || 'NONCE_VALUE' || ':' || 'HDR_RAW' )
-//

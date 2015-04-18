@@ -3,17 +3,13 @@ package acpb
 
 import (
 	"fmt"
-	"os"
-	//    "log"
-	//    "net"
-	//    "encoding/hex"
-	//    "arsene/ac/proto"
-	"github.com/unix4fun/ac/ackp"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
+	"github.com/unix4fun/ac/ackp"
+	"os"
 )
 
-var ACmap ackp.PSKMap = ackp.ACmap
-var ACrun bool = ackp.ACrun
+//var ACmap ackp.PSKMap = ackp.ACmap
+//var ACrun bool = ackp.ACrun
 
 // it's temporary until my design looks better
 type AcPBError struct {
@@ -95,6 +91,9 @@ func HandleACMsg(msg []byte) (msgReply []byte, err error) {
 		//fmt.Fprintf(os.Stderr, "this is a Key Exchange Message\n")
 
 		kxMsgReply, err := HandleACKxMsg(acMessageEnvelope.GetBlob())
+		if err != nil {
+			return nil, err
+		}
 
 		// now let's pack it in the new message
 		responseType = ArseneCryptoMessage_AC_KEX
@@ -112,6 +111,9 @@ func HandleACMsg(msg []byte) (msgReply []byte, err error) {
 		//var responseType ArseneCryptoMessageAcMessageType
 		fmt.Fprintf(os.Stderr, "this is a CipherText Message\n")
 		ctMsgReply, err := HandleACCtMsg(acMessageEnvelope.GetBlob())
+		if err != nil {
+			return nil, err
+		}
 
 		// now let's pack it in the new message
 		responseType = ArseneCryptoMessage_AC_CRYPTO
@@ -124,6 +126,9 @@ func HandleACMsg(msg []byte) (msgReply []byte, err error) {
 	case ArseneCryptoMessage_AC_CTL:
 		// control messages let's start with PING!
 		ctlMsgReply, err := HandleACCtlMsg(acMessageEnvelope.GetBlob())
+		if err != nil {
+			return nil, err
+		}
 
 		// now let's pack it in the new message
 		responseType = ArseneCryptoMessage_AC_CTL
@@ -135,7 +140,7 @@ func HandleACMsg(msg []byte) (msgReply []byte, err error) {
 		return msgReply, err
 	case ArseneCryptoMessage_AC_QUIT:
 		// we go out!!
-		ACrun = false
+		ackp.ACrun = false
 	default:
 		fmt.Fprintf(os.Stderr, "this is a an unhandled (yet) type message\n")
 	} /* end of switch.. */

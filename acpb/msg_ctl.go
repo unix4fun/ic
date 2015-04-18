@@ -4,6 +4,7 @@ package acpb
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
+	"github.com/unix4fun/ac/ackp"
 	"os"
 	"time"
 )
@@ -46,7 +47,7 @@ func CTLLOAD_Handler(acMessageCtlReq *AcControlMessageRequest) (acMsgResponse *A
 
 	fmt.Fprintf(os.Stderr, "[+] LOADCTX '%s'\n", reqFilename)
 
-	ok, err := ACmap.File2Map(reqFilename, []byte("proutprout"), []byte("proutkey"))
+	ok, err := ackp.ACmap.File2Map(reqFilename, []byte("proutprout"), []byte("proutkey"))
 	if err != nil || ok != false {
 		retErr := acpbError(-1, "CTLLOAD_Handler().args(outfile, salt, keystr): 0 bytes", nil)
 		acMsgResponse = &AcControlMessageResponse{
@@ -73,7 +74,7 @@ func CTLSAVE_Handler(acMessageCtlReq *AcControlMessageRequest) (acMsgResponse *A
 	fmt.Fprintf(os.Stderr, "[+] SAVECTX '%s'\n", reqFilename)
 
 	//func (psk PSKMap) Map2FileBlob(outfilestr string, salt []byte, keystr []byte) (bool, error) {
-	ok, err := ACmap.Map2File(reqFilename, []byte("proutprout"), []byte("proutkey"))
+	ok, err := ackp.ACmap.Map2File(reqFilename, []byte("proutprout"), []byte("proutkey"))
 	if err != nil || ok != false {
 		retErr := acpbError(-1, "CTLSAVE_Handler().args(outfile, salt, keystr): 0 bytes", nil)
 		acMsgResponse = &AcControlMessageResponse{

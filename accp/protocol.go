@@ -8,9 +8,9 @@ import (
 	//"encoding/hex"
 	//"fmt"
 	//"golang.org/x/crypto/nacl/box"       // nacl is now here.
-	"golang.org/x/crypto/nacl/secretbox" // nacl is now here.
-	"github.com/unix4fun/ac/acutl"
 	"github.com/unix4fun/ac/ackp"
+	"github.com/unix4fun/ac/acutl"
+	"golang.org/x/crypto/nacl/secretbox" // nacl is now here.
 	//"io"
 	//"time"
 )
@@ -24,23 +24,6 @@ const (
 	msgHdrAC = "AC"
 	msgHdrKX = "KX"
 )
-
-// protoError is the custom AC error type
-// exporting the error code ad well as string and cascaded error message
-/*
-/*
-func (ae *protoError) getErrorCode() int {
-	return ae.value
-}
-
-func (ae *protoError) getErrorMsg() string {
-	return ae.Error()
-}
-
-func acprotoError(val int, msg string, err error) (ae *protoError) {
-	return &protoError{value: val, msg: msg, err: err}
-}
-*/
 
 func CreateACContextWithInputEntropy(channel []byte, inputEntropy []byte) (context *ackp.SecKey, err error) {
 	context = new(ackp.SecKey)

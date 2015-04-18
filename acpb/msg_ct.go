@@ -17,7 +17,6 @@ import (
 	"os"
 )
 
-
 func CTSEAL_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *AcCipherTextMessageResponse, err error) {
 	var responseType AcCipherTextMessageResponseAcCTRespMsgType
 	responseType = AcCipherTextMessageResponse_CTR_SEAL
@@ -45,7 +44,7 @@ func CTSEAL_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 	}
 
 	//acctx, ok_a := Sk[channel]
-	acctx, ok_a := ACmap.GetSKMapEntry(reqServ, reqChan)
+	acctx, ok_a := ackp.ACmap.GetSKMapEntry(reqServ, reqChan)
 	if ok_a == false {
 		retErr := acpbError(-2, "CTSEAL_Handler(): no SKMap found!", nil)
 		acMsgResponse = &AcCipherTextMessageResponse{
@@ -57,7 +56,7 @@ func CTSEAL_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 		return acMsgResponse, retErr
 	}
 
-	acrnd, ok_b := ACmap.GetRDMapEntry(reqServ, reqChan)
+	acrnd, ok_b := ackp.ACmap.GetRDMapEntry(reqServ, reqChan)
 	if ok_b == false {
 		retErr := acpbError(-2, "CTSEAL_Handler(): no RDMap found!", nil)
 		acMsgResponse = &AcCipherTextMessageResponse{
@@ -191,7 +190,7 @@ func CTOPEN_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 	}
 
 	//acctx, ok_a := Sk[channel]
-	acctx, ok_a := ACmap.GetSKMapEntry(reqServ, channel)
+	acctx, ok_a := ackp.ACmap.GetSKMapEntry(reqServ, channel)
 	if ok_a == false {
 		retErr := acpbError(-2, "CTOPEN_Handler(): no SKMap Entry found!", nil)
 		acMsgResponse = &AcCipherTextMessageResponse{
@@ -203,7 +202,7 @@ func CTOPEN_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 		return acMsgResponse, retErr
 	}
 
-	acrnd, ok_b := ACmap.GetRDMapEntry(reqServ, channel)
+	acrnd, ok_b := ackp.ACmap.GetRDMapEntry(reqServ, channel)
 	if ok_b == false {
 		retErr := acpbError(-2, "CTOPEN_Handler(): no RDMap found!", nil)
 		acMsgResponse = &AcCipherTextMessageResponse{
@@ -399,8 +398,8 @@ func CTADD_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *A
 	}
 
 	acctx.SetKey(key)
-	ACmap.SetSKMapEntry(reqServ, reqChan, acctx)
-	ACmap.SetRDMapEntry(reqServ, reqChan, newRnd)
+	ackp.ACmap.SetSKMapEntry(reqServ, reqChan, acctx)
+	ackp.ACmap.SetRDMapEntry(reqServ, reqChan, newRnd)
 
 	acMsgResponse = &AcCipherTextMessageResponse{
 		Type:      &responseType,
