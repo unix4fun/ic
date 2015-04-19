@@ -11,10 +11,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal" // XXX deactivated
-	//    "time"
-	//    "log" // XXX deactivated
-	// XXX temporary..
-	//"crypto/rand"
 	"flag"
 	"github.com/unix4fun/ac/ackp"
 	"github.com/unix4fun/ac/acpb"

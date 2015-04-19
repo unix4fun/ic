@@ -4,14 +4,11 @@ package acpb
 // acpb == AC Protocol Buffer
 import (
 	"fmt"
-	"os"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ac/accp"
 	"github.com/unix4fun/ac/ackp"
+	"os"
 	"time"
-//    "log"
-//    "net"
-//"crypto/rand"
 )
 
 func PKGEN_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *AcPublicKeyMessageResponse, err error) {
