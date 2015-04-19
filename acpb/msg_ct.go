@@ -5,10 +5,10 @@ import (
 	//"bytes"
 	"crypto/rand"
 	"fmt"
+	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ac/accp"
 	"github.com/unix4fun/ac/ackp"
-	"github.com/golang/protobuf/proto" // protobuf is now here.
-//"github.com/unix4fun/ac/acutl"
+	//"github.com/unix4fun/ac/acutl"
 	//"golang.org/x/crypto/hkdf"   // sha3 is now here.
 	//"golang.org/x/crypto/pbkdf2" // sha3 is now here.
 	//"golang.org/x/crypto/sha3"   // sha3 is now here.

@@ -8,13 +8,13 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"os/signal" // XXX deactivated
 	"flag"
+	"fmt"
 	"github.com/unix4fun/ac/ackp"
 	"github.com/unix4fun/ac/acpb"
-	"syscall" // XXX deactivated
+	"os"
+	"os/signal" // XXX deactivated
+	"syscall"   // XXX deactivated
 
 	//"runtime/pprof"
 )
@@ -50,7 +50,6 @@ func handleStdin() (err error) {
 
 func main() {
 	Version := acVersion
-
 
 	fmt.Fprintf(os.Stderr, "[+] ac-%s\nstart\n", Version)
 
