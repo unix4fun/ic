@@ -65,7 +65,7 @@ func PKGEN_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 	myNewKeys.Pubkey = string(PK)
 
 	// create the Public Key storage if it's empty...
-	ACmap.SetPKMapEntry(reqServ, reqNick, myNewKeys)
+	ackp.ACmap.SetPKMapEntry(reqServ, reqNick, myNewKeys)
 	acMsgResponse = &AcPublicKeyMessageResponse{
 		Type:      &responseType,
 		Bada:      proto.Bool(true),
@@ -130,7 +130,7 @@ func PKADD_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 		return acMsgResponse, retErr
 	}
 
-	ACmap.SetPKMapEntry(reqServ, reqNick, newkey)
+	ackp.ACmap.SetPKMapEntry(reqServ, reqNick, newkey)
 	// PK_ADD = 12; // request: type && nick && host && server && blob  -> add or update a public key
 	acMsgResponse = &AcPublicKeyMessageResponse{
 		Type:      &responseType,
@@ -164,7 +164,7 @@ func PKLIST_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *A
 		return acMsgResponse, retErr
 	}
 
-	Pk, _ := ACmap.GetPKMap(reqServ)
+	Pk, _ := ackp.ACmap.GetPKMap(reqServ)
 
 	if len(reqNick) > 0 { // IS A SPECIFIC NICK REQUESTED ?!?!
 		myKeys, ok := Pk[reqNick]
@@ -262,7 +262,7 @@ func PKDEL_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 
 	if len(reqNick) > 0 && len(reqServ) > 0 { // IS A SPECIFIC NICK REQUESTED ?!?!
 		//_, ok := Pk[reqNick]
-		Pk, ok := ACmap.GetPKMap(reqServ)
+		Pk, ok := ackp.ACmap.GetPKMap(reqServ)
 		if ok == true {
 			delete(Pk, reqNick)
 			acMsgResponse = &AcPublicKeyMessageResponse{

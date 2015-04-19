@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ac/accp"
+	"github.com/unix4fun/ac/ackp"
 	"os"
 )
 
@@ -32,15 +33,15 @@ func KXPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgResponse 
 
 	//func (psk PSKMap) GetSKMapEntry(server string, channel string) (*ACMsgContext, bool) {
 	//acctx, ok_a := Sk[channel]
-	acctx, ok_a := ACmap.GetSKMapEntry(reqServ, channel)
+	acctx, ok_a := ackp.ACmap.GetSKMapEntry(reqServ, channel)
 	//fmt.Print(ok_a)
 	//me, ok_b := Pk[mynick]
-	me, ok_b := ACmap.GetPKMapEntry(reqServ, mynick)
+	me, ok_b := ackp.ACmap.GetPKMapEntry(reqServ, mynick)
 	//fmt.Print(ok_b)
 	//peer, ok_c := Pk[peernick]
-	peer, ok_c := ACmap.GetPKMapEntry(reqServ, peernick)
+	peer, ok_c := ackp.ACmap.GetPKMapEntry(reqServ, peernick)
 	//fmt.Print(ok_c)
-	acrnd, ok_d := ACmap.GetRDMapEntry(reqServ, channel)
+	acrnd, ok_d := ackp.ACmap.GetRDMapEntry(reqServ, channel)
 
 	if ok_a == false || ok_b == false || ok_c == false || ok_d == false {
 		retErr := acpbError(-2, "KXPACK_Handler().GetSKMapEntry/GetPKMapEntry(): failed ", nil)
@@ -128,10 +129,10 @@ func KXUNPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgRespons
 	//acctx, ok_a := Sk[channel]
 	//me, ok_b := Pk[MAPMYKEY]
 	//    fmt.Fprintf(os.Stderr, "FIRST ME\n")
-	me, ok_b := ACmap.GetPKMapEntry(reqServ, mynick)
+	me, ok_b := ackp.ACmap.GetPKMapEntry(reqServ, mynick)
 	//me, ok_b := Pk[mynick]
 	//    fmt.Fprintf(os.Stderr, "THEN PEER\n")
-	peer, ok_c := ACmap.GetPKMapEntry(reqServ, peernick)
+	peer, ok_c := ackp.ACmap.GetPKMapEntry(reqServ, peernick)
 	//peer, ok_c := Pk[peernick]
 
 	//    fmt.Println(ok_b)
@@ -182,8 +183,8 @@ func KXUNPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgRespons
 	}
 
 	//fmt.Printf("reqServ: %s channel: %s key: %s\n", reqServ, channel, hex.EncodeToString(acctx.GetKey()))
-	ACmap.SetSKMapEntry(reqServ, channel, acctx)
-	ACmap.SetRDMapEntry(reqServ, channel, acrnd)
+	ackp.ACmap.SetSKMapEntry(reqServ, channel, acctx)
+	ackp.ACmap.SetRDMapEntry(reqServ, channel, acrnd)
 
 	acMsgResponse = &AcKeyExchangeMessageResponse{
 		Type:      &responseType,
