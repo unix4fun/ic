@@ -30,6 +30,12 @@ func (skgen *SecretKeyGen) Init(input []byte, channel []byte, nick []byte, serv 
 	if input != nil {
 		skgen.input = make([]byte, len(input))
 		copy(skgen.input, input)
+	} else { // handle empty input with crypto/rand input
+		skgen.input = make([]byte, 1024)
+		_, err = io.ReadFull(rand.Reader, skgen.input)
+		if err != nil {
+			return err
+		}
 	}
 
 	if channel != nil {
@@ -59,7 +65,7 @@ func (skgen *SecretKeyGen) Init(input []byte, channel []byte, nick []byte, serv 
 	//dk := pbkdf2.Key([]byte("some password"), salt, 4096, 32, sha1.New)
 	//func Key(password, salt []byte, iter, keyLen int, h func() hash.Hash) []byte
 	// XXX TODO be sure of the PBKDF2 FUNCTION CALL ARGUMENTS...
-	skgen.input_pbkdf = pbkdf2.Key(skgen.input, prng, 4096, 32, skgen.hash)
+	skgen.input_pbkdf = pbkdf2.Key(skgen.input, prng, 16384, 32, skgen.hash)
 	//    fmt.Fprintf(os.Stderr, "PBKDF LEN: %d\n", len(skgen.input_pbkdf))
 
 	// in Read() we will apply the HKDF function.. onto the PBKDF2 derived key.

@@ -308,12 +308,10 @@ func CTADD_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *A
 		return acMsgResponse, retErr
 	}
 
-	// XOR the key..
-	for j := 0; j < len(key); j++ {
-		key[j] = key[j] ^ newRnd[j]
-	}
-
 	acctx.SetKey(key)
+	// XOR the key...
+	acctx.RndKey(newRnd)
+
 	ackp.ACmap.SetSKMapEntry(reqServ, reqChan, acctx)
 	ackp.ACmap.SetRDMapEntry(reqServ, reqChan, newRnd)
 
