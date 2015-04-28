@@ -1,4 +1,5 @@
 // +build go1.4
+
 package ackp
 
 import (
@@ -6,8 +7,8 @@ import (
 	//"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"time"
 	"golang.org/x/crypto/nacl/secretbox"
+	"time"
 	//"debug/elf"
 )
 
@@ -27,7 +28,7 @@ func (sk *SecKey) String() string {
 	fmt.Fprintf(&b, "-> bob : %s\n", sk.bob)
 	fmt.Fprintf(&b, "-> key : %s\n", hex.EncodeToString(sk.key[:]))
 	fmt.Fprintf(&b, "-> nonce : %08x\n", sk.nonce)
-	fmt.Fprintf(&b, "-> created: %l\n", sk.CreaTime.Unix())
+	fmt.Fprintf(&b, "-> created: %d\n", sk.CreaTime.Unix())
 	return b.String()
 }
 

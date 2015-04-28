@@ -106,4 +106,3 @@ func OpenPKMessageNACL(ircmsg []byte) (out []byte, err error) {
 
 	return out, nil
 }
-

@@ -153,6 +153,7 @@ func main() {
 
 	// parsing the RSA code...
 	rsaFlag := flag.Bool("rsagen", false, "generate RSA identity keys")
+	ecFlag := flag.Bool("ecgen", false, "generate ECDSA identity keys (these are using NIST curve SecP384")
 	// we cannot use more than 2048K anyway why bother with a flag then
 	//bitOpt := flag.Int("client", 2048, "generate Client SSL Certificate")
 	flag.Parse()
@@ -168,7 +169,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if *rsaFlag == true {
+	if *rsaFlag == true || *ecFlag == true {
 		// generate a set of identity RSA keys and save them to file encrypted
 		//accp.GenRSAKeys()
 	} else {

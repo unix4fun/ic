@@ -1,11 +1,11 @@
 // +build go1.4
+
 package ackp
 
 import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	//"github.com/unix4fun/ac/accp"
 	"os"
 )
 
@@ -342,4 +342,3 @@ func (rdm RDMap) GetRD(channel string) []byte {
 	}
 	return nil
 }
-

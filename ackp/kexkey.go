@@ -1,12 +1,15 @@
 // +build go1.4
+
+// Package ackp implements various key type handlers and associated utility routines
+// ackp stands for AC Key Package
 package ackp
 
 import (
 	"bytes"
-	"fmt"
 	"crypto/rand"
-	"golang.org/x/crypto/nacl/box"
+	"fmt"
 	"github.com/unix4fun/ac/acutl"
+	"golang.org/x/crypto/nacl/box"
 	"time"
 )
 
@@ -71,7 +74,7 @@ func (pk *KexKey) String() string {
 	fmt.Fprintf(&b, "nick: %s @ %s on %s\n", pk.Nickname, pk.Userhost, pk.Server)
 	fmt.Fprintf(&b, "pubkey: %s\n", pk.Pubkey)
 	//fmt.Fprintf(&b, "privkey: %s\n", hex.EncodeToString(pk.privkey[:]))
-	fmt.Fprintf(&b, "created: %l\n", pk.CreaTime.Unix())
+	fmt.Fprintf(&b, "created: %d\n", pk.CreaTime.Unix())
 	return b.String()
 }
 
@@ -82,7 +85,7 @@ func CreateKxKeys(nickname, userhost, server string) (mykeys *KexKey, err error)
 	mykeys = new(KexKey)
 	mykeys.pubkey, mykeys.privkey, err = box.GenerateKey(rand.Reader)
 	if err != nil {
-		return nil, &acutl.AcError{ Value: -1, Msg: "CreateMyKeys().GenerateKey(): ", Err: err}
+		return nil, &acutl.AcError{Value: -1, Msg: "CreateMyKeys().GenerateKey(): ", Err: err}
 	}
 
 	pubfp, err := acutl.HashSHA3Data(mykeys.pubkey[:])
@@ -94,12 +97,12 @@ func CreateKxKeys(nickname, userhost, server string) (mykeys *KexKey, err error)
 	copy(mykeys.pubfp[:], pubfp)
 
 	/*
-	PK, err := CreatePKMessageNACL(mykeys.pubkey[:])
-	if err != nil {
-		//return nil, acprotoError(-3, "CreateMyKeys().CreatePKMessage(): ", err)
-		return nil, &acutl.AcError{Value: -3, Msg: "CreateMyKeys().CreatePKMessage(): ", Err: err}
-	}
-	mykeys.Pubkey = string(PK)
+		PK, err := CreatePKMessageNACL(mykeys.pubkey[:])
+		if err != nil {
+			//return nil, acprotoError(-3, "CreateMyKeys().CreatePKMessage(): ", err)
+			return nil, &acutl.AcError{Value: -3, Msg: "CreateMyKeys().CreatePKMessage(): ", Err: err}
+		}
+		mykeys.Pubkey = string(PK)
 	*/
 	mykeys.Nickname = nickname
 	mykeys.Userhost = userhost
@@ -110,3 +113,16 @@ func CreateKxKeys(nickname, userhost, server string) (mykeys *KexKey, err error)
 	return mykeys, nil
 }
 
+// XXX TODO: to reimplement properly..
+func CreateKxKeys2(nickname, userhost, server string) (*KexKey, error) {
+	/*
+	pubkey, privkey, err := box.GenerateKey(rand.Reader)
+	if err != nil {
+		return nil, &acutl.AcError{Value: -1, Msg: "CreateMyKeys().GenerateKey(): ", Err: err}
+	}
+
+	pubfp, err := acutl.HashSHA3Data(pubkey[:])
+	*/
+	return nil, nil
+
+}

@@ -73,7 +73,6 @@ func B64DecodeData(in []byte) (out []byte, err error) {
 //func CompressData(in []byte) (data *bytes.Buffer, err error) {
 func CompressData(in []byte) (out []byte, err error) {
 
-	//fmt.Fprintf(os.Stderr, "CompressData(%d bytes)\n", len(in))
 	// first let's compress
 	data := new(bytes.Buffer)
 
@@ -91,18 +90,13 @@ func CompressData(in []byte) (out []byte, err error) {
 	//zbuf.Flush()
 	// XXX let's try...
 	zbuf.Close()
+
 	//fmt.Fprintf(os.Stderr, "CompressData(%d B): %d B\n", len(in), data.Len())
-	//	zbuf.Close() is defered
 	out = data.Bytes()
-	//fmt.Printf("OUTPUT: %s\n", hex.EncodeToString(out))
 	return out, nil
 }
 
 func DecompressData(in []byte) (out []byte, err error) {
-	//outbuf := new(bytes.Buffer)
-
-	//fmt.Printf("LEN INPUT : %d\n", len(in))
-	//fmt.Printf("INPUT : %s\n", hex.EncodeToString(in))
 	zbuf := bytes.NewBuffer(in)
 	plain, err := zlib.NewReader(zbuf)
 	defer plain.Close()
@@ -110,15 +104,11 @@ func DecompressData(in []byte) (out []byte, err error) {
 		return nil, &AcError{Value: -1, Msg: "DecompressData().zlib.NewReader(): ", Err: err}
 	}
 
-	//_, err = io.Copy(outbuf, plain)
 	out, err = ioutil.ReadAll(plain)
-	//fmt.Printf("LEN OUTPUT : %d\n", len(out))
-	//fmt.Printf("OUTPUT: %s\n", out)
 	if err != nil && err != io.EOF {
 		return nil, &AcError{Value: -2, Msg: "DecompressData().ioutil().ReadAll(): ", Err: err}
 	}
 
-	//out = outbuf.Bytes()
 	return out, nil
 }
 
