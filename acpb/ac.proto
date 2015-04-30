@@ -5,15 +5,12 @@ option cc_generic_services = false;
 option java_generic_services = false;
 option py_generic_services = false;
 
-//
-//
-//
-// PUBLIC KEY!
-// type: ECDH / RSA 2K / RSA 4K
-// 
-//
-//
-//PK_GET = 11; // request: type && my_nick                   -> get my pubkey for transmission XXX TODO: to disappear
+// PUBLIC KEY // EC25519 DH
+// This message handle public key requests:
+// PK_GEN: generate an ephemeral public key
+// PK_ADD: add an externally received ephemeral public key
+// PK_LIST: list currently known ephemeral public key(s)
+// PK_DEL: delete a currently stored ephemeral public key
 message acPublicKeyMessageRequest {
     enum acPKReqMsgType {
         PK_GEN = 10; // request: type && my_nick && host && server && blob (input entropy) -> generate pubkey & store/update XXX: input entropy to use...
