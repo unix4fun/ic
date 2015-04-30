@@ -20,7 +20,7 @@ func PKGEN_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 	reqServ := acMessagePkReq.GetServer()
 	//reqEntropy := acMessagePkReq.GetBlob()
 	//
-	//fmt.Fprintf(os.Stderr, "[+] PKGEN <- %s ! %s / %s\n", reqNick, reqHost, reqServ)
+	fmt.Fprintf(os.Stderr, "[+] PKGEN <- %s ! %s / %s\n", reqNick, reqHost, reqServ)
 
 	if len(reqServ) == 0 || len(reqNick) == 0 {
 		retErr := acpbError(-1, "PKGEN_Handler().GetNick(): 0 bytes", nil)

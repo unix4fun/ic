@@ -82,8 +82,6 @@ message acKeyExchangeMessageResponse {
     }
     required acKXRespMsgType type = 1;
     required bool bada = 2; // did it work or not
-    required string channel = 3;
-    required string nick = 4;
     required bytes blob = 5;
     optional sint32 error_code = 6;
     optional uint32 nonce = 7;
@@ -120,8 +118,6 @@ message acCipherTextMessageResponse {
     }
     required acCTRespMsgType type = 1;
     required bool bada = 2; // did it work or not
-    required string channel = 3;
-    required string nick = 4;
     repeated bytes blob = 5;
     optional sint32 error_code = 6;
     optional uint32 nonce = 7;

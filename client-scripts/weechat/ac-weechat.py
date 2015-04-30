@@ -10,7 +10,7 @@
 
 SCRIPT_NAME    = 'ac-weechat'
 SCRIPT_AUTHOR  = 'eau <eau-code@unix4fun.net>'
-SCRIPT_VERSION = '20150414'
+SCRIPT_VERSION = '20150430'
 SCRIPT_LICENSE = 'BSD'
 SCRIPT_DESC    = 'AC script'
 
@@ -1613,11 +1613,19 @@ class AcPbCom(object):
         # XXX TODO: this is a hack need a proper select loop here.. :)
         # also let's poll stderr to get errors and display it in a status window..
         #time.sleep(0.1)
-        rlist, _, _ = select.select([self.acProc.stdout], [], [], 1)
+        rlist, wlist, xlist = select.select([self.acProc.stdout], [], [], 1)
         if (rlist):
             rcvBlob = self.acProc.stdout.read(bufsize)
         else:
+            # XXX TODO: need to message the process back
             print "PROCESS COMMUNICATION TIMEOUT!!!"
+            print "RLIST"
+            print rlist
+            print "WLIST"
+            print wlist
+            print "XLIST"
+            print xlist
+            return [ None,  None ]
     
         # XXX TODO: surround with try/except
         acRcvEnvp = ac_pb2.ArseneCryptoMessage()

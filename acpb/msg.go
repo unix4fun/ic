@@ -67,11 +67,11 @@ func HandleACMsg(msg []byte) (msgReply []byte, err error) {
 		//fmt.Printf("this is a Public Key Message\n")
 		// TEST error condition
 		pkMsgReply, err := HandleACPkMsg(acMessageEnvelope.GetBlob())
-		/*
-		   if err != nil {
-		       return nil, acpbError(-1, "HandleACPkMsg(): ", err)
-		   }
-		*/
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "MSG: %v ERR: %v\n", pkMsgReply, err)
+			return nil, err
+			//       return nil, acpbError(-1, "HandleACPkMsg(): ", err)
+		}
 
 		// now let's pack it in the new message
 		responseType = ArseneCryptoMessage_AC_PK
@@ -92,6 +92,7 @@ func HandleACMsg(msg []byte) (msgReply []byte, err error) {
 
 		kxMsgReply, err := HandleACKxMsg(acMessageEnvelope.GetBlob())
 		if err != nil {
+			fmt.Fprintf(os.Stderr, "MSG: %v ERR: %v\n", kxMsgReply, err)
 			return nil, err
 		}
 
@@ -109,9 +110,10 @@ func HandleACMsg(msg []byte) (msgReply []byte, err error) {
 		return msgReply, err
 	case ArseneCryptoMessage_AC_CRYPTO:
 		//var responseType ArseneCryptoMessageAcMessageType
-		fmt.Fprintf(os.Stderr, "this is a CipherText Message\n")
+		//fmt.Fprintf(os.Stderr, "this is a CipherText Message\n")
 		ctMsgReply, err := HandleACCtMsg(acMessageEnvelope.GetBlob())
 		if err != nil {
+			fmt.Fprintf(os.Stderr, "MSG: %v ERR: %v\n", ctMsgReply, err)
 			return nil, err
 		}
 

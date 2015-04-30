@@ -180,6 +180,12 @@ func main() {
 		ackp.ACmap = make(ackp.PSKMap)
 		ackp.ACrun = true
 
+		//fmt.Fprintf(os.Stderr, "PROUTPROUT")
+		//fmt.Fprintf(os.Stderr, "%v", ackp.ACmap)
+		//fmt.Println(ackp.ACmap)
+		ackp.ACmap.SetPKMapEntry("proutprout", "mynick", nil)
+		//fmt.Println(ackp.ACmap)
+
 		// XXX TODO: this is not stable enough but should do the trick for now..
 		// it is not clear what happens if the ACrun = false is done first
 		// but i close the socket on both sides.. and it should clean the

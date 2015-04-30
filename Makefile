@@ -55,8 +55,7 @@ version:
 	@echo "Generating ${CURRENT}"
 	@echo "package main\nconst acVersion string = \"`date +%Y%m%d`\"\n" > version.go
 	@sed s/SCRIPT_VERSION\ =\ '.*'/SCRIPT_VERSION\ =\ \'${CURRENT}\'/g  ${ACWSCRIPT}/ac-weechat.py > ${ACWSCRIPT}/ac-weechat.py.${CURRENT}
-	@diff -sru ${ACWSCRIPT}/ac-weechat.py ${ACWSCRIPT}/ac-weechat.py.${CURRENT} 
-	@if [ $$? -eq 1 ]; then echo "Ok/Ctrl+C" && read t; else exit 0; fi
+	@diff -sru ${ACWSCRIPT}/ac-weechat.py ${ACWSCRIPT}/ac-weechat.py.${CURRENT} || if [ $$? -eq 1 ]; then echo "Ok/Ctrl+C" && read t; else exit 0; fi
 	#|| [ $$? -eq 1 ]; then echo "$(?) Ok/Ctrl+C?" && read t
 #	@echo "OK Ctrl-C to stop"
 #	@read t

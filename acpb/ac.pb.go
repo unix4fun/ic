@@ -612,8 +612,6 @@ func (m *AcKeyExchangeMessageRequest) GetBlob() []byte {
 type AcKeyExchangeMessageResponse struct {
 	Type             *AcKeyExchangeMessageResponseAcKXRespMsgType `protobuf:"varint,1,req,name=type,enum=acpb.AcKeyExchangeMessageResponseAcKXRespMsgType" json:"type,omitempty"`
 	Bada             *bool                                        `protobuf:"varint,2,req,name=bada" json:"bada,omitempty"`
-	Channel          *string                                      `protobuf:"bytes,3,req,name=channel" json:"channel,omitempty"`
-	Nick             *string                                      `protobuf:"bytes,4,req,name=nick" json:"nick,omitempty"`
 	Blob             []byte                                       `protobuf:"bytes,5,req,name=blob" json:"blob,omitempty"`
 	ErrorCode        *int32                                       `protobuf:"zigzag32,6,opt,name=error_code" json:"error_code,omitempty"`
 	Nonce            *uint32                                      `protobuf:"varint,7,opt,name=nonce" json:"nonce,omitempty"`
@@ -636,20 +634,6 @@ func (m *AcKeyExchangeMessageResponse) GetBada() bool {
 		return *m.Bada
 	}
 	return false
-}
-
-func (m *AcKeyExchangeMessageResponse) GetChannel() string {
-	if m != nil && m.Channel != nil {
-		return *m.Channel
-	}
-	return ""
-}
-
-func (m *AcKeyExchangeMessageResponse) GetNick() string {
-	if m != nil && m.Nick != nil {
-		return *m.Nick
-	}
-	return ""
 }
 
 func (m *AcKeyExchangeMessageResponse) GetBlob() []byte {
@@ -739,8 +723,6 @@ func (m *AcCipherTextMessageRequest) GetOpt() string {
 type AcCipherTextMessageResponse struct {
 	Type             *AcCipherTextMessageResponseAcCTRespMsgType `protobuf:"varint,1,req,name=type,enum=acpb.AcCipherTextMessageResponseAcCTRespMsgType" json:"type,omitempty"`
 	Bada             *bool                                       `protobuf:"varint,2,req,name=bada" json:"bada,omitempty"`
-	Channel          *string                                     `protobuf:"bytes,3,req,name=channel" json:"channel,omitempty"`
-	Nick             *string                                     `protobuf:"bytes,4,req,name=nick" json:"nick,omitempty"`
 	Blob             [][]byte                                    `protobuf:"bytes,5,rep,name=blob" json:"blob,omitempty"`
 	ErrorCode        *int32                                      `protobuf:"zigzag32,6,opt,name=error_code" json:"error_code,omitempty"`
 	Nonce            *uint32                                     `protobuf:"varint,7,opt,name=nonce" json:"nonce,omitempty"`
@@ -763,20 +745,6 @@ func (m *AcCipherTextMessageResponse) GetBada() bool {
 		return *m.Bada
 	}
 	return false
-}
-
-func (m *AcCipherTextMessageResponse) GetChannel() string {
-	if m != nil && m.Channel != nil {
-		return *m.Channel
-	}
-	return ""
-}
-
-func (m *AcCipherTextMessageResponse) GetNick() string {
-	if m != nil && m.Nick != nil {
-		return *m.Nick
-	}
-	return ""
 }
 
 func (m *AcCipherTextMessageResponse) GetBlob() [][]byte {

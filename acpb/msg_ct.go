@@ -247,7 +247,7 @@ func CTOPEN_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 // TODO: implement fortuna to feed the PRNG
 func CTADD_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *AcCipherTextMessageResponse, err error) {
 	var responseType AcCipherTextMessageResponseAcCTRespMsgType
-	responseType = AcCipherTextMessageResponse_CTR_OPEN
+	responseType = AcCipherTextMessageResponse_CTR_ADD
 	//var acctx * accp.SecKey
 
 	//fmt.Fprintf(os.Stderr, "CTADD Message: let's give the key\n")
@@ -353,6 +353,7 @@ func HandleACCtMsg(msg []byte) (msgReply []byte, err error) {
 		fmt.Fprintf(os.Stderr, "ADD CT KEY Message:!\n")
 		// TODO we don't handle errors correctly yet...
 		acReplyCtMsg, err = CTADD_Handler(acMessageCtReq)
+		fmt.Fprintf(os.Stderr, "LEN: %v", *acReplyCtMsg)
 	default:
 		fmt.Fprintf(os.Stderr, "UNKNOWN Message: WTF?!?!\n")
 		// TODO need to send a valid reponse with error -255
