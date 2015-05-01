@@ -116,12 +116,12 @@ func CreateKxKeys(nickname, userhost, server string) (mykeys *KexKey, err error)
 // XXX TODO: to reimplement properly..
 func CreateKxKeys2(nickname, userhost, server string) (*KexKey, error) {
 	/*
-	pubkey, privkey, err := box.GenerateKey(rand.Reader)
-	if err != nil {
-		return nil, &acutl.AcError{Value: -1, Msg: "CreateMyKeys().GenerateKey(): ", Err: err}
-	}
+		pubkey, privkey, err := box.GenerateKey(rand.Reader)
+		if err != nil {
+			return nil, &acutl.AcError{Value: -1, Msg: "CreateMyKeys().GenerateKey(): ", Err: err}
+		}
 
-	pubfp, err := acutl.HashSHA3Data(pubkey[:])
+		pubfp, err := acutl.HashSHA3Data(pubkey[:])
 	*/
 	return nil, nil
 
