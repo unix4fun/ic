@@ -2,9 +2,9 @@ package acpb
 
 import (
 	"fmt"
-	"testing"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ac/ackp"
+	"testing"
 )
 
 /*
@@ -45,18 +45,18 @@ func TestPKGENMessage001(t *testing.T) {
 	switch respType := acMessagePkResp.GetType(); respType {
 	case AcPublicKeyMessageResponse_PKR_GEN:
 		switch acMessagePkResp.GetBada() {
-			case true:
-			case false:
-				t.Errorf("False when it should be true this is a working request!")
-				t.Errorf("Req: %v\n", acMessagePkReq)
-				t.Errorf("Resp: %v\n", acMessagePkResp)
+		case true:
+		case false:
+			t.Errorf("False when it should be true this is a working request!")
+			t.Errorf("Req: %v\n", acMessagePkReq)
+			t.Errorf("Resp: %v\n", acMessagePkResp)
 		}
 		switch acMessagePkResp.GetErrorCode() {
-			case 0:
-			default:
-				t.Errorf("Error code is wrong")
-				t.Errorf("Req: %v\n", acMessagePkReq)
-				t.Errorf("Resp: %v\n", acMessagePkResp)
+		case 0:
+		default:
+			t.Errorf("Error code is wrong")
+			t.Errorf("Req: %v\n", acMessagePkReq)
+			t.Errorf("Resp: %v\n", acMessagePkResp)
 		}
 	default:
 		t.Errorf("Wrong Response Type : %d, expected: %d\n", respType, AcPublicKeyMessageResponse_PKR_GEN)
