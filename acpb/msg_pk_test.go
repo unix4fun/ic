@@ -2,10 +2,23 @@ package acpb
 
 import (
 	"fmt"
-	"testing"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ac/ackp"
+	"testing"
 )
+
+/*
+type Test struct {
+	inType AcPublicKeyMessageRequestAcPKReqMsgType
+	in * AcPublicKeyMessageRequest     // input
+	out * AcPublicKeyMessageResponse   // expected output
+}
+
+var tests = []Test {
+	{ AcPublicKeyMessageRequest_PK_GEN,  &AcPublicKeyMessageRequest{ Type: &inType, Nick: proto.String("prout"), Host: proto.String("prout@hostname"), Server: proto.String("freenode.net")} },
+
+}
+*/
 
 /*
  * TESTs needed
@@ -45,20 +58,20 @@ func TestPKGENMessage001(t *testing.T) {
 	switch respType := acMessagePkResp.GetType(); respType {
 	case AcPublicKeyMessageResponse_PKR_GEN:
 		switch acMessagePkResp.GetBada() {
-			case true:
-			case false:
-				t.Errorf("False when it should be true this is a working request!")
-				t.Errorf("Req: %v\n", acMessagePkReq)
-				t.Errorf("Resp: %v\n", acMessagePkResp)
+		case true:
+		case false:
+			t.Errorf("False when it should be true this is a working request!")
+			t.Errorf("Req: %v\n", acMessagePkReq)
+			t.Errorf("Resp: %v\n", acMessagePkResp)
 		}
 		switch acMessagePkResp.GetErrorCode() {
-			case 0:
-			default:
-				t.Errorf("Error code is wrong")
-				t.Errorf("Req: %v\n", acMessagePkReq)
-				t.Errorf("Resp: %v\n", acMessagePkResp)
+		case 0:
+		default:
+			t.Errorf("Error code is wrong")
+			t.Errorf("Req: %v\n", acMessagePkReq)
+			t.Errorf("Resp: %v\n", acMessagePkResp)
 		}
-	default:
+	default: // We sent a PK_GEN request, should be a PK_GEN
 		t.Errorf("Wrong Response Type : %d, expected: %d\n", respType, AcPublicKeyMessageResponse_PKR_GEN)
 		t.Errorf("Req: %v\n", acMessagePkReq)
 		t.Errorf("Resp: %v\n", acMessagePkResp)
@@ -84,8 +97,8 @@ func TestPKGENMessage002(t *testing.T) {
 	acMessagePkReq := &AcPublicKeyMessageRequest{
 		Type:   &reqType,
 		Nick:   nil,
-		Host:   &HostTest_1,
-		Server: &ServerTest_1,
+		Host:   proto.String(HostTest_1),
+		Server: proto.String(ServerTest_1),
 	}
 
 	acMessagePkResp, _ := PKGEN_Handler(acMessagePkReq)
