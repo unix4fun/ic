@@ -377,15 +377,12 @@ func (x *ArseneCryptoMessageAcMessageType) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-//
-//
-//
-// PUBLIC KEY!
-// type: ECDH / RSA 2K / RSA 4K
-//
-//
-//
-// PK_GET = 11; // request: type && my_nick                   -> get my pubkey for transmission XXX TODO: to disappear
+// PUBLIC KEY // EC25519 DH
+// This message handle public key requests:
+// PK_GEN: generate an ephemeral public key
+// PK_ADD: add an externally received ephemeral public key
+// PK_LIST: list currently known ephemeral public key(s)
+// PK_DEL: delete a currently stored ephemeral public key
 type AcPublicKeyMessageRequest struct {
 	Type             *AcPublicKeyMessageRequestAcPKReqMsgType `protobuf:"varint,1,req,name=type,enum=acpb.AcPublicKeyMessageRequestAcPKReqMsgType" json:"type,omitempty"`
 	Nick             *string                                  `protobuf:"bytes,2,opt,name=nick" json:"nick,omitempty"`

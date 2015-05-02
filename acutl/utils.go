@@ -15,6 +15,7 @@ import (
 	//"os"
 	//"regexp"
 	//"time"
+	"log"
 )
 
 // protoError is the custom AC error type
@@ -23,6 +24,12 @@ type AcError struct {
 	Value int    // the error code.
 	Msg   string // the associated message
 	Err   error  // called layer error
+}
+
+var DebugLog *log.Logger
+
+func LogInit(out io.Writer) {
+	DebugLog = log.New(out, "<acDebug>:", log.Lmicroseconds|log.Lshortfile|log.LstdFlags)
 }
 
 func (ae *AcError) Error() string {

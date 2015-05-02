@@ -7,6 +7,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"os"
+	//"github.com/unix4fun/ac/acutl"
 )
 
 // some variable to handle the maps and the run loop
@@ -74,7 +75,7 @@ func (psk PSKMap) String() string {
 	return buf.String()
 }
 
-func (psk PSKMap) Map2File(outfilestr string, salt []byte, keystr []byte) (bool, error) {
+func (psk *PSKMap) Map2File(outfilestr string, salt []byte, keystr []byte) (bool, error) {
 	/*
 	 *
 	 * here is the plan:
@@ -116,7 +117,7 @@ func (psk PSKMap) Map2File(outfilestr string, salt []byte, keystr []byte) (bool,
 	return true, nil
 }
 
-func (psk PSKMap) File2Map(infilestr string, salt []byte, keystr []byte) (bool, error) {
+func (psk *PSKMap) File2Map(infilestr string, salt []byte, keystr []byte) (bool, error) {
 	fmt.Fprintf(os.Stderr, "File2Map CALL to  %s", infilestr)
 	infile, err := os.Open(infilestr)
 	defer infile.Close()
@@ -142,6 +143,7 @@ func (psk PSKMap) File2Map(infilestr string, salt []byte, keystr []byte) (bool, 
 // RDMaps
 //
 func (psk PSKMap) GetRDMapEntry(server string, channel string) ([]byte, bool) {
+	fmt.Fprintf(os.Stderr, "===---=-=-=--==- GetRDMapEntry[@%p] (serv: %s channel: %s)! --==-=---=-=-=-==-\n", psk, server, channel)
 	rdmap, ok := psk.GetRDMap(server)
 	if ok == true {
 		val, ok := rdmap[channel]
@@ -151,6 +153,12 @@ func (psk PSKMap) GetRDMapEntry(server string, channel string) ([]byte, bool) {
 }
 
 func (psk PSKMap) SetRDMapEntry(server, channel string, rnd []byte) {
+	if psk == nil {
+		psk = make(PSKMap)
+		fmt.Fprintf(os.Stderr, "===---=-=-=--==- SetRDMapEntry (serv: %s channel: %s) NEWMAP @ %p! --==-=---=-=-=-==-\n", server, channel, psk)
+	} else {
+		fmt.Fprintf(os.Stderr, "===---=-=-=--==- SetRDMapEntry[@%p] (serv: %s channel: %s)! --==-=---=-=-=-==-\n", psk, server, channel)
+	}
 	rdmap, ok := psk.GetRDMap(server)
 	if ok == true {
 		delete(rdmap, channel)
@@ -163,6 +171,7 @@ func (psk PSKMap) SetRDMapEntry(server, channel string, rnd []byte) {
 }
 
 func (psk PSKMap) GetRDMap(server string) (RDMap, bool) {
+	fmt.Fprintf(os.Stderr, "===---=-=-=--==- GetRDMap[@%p] (serv: %s)! --==-=---=-=-=-==-\n", psk, server)
 	acm, ok := psk[server]
 	if ok == true {
 		return acm.Rd, true
@@ -183,17 +192,23 @@ func (psk PSKMap) initRDMapWith(server string, channel string, rnd []byte) {
 // SKMaps
 //
 func (psk PSKMap) GetSKMapEntry(server string, channel string) (*SecKey, bool) {
+	fmt.Fprintf(os.Stderr, "===---=-=-=--==- GetSKMapEntry[@%p] (serv: %s channel: %s)! --==-=---=-=-=-==-\n", server, channel)
 	skmap, ok := psk.GetSKMap(server)
-	fmt.Fprintf(os.Stderr, "===---=-=-=--==- GetSKMapEntry (serv: %s channel: %s) ! skmap: %p ok: %t --==-=---=-=-=-==-\n", server, channel, skmap, ok)
 	if ok == true {
 		val, ok := skmap[channel]
-		fmt.Fprintf(os.Stderr, "===---=-=-=--==- GetSKMapEntry (serv: %s channel: %s) ! val: %p ok: %t --==-=---=-=-=-==-\n", server, channel, val, ok)
+		//fmt.Fprintf(os.Stderr, "===---=-=-=--==- GetSKMapEntry (serv: %s channel: %s) ! val: %p ok: %t --==-=---=-=-=-==-\n", server, channel, val, ok)
 		return val, ok
 	}
 	return nil, false
 }
 
 func (psk PSKMap) SetSKMapEntry(server string, channel string, sk *SecKey) {
+	if psk == nil {
+		psk = make(PSKMap)
+		fmt.Fprintf(os.Stderr, "===---=-=-=--==- SetSKMapEntry (serv: %s channel: %s) NEWMAP @ %p! --==-=---=-=-=-==-\n", server, channel, psk)
+	} else {
+		fmt.Fprintf(os.Stderr, "===---=-=-=--==- SetSKMapEntry[@%p] (serv: %s channel: %s)! --==-=---=-=-=-==-\n", psk, server, channel)
+	}
 	skmap, ok := psk.GetSKMap(server)
 	if ok == true {
 		delete(skmap, channel) // NO OP in case of nil..
@@ -206,6 +221,7 @@ func (psk PSKMap) SetSKMapEntry(server string, channel string, sk *SecKey) {
 }
 
 func (psk PSKMap) GetSKMap(server string) (SKMap, bool) {
+	fmt.Fprintf(os.Stderr, "===---=-=-=--==- GetSKMap[@%p] (serv: %s)! --==-=---=-=-=-==-\n", psk, server)
 	acm, ok := psk[server]
 	if ok == true {
 		return acm.Sk, true
@@ -226,11 +242,11 @@ func (psk PSKMap) initSKMapWith(server string, channel string, sk *SecKey) {
 // PKMaps
 //
 func (psk PSKMap) GetPKMapEntry(server string, nick string) (*KexKey, bool) {
+	fmt.Fprintf(os.Stderr, "===---=-=-=--==- GetPKMapEntry[@%p] (serv: %s nick: %s)! --==-=---=-=-=-==-\n", server, nick)
 	pkmap, ok := psk.GetPKMap(server)
-	fmt.Fprintf(os.Stderr, "===---=-=-=--==- GetPKMapEntry (serv: %s nick: %s) ! pkmap: %p ok: %t --==-=---=-=-=-==-\n", server, nick, pkmap, ok)
 	if ok == true {
 		val, ok := pkmap[nick]
-		fmt.Fprintf(os.Stderr, "===---=-=-=--==- GetPKMapEntry (serv: %s nick: %s) ! val: %p ok: %t --==-=---=-=-=-==-\n", server, nick, val, ok)
+		//fmt.Fprintf(os.Stderr, "===---=-=-=--==- GetPKMapEntry (serv: %s nick: %s) ! val: %p ok: %t --==-=---=-=-=-==-\n", server, nick, val, ok)
 		//        fmt.Println(val)
 		//        fmt.Println(ok)
 		return val, ok
@@ -239,18 +255,26 @@ func (psk PSKMap) GetPKMapEntry(server string, nick string) (*KexKey, bool) {
 }
 
 func (psk PSKMap) SetPKMapEntry(server string, nick string, pk *KexKey) {
+	if psk == nil {
+		psk = make(PSKMap)
+		fmt.Fprintf(os.Stderr, "===---=-=-=--==- SetPKMapEntry (serv: %s nick: %s) NEWMAP @ %p! --==-=---=-=-=-==-\n", server, nick, psk)
+	} else {
+		fmt.Fprintf(os.Stderr, "===---=-=-=--==- SetPKMapEntry[@%p] (serv: %s nick: %s)! --==-=---=-=-=-==-\n", psk, server, nick)
+	}
 	pkmap, ok := psk.GetPKMap(server)
 	if ok == true {
 		delete(pkmap, nick) // NO OP in case of nil..
 		pkmap[nick] = pk
 		return
 	}
+
 	// the PKMap for this server is non existent, let's make it...
 	psk.initPKMapWith(server, nick, pk)
 	return
 }
 
 func (psk PSKMap) GetPKMap(server string) (PKMap, bool) {
+	fmt.Fprintf(os.Stderr, "===---=-=-=--==- GetPKMap[@%p] (serv: %s)! --==-=---=-=-=-==-\n", psk, server)
 	acm, ok := psk[server]
 	if ok == true {
 		return acm.Pk, true

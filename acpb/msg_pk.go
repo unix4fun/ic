@@ -3,11 +3,10 @@ package acpb
 
 // acpb == AC Protocol Buffer
 import (
-	"fmt"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ac/accp"
 	"github.com/unix4fun/ac/ackp"
-	"os"
+	"github.com/unix4fun/ac/acutl"
 	"time"
 )
 
@@ -18,45 +17,44 @@ func PKGEN_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 	reqNick := acMessagePkReq.GetNick()
 	reqHost := acMessagePkReq.GetHost()
 	reqServ := acMessagePkReq.GetServer()
-	//reqEntropy := acMessagePkReq.GetBlob()
-	//
-	fmt.Fprintf(os.Stderr, "[+] PKGEN <- %s ! %s / %s\n", reqNick, reqHost, reqServ)
+
+	acutl.DebugLog.Printf("(CALL) PKGEN <- %s ! %s / %s\n", reqNick, reqHost, reqServ)
 
 	if len(reqServ) == 0 || len(reqNick) == 0 {
-		retErr := acpbError(-1, "PKGEN_Handler().GetNick(): 0 bytes", nil)
+		retErr := &acutl.AcError{Value: -1, Msg: "PKGEN_Handler().Get{Nick|Server}(): 0 bytes", Err: nil}
 		acMsgResponse = &AcPublicKeyMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
 			ErrorCode: proto.Int32(-1),
 			Blob:      []byte(retErr.Error()),
 		}
-		fmt.Fprintf(os.Stderr, "[!] PKGEN -> (R) -1 ! %s\n", retErr.Error())
+		acutl.DebugLog.Printf("(RET[!]) PKGEN -> (-1) ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
 
 	myNewKeys, err := ackp.CreateKxKeys(reqNick, reqHost, reqServ)
 	if err != nil {
-		retErr := acpbError(-2, "PKGEN_Handler().CreateMyKeys(): ", err)
+		retErr := &acutl.AcError{Value: -2, Msg: "PKGEN_Handler().CreateMyKeys(): ", Err: err}
 		acMsgResponse = &AcPublicKeyMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
 			ErrorCode: proto.Int32(-2),
 			Blob:      []byte(retErr.Error()),
 		}
-		//fmt.Fprintf(os.Stderr, "[!] PKGEN -> (R) -2 ! %s\n", retErr.Error())
+		acutl.DebugLog.Printf("(RET[!]) PKGEN -> (-2) ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
 	// create the cached version instead of in CreateMyKeys()
 	PK, err := accp.CreatePKMessageNACL(myNewKeys.GetPubkey()[:])
 	if err != nil {
-		retErr := acpbError(-3, "PKGEN_Handler().CreateCachePubkey: ", err)
+		retErr := &acutl.AcError{Value: -3, Msg: "PKGEN_Handler().CreateCachePubkey: ", Err: err}
 		acMsgResponse = &AcPublicKeyMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
 			ErrorCode: proto.Int32(-3),
 			Blob:      []byte(retErr.Error()),
 		}
-		//fmt.Fprintf(os.Stderr, "[!] PKGEN -> (R) -2 ! %s\n", retErr.Error())
+		acutl.DebugLog.Printf("(RET[!]) PKGEN -> (-3) ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
 	myNewKeys.Pubkey = string(PK)
@@ -68,7 +66,7 @@ func PKGEN_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 		Bada:      proto.Bool(true),
 		ErrorCode: proto.Int32(0),
 	}
-	fmt.Fprintf(os.Stderr, "[+] PKGEN -> (R) 0 ! Key Generated.\n")
+	acutl.DebugLog.Printf("(RET) PKGEN -> (0) ! Key Generated.\n")
 	return acMsgResponse, nil
 }
 
@@ -81,16 +79,16 @@ func PKADD_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 	reqServ := acMessagePkReq.GetServer()
 	reqPubkey := string(acMessagePkReq.GetBlob())
 
-	fmt.Fprintf(os.Stderr, "[+] PKADD <- %s ! %s / %s (%s)\n", reqNick, reqHost, reqServ, reqPubkey)
+	acutl.DebugLog.Printf("(CALL) PKADD <- %s ! %s / %s (%s)\n", reqNick, reqHost, reqServ, reqPubkey)
 	if len(reqServ) == 0 || len(reqNick) == 0 || len(reqPubkey) == 0 {
-		retErr := acpbError(-1, "PKADD_Handler().reqNick/Pubkey(): 0 bytes", nil)
+		retErr := &acutl.AcError{Value: -1, Msg: "PKADD_Handler().reqNick/Pubkey(): 0 bytes", Err: nil}
 		acMsgResponse = &AcPublicKeyMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
 			ErrorCode: proto.Int32(-1),
 			Blob:      []byte(retErr.Error()),
 		}
-		fmt.Fprintf(os.Stderr, "[!] PKADD -> (R) -1 ! %s\n", retErr.Error())
+		acutl.DebugLog.Printf("(RET[!]) PKADD -> (-1) ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
 
@@ -104,26 +102,27 @@ func PKADD_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 
 	pubk, err := accp.OpenPKMessageNACL([]byte(reqPubkey))
 	if err != nil {
-		retErr := acpbError(-2, "PKADD_Handler().OpenPKMessage(): ", err)
+		retErr := &acutl.AcError{Value: -2, Msg: "PKADD_Handler().OpenPKMessage(): ", Err: err}
 		acMsgResponse = &AcPublicKeyMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
 			ErrorCode: proto.Int32(-2),
 			Blob:      []byte(retErr.Error()),
 		}
-		fmt.Fprintf(os.Stderr, "[!] PKADD -> (R) -2 ! %s\n", retErr.Error())
+		acutl.DebugLog.Printf("(RET[!]) PKADD -> (-2) ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
 	// XX check if it's a valid pubkey..
 	err = newkey.SetPubkey(pubk)
 	if err != nil {
-		retErr := acpbError(-3, "PKADD_Handler().OpenPKMessage(weird keysize): ", err)
+		retErr := &acutl.AcError{Value: -3, Msg: "PKADD_Handler().OpenPKMessage(weird keysize): ", Err: err}
 		acMsgResponse = &AcPublicKeyMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
 			ErrorCode: proto.Int32(-3),
 			Blob:      []byte(retErr.Error()),
 		}
+		acutl.DebugLog.Printf("(RET[!]) PKADD -> (-3) ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
 
@@ -134,7 +133,7 @@ func PKADD_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 		Bada:      proto.Bool(true),
 		ErrorCode: proto.Int32(0),
 	}
-	fmt.Fprintf(os.Stderr, "[+] PKADD -> (R) 0 ! Key added.\n")
+	acutl.DebugLog.Printf("(RET) PKADD -> (0) ! Key added.\n")
 	return acMsgResponse, nil
 }
 
@@ -149,15 +148,15 @@ func PKLIST_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *A
 	reqNick := acMessagePkReq.GetNick()
 	reqServ := acMessagePkReq.GetServer()
 
-	fmt.Fprintf(os.Stderr, "[+] PKLIST <- '%s' ! <host> / %s\n", reqNick, reqServ)
+	acutl.DebugLog.Printf("(CALL) PKLIST <- '%s' ! <host> / %s\n", reqNick, reqServ)
 	if len(reqServ) == 0 {
-		retErr := acpbError(-1, "PKLIST_Handler().reqServ: 0 bytes", nil)
+		retErr := &acutl.AcError{Value: -1, Msg: "PKLIST_Handler().reqServ: 0 bytes", Err: nil}
 		acMsgResponse = &AcPublicKeyMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
 			ErrorCode: proto.Int32(-1), // on which network are you looking? are you connected?!
 		}
-		fmt.Fprintf(os.Stderr, "[!] PKLIST -> (R) -1 ! %s\n", retErr.Error())
+		acutl.DebugLog.Printf("(RET[!]) PKLIST -> (-1) ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
 
@@ -166,19 +165,19 @@ func PKLIST_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *A
 	if len(reqNick) > 0 { // IS A SPECIFIC NICK REQUESTED ?!?!
 		myKeys, ok := Pk[reqNick]
 		if ok == false { // We did NOT find the key! ERRORRRRRR!!
-			retErr := acpbError(-2, "PKLIST_Handler().reqNick(!)", nil)
+			retErr := &acutl.AcError{Value: -2, Msg: "PKLIST_Handler().reqNick(!)", Err: nil}
 			acMsgResponse = &AcPublicKeyMessageResponse{
 				Type:      &responseType,
 				Bada:      proto.Bool(false),
 				ErrorCode: proto.Int32(-2), // no such nickname
 			}
-			fmt.Fprintf(os.Stderr, "[!] PKLIST -> (R) -2 ! %s\n", retErr.Error())
+			acutl.DebugLog.Printf("(RET[!]) PKLIST -> (-2) ! %s\n", retErr.Error())
 			return acMsgResponse, retErr
 		} else { // Key is in memory
 			// get the timestamp!!
 			timestamp := myKeys.CreaTime.Unix()
 			// acPublicKey object
-			fmt.Fprintf(os.Stderr, "[+] PKLIST %s!%s @ %s / priv: %t\n", myKeys.Nickname, myKeys.Userhost, myKeys.Server, myKeys.HasPriv)
+			//fmt.Fprintf(os.Stderr, "[+] PKLIST %s!%s @ %s / priv: %t\n", myKeys.Nickname, myKeys.Userhost, myKeys.Server, myKeys.HasPriv)
 			acPubkey := &AcPublicKey{
 				Nick:      &myKeys.Nickname,
 				Pubkey:    &myKeys.Pubkey,
@@ -195,7 +194,7 @@ func PKLIST_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *A
 				Bada:       proto.Bool(true),
 				PublicKeys: acPubkeyArray,
 			}
-			fmt.Fprintf(os.Stderr, "[+] PKLIST -> (R) 0 ! one Key\n")
+			acutl.DebugLog.Printf("(RET) PKLIST -> (0) ! one Key\n")
 			return acMsgResponse, nil
 		}
 	} else { // USER IS REQUESTING ALL KEYS STORED IN MEMORY
@@ -203,7 +202,7 @@ func PKLIST_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *A
 			// get the timestamp!!
 			timestamp := myKeys.CreaTime.Unix()
 			// acPublicKey
-			fmt.Fprintf(os.Stderr, "[+] PKLIST %s!%s @ %s / priv: %t\n", myKeys.Nickname, myKeys.Userhost, myKeys.Server, myKeys.HasPriv)
+			//fmt.Fprintf(os.Stderr, "[+] PKLIST %s!%s @ %s / priv: %t\n", myKeys.Nickname, myKeys.Userhost, myKeys.Server, myKeys.HasPriv)
 			acPubkey := &AcPublicKey{
 				Nick:      &myKeys.Nickname,
 				Pubkey:    &myKeys.Pubkey,
@@ -221,17 +220,17 @@ func PKLIST_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *A
 			Bada:       proto.Bool(true),
 			PublicKeys: acPubkeyArray,
 		}
-		fmt.Fprintf(os.Stderr, "[+] PKLIST -> (R) 0 ! n Keys\n")
+		acutl.DebugLog.Printf("(RET) PKLIST -> (0) ! n Keys\n")
 		return acMsgResponse, nil
 	} // end of else
 
-	retErr := acpbError(-3, "PKLIST_Handler().unHandled", nil)
+	retErr := &acutl.AcError{Value: -3, Msg: "PKLIST_Handler().unHandled", Err: nil}
 	acMsgResponse = &AcPublicKeyMessageResponse{
 		Type:      &responseType,
 		Bada:      proto.Bool(false),
 		ErrorCode: proto.Int32(-3),
 	}
-	fmt.Fprintf(os.Stderr, "[!] PKLIST -> (R) -3 ! %s\n", retErr.Error())
+	acutl.DebugLog.Printf("(RET[!]) PKLIST -> (-3) ! %s\n", retErr.Error())
 	return acMsgResponse, retErr
 }
 
@@ -243,19 +242,7 @@ func PKDEL_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 	// request: type && nick && server                   -> delete the specific public key
 	reqNick := acMessagePkReq.GetNick()
 	reqServ := acMessagePkReq.GetServer()
-	fmt.Fprintf(os.Stderr, "[+] PKDEL <- '%s' ! <host> / %s\n", reqNick, reqServ)
-
-	/*
-	   if len(reqServ) == 0 { // No server provided go to hell...
-	       retErr := acpbError(-1, "PKDEL_Handler().reqServ: 0 bytes", nil)
-	       acMsgResponse = &AcPublicKeyMessageResponse {
-	           Type: &responseType,
-	           Bada: proto.Bool(false),
-	           ErrorCode: proto.Int32(-1), // no such nickname
-	       }
-	       return acMsgResponse, retErr
-	   }
-	*/
+	acutl.DebugLog.Printf("(CALL) PKDEL <- '%s' ! <host> / %s\n", reqNick, reqServ)
 
 	if len(reqNick) > 0 && len(reqServ) > 0 { // IS A SPECIFIC NICK REQUESTED ?!?!
 		//_, ok := Pk[reqNick]
@@ -267,19 +254,19 @@ func PKDEL_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 				Bada:      proto.Bool(true),
 				ErrorCode: proto.Int32(0), // no such nickname
 			}
-			fmt.Fprintf(os.Stderr, "[+] PKDEL -> (R) 0 ! deleted key\n")
+			acutl.DebugLog.Printf("(RET) PKDEL -> (0) ! deleted key\n")
 			return acMsgResponse, nil
 		}
 	}
 
 	// XXX TODO: not sure If I should remove all keys or just return error
-	retErr := acpbError(-1, "PKDEL_Handler().reqServ|reqNick: 0 bytes", nil)
+	retErr := &acutl.AcError{Value: -1, Msg: "PKDEL_Handler().reqServ|reqNick: 0 bytes", Err: nil}
 	acMsgResponse = &AcPublicKeyMessageResponse{
 		Type:      &responseType,
 		Bada:      proto.Bool(false),
 		ErrorCode: proto.Int32(-1), // no such nickname
 	}
-	fmt.Fprintf(os.Stderr, "[!] PKDEL -> (R) -1 ! missing argument\n")
+	acutl.DebugLog.Printf("(RET[!]) PKDEL -> (-1) ! missing argument\n")
 	return acMsgResponse, retErr
 }
 
@@ -299,7 +286,7 @@ func HandleACPkMsg(msg []byte) (msgReply []byte, err error) {
 	if err != nil {
 		var responseType AcPublicKeyMessageResponseAcPKRespMsgType
 		responseType = AcPublicKeyMessageResponse_PKR_ERR
-		retErr := acpbError(-1, "HandleACMsg().Unmarshall(PK): ", err)
+		retErr := &acutl.AcError{Value: -1, Msg: "HandleACMsg().Unmarshall(PK): ", Err: err}
 		acReplyPkMsg = &AcPublicKeyMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
@@ -310,23 +297,17 @@ func HandleACPkMsg(msg []byte) (msgReply []byte, err error) {
 	} else {
 		switch pkMsg := acMessagePkReq.GetType(); pkMsg {
 		case AcPublicKeyMessageRequest_PK_GEN:
-			//fmt.Printf("PK_GEN Message: generate my key!\n")
-			// we don't handle errors correctly yet...
 			acReplyPkMsg, err = PKGEN_Handler(acMessagePkReq)
-			//        case AcPublicKeyMessageRequest_PK_GET:
-			//            fmt.Printf("PK_GET Message: gimme me my key!\n")
-			//            acReplyPkMsg, err = PKGET_Handler(acMessagePkReq)
 		case AcPublicKeyMessageRequest_PK_ADD:
-			//fmt.Printf("PK_ADD Message: add this pubkey\n")
 			acReplyPkMsg, err = PKADD_Handler(acMessagePkReq)
 		case AcPublicKeyMessageRequest_PK_LIST:
-			//fmt.Printf("PK_LIST Message: list all pubkey stored\n")
 			acReplyPkMsg, err = PKLIST_Handler(acMessagePkReq)
 		case AcPublicKeyMessageRequest_PK_DEL:
-			//fmt.Printf("PK_DEL Message: delete a public key\n")
 			acReplyPkMsg, err = PKDEL_Handler(acMessagePkReq)
 		default:
-			fmt.Fprintf(os.Stderr, "[+] UNKNOWN Message: WTF?!?!\n")
+			err = &acutl.AcError{Value: -255, Msg: "HandleACPkMsg(): unknown PK request!", Err: nil}
+			acutl.DebugLog.Printf("(RET[!]) HandleACPkMsg(): unknown PK request\n")
+			return nil, err
 		} // END OF SWITCH
 	} // ELSE
 

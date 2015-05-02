@@ -2,19 +2,20 @@
 package acpb
 
 import (
-	//"bytes"
 	"crypto/rand"
-	"fmt"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ac/accp"
 	"github.com/unix4fun/ac/ackp"
+	"github.com/unix4fun/ac/acutl"
+	"io"
+	//"bytes"
+	//	"fmt"
 	//"github.com/unix4fun/ac/acutl"
 	//"golang.org/x/crypto/hkdf"   // sha3 is now here.
 	//"golang.org/x/crypto/pbkdf2" // sha3 is now here.
 	//"golang.org/x/crypto/sha3"   // sha3 is now here.
 	//"hash"
-	"io"
-	"os"
+	//	"os"
 )
 
 func CTSEAL_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *AcCipherTextMessageResponse, err error) {
@@ -30,41 +31,40 @@ func CTSEAL_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 	reqServ := acMessageCtReq.GetServer()
 	reqBlob := acMessageCtReq.GetBlob()
 
-	fmt.Fprintf(os.Stderr, "[+] CTSEAL %s/%s %s:'%s'\n", reqChan, reqServ, myNick, reqBlob)
+	acutl.DebugLog.Printf("(CALL) CTSEAL (%s/%s %s:'%s')\n", reqChan, reqServ, myNick, reqBlob)
 
 	if len(reqChan) == 0 || len(myNick) == 0 || len(reqBlob) == 0 {
-		retErr := acpbError(-1, "CTSEAL_Handler().args(channel|serv|mynick): 0 bytes", nil)
+		retErr := &acutl.AcError{Value: -1, Msg: "CTSEAL_Handler().args(channel|serv|mynick): 0 bytes", Err: nil}
 		acMsgResponse = &AcCipherTextMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
 			ErrorCode: proto.Int32(-1),
 		}
-		fmt.Fprintf(os.Stderr, "[!] CTSEAL -> (R) -1 ! %s\n", retErr.Error())
+		acutl.DebugLog.Printf("(RET[!]) CTSEAL -> (-1) ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
 
-	//acctx, ok_a := Sk[channel]
 	acctx, ok_a := ackp.ACmap.GetSKMapEntry(reqServ, reqChan)
 	if ok_a == false {
-		retErr := acpbError(-2, "CTSEAL_Handler(): no SKMap found!", nil)
+		retErr := &acutl.AcError{Value: -2, Msg: "CTSEAL_Handler(): no SKMap found!", Err: nil}
 		acMsgResponse = &AcCipherTextMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
 			ErrorCode: proto.Int32(-2),
 		}
-		fmt.Fprintf(os.Stderr, "[!] CTSEAL -> (R) -2 ! %s\n", retErr.Error())
+		acutl.DebugLog.Printf("(RET[!]) CTSEAL -> (-2) ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
 
 	acrnd, ok_b := ackp.ACmap.GetRDMapEntry(reqServ, reqChan)
 	if ok_b == false {
-		retErr := acpbError(-2, "CTSEAL_Handler(): no RDMap found!", nil)
+		retErr := &acutl.AcError{Value: -3, Msg: "CTSEAL_Handler(): no RDMap found!", Err: nil}
 		acMsgResponse = &AcCipherTextMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
-			ErrorCode: proto.Int32(-2),
+			ErrorCode: proto.Int32(-3),
 		}
-		fmt.Fprintf(os.Stderr, "[!] CTSEAL -> (R) -2 ! %s\n", retErr.Error())
+		acutl.DebugLog.Printf("(RET[!]) CTSEAL -> (-3) ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
 
@@ -104,46 +104,17 @@ func CTSEAL_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 		//fmt.Fprintf(os.Stderr, ">> NEW #%d block[%d:%d]: %s \n", j, bPtr, bPtr+len(reqBlobTmp), reqBlobTmp)
 		out, err = accp.CreateACMessageNACL(acctx, acrnd, reqBlobTmp, []byte(myNick))
 		if err != nil {
-			retErr := acpbError(-4, "CTSEAL_Handler(): CreateACMessage() error:", err)
+			retErr := &acutl.AcError{Value: -4, Msg: "CTSEAL_Handler(): CreateACMessageNACL()!", Err: err}
 			acMsgResponse = &AcCipherTextMessageResponse{
 				Type:      &responseType,
 				Bada:      proto.Bool(false),
 				ErrorCode: proto.Int32(-4),
 			}
-			fmt.Fprintf(os.Stderr, "[!] CTSEAL -> (R) -4 ! %s\n", retErr.Error())
+			acutl.DebugLog.Printf("(RET[!]) CTSEAL -> (-4) ! %s\n", retErr.Error())
 			return acMsgResponse, retErr
 		}
 		acBlobArray = append(acBlobArray, out)
 	} // END OF FOR
-
-	/*
-			for b, offset := 1, msgLen; b < nBlock; b, offset = b+1, offset+msgLen {
-				fmt.Fprintf(os.Stderr, "b: %d - offset: %d => [%d:%d]\n", b, offset, offset-msgLen, offset)
-				// 0 : 289
-				//   : 289
-			}
-
-		//var acBlobArray = make([][]byte, nBlock)
-		fmt.Fprintf(os.Stderr, "b: %d - offset: %d => [%d:%d]\n", b, offset, offset-msgLen, offset)
-	*/
-
-	//func CreateACMessage(context * SecKey, msg, myNick []byte) (out []BYTE, ERR ERROR) {
-	/*
-		out, err := accp.CreateACMessage(acctx, acrnd, reqBlob, []byte(myNick))
-		if err != nil {
-			retErr := acpbError(-3, "CTSEAL_Handler(): CreateACMessage() error:", err)
-			acMsgResponse = &AcCipherTextMessageResponse{
-				Type:      &responseType,
-				Bada:      proto.Bool(false),
-				ErrorCode: proto.Int32(-3),
-			}
-			fmt.Fprintf(os.Stderr, "[!] CTSEAL -> (R) -3 ! %s\n", retErr.Error())
-			return acMsgResponse, retErr
-		}
-
-		// even with one reply it's now a [][]byte
-		acBlobArray = append(acBlobArray, out)
-	*/
 
 	acMsgResponse = &AcCipherTextMessageResponse{
 		Type:      &responseType,
@@ -152,7 +123,8 @@ func CTSEAL_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 		Nonce:     proto.Uint32(acctx.GetNonce()),
 		Blob:      acBlobArray,
 	}
-	fmt.Fprintf(os.Stderr, "[+] CTSEAL -> (R) 0 ! %s/%s %s's msg sealed\n", reqServ, reqChan, myNick)
+	//fmt.Fprintf(os.Stderr, "[+] CTSEAL -> (R) 0 ! %s/%s %s's msg sealed\n", reqServ, reqChan, myNick)
+	acutl.DebugLog.Printf("(RET) CTSEAL -> (0) ! %s/%s %s's msg sealed\n", reqServ, reqChan, myNick)
 	return acMsgResponse, nil
 }
 
@@ -160,12 +132,6 @@ func CTOPEN_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 	var responseType AcCipherTextMessageResponseAcCTRespMsgType
 	responseType = AcCipherTextMessageResponse_CTR_OPEN
 	var acctx *ackp.SecKey
-	//var acBlobArray [][]byte
-
-	//    fmt.Fprintf(os.Stderr, "CTOPEN Message: let's give the key\n")
-	//    fmt.Fprintf(os.Stderr, "from nick: %s\n", acMessageCtReq.GetNick())
-	//    fmt.Fprintf(os.Stderr, "blob: %s\n", acMessageCtReq.GetBlob())
-	//    fmt.Fprintf(os.Stderr, "channel: %s\n", acMessageCtReq.GetChannel())
 
 	channel := acMessageCtReq.GetChannel()
 	peernick := acMessageCtReq.GetNick()
@@ -173,44 +139,41 @@ func CTOPEN_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 	blob := acMessageCtReq.GetBlob()
 	reqOpt := acMessageCtReq.GetOpt() // XXX will be used for myNick
 
-	fmt.Fprintf(os.Stderr, "[+] CTOPEN %s/%s from %s:'%s' (%s)\n", channel, reqServ, peernick, blob, reqOpt)
-
-	//    fmt.Fprintf(os.Stderr, "reqOpt VALUE: %p\n", reqOpt)
-	//    fmt.Println(reqOpt)
+	acutl.DebugLog.Printf("(CALL) CTOPEN %s/%s from %s:'%s' (%s)\n", channel, reqServ, peernick, blob, reqOpt)
 
 	if len(channel) == 0 || len(peernick) == 0 || len(blob) == 0 {
-		retErr := acpbError(-1, "CTOPEN_Handler().args(channel|serv|mynick): 0 bytes", nil)
+		retErr := &acutl.AcError{Value: -1, Msg: "CTOPEN_Handler().args(channel|serv|mynick): 0 bytes", Err: nil}
 		acMsgResponse = &AcCipherTextMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
 			ErrorCode: proto.Int32(-1),
 		}
-		fmt.Fprintf(os.Stderr, "[!] CTOPEN -> (R) -1 ! %s\n", retErr.Error())
+		acutl.DebugLog.Printf("(RET[!]) CTOPEN -> (-1) ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
 
 	//acctx, ok_a := Sk[channel]
 	acctx, ok_a := ackp.ACmap.GetSKMapEntry(reqServ, channel)
 	if ok_a == false {
-		retErr := acpbError(-2, "CTOPEN_Handler(): no SKMap Entry found!", nil)
+		retErr := &acutl.AcError{Value: -2, Msg: "CTOPEN_Handler(): no SKMap Entry found!", Err: nil}
 		acMsgResponse = &AcCipherTextMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
 			ErrorCode: proto.Int32(-2),
 		}
-		fmt.Fprintf(os.Stderr, "[!] CTOPEN -> (R) -2 ! %s\n", retErr.Error())
+		acutl.DebugLog.Printf("(RET[!]) CTOPEN -> (-2) ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
 
 	acrnd, ok_b := ackp.ACmap.GetRDMapEntry(reqServ, channel)
 	if ok_b == false {
-		retErr := acpbError(-2, "CTOPEN_Handler(): no RDMap found!", nil)
+		retErr := &acutl.AcError{Value: -3, Msg: "CTOPEN_Handler(): no RDMap Entry found!", Err: nil}
 		acMsgResponse = &AcCipherTextMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
-			ErrorCode: proto.Int32(-2),
+			ErrorCode: proto.Int32(-3),
 		}
-		fmt.Fprintf(os.Stderr, "[!] CTOPEN -> (R) -2 ! %s\n", retErr.Error())
+		acutl.DebugLog.Printf("(RET[!]) CTOPEN -> (-3) ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
 
@@ -218,20 +181,16 @@ func CTOPEN_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 	// XXX TODO: use reqOpt accordingly
 	out, err := accp.OpenACMessageNACL(acctx, acrnd, blob, []byte(peernick), []byte(reqOpt))
 	if err != nil {
-		//fmt.Println(err)
-		retErr := acpbError(-3, "CTOPEN_Handler(): OpenACMessage() error !", err)
+		retErr := &acutl.AcError{Value: -4, Msg: "CTOPEN_Handler(): OpenACMessageNACL() error!", Err: err}
 		acMsgResponse = &AcCipherTextMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
-			ErrorCode: proto.Int32(-3),
+			ErrorCode: proto.Int32(-4),
 		}
-		fmt.Fprintf(os.Stderr, "[!] CTOPEN -> (R) -3 ! %s\n", retErr.Error())
+		acutl.DebugLog.Printf("(RET[!]) CTOPEN -> (-4) ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
 
-	//acBlobArray = append(acBlobArray, out)
-
-	//fmt.Fprintf(os.Stderr, "OUT: %s\n", out)
 	acMsgResponse = &AcCipherTextMessageResponse{
 		Type:      &responseType,
 		Bada:      proto.Bool(true),
@@ -239,7 +198,7 @@ func CTOPEN_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 		Nonce:     proto.Uint32(acctx.GetNonce()),
 		Blob:      [][]byte{out},
 	}
-	fmt.Fprintf(os.Stderr, "[+] CTOPEN -> (R) 0 ! %s/%s %s's msg opened\n", reqServ, channel, peernick)
+	acutl.DebugLog.Printf("(RET) CTOPEN -> (0) ! %s/%s %s's msg opened\n", reqServ, channel, peernick)
 	return acMsgResponse, nil
 }
 
@@ -248,27 +207,22 @@ func CTOPEN_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 func CTADD_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *AcCipherTextMessageResponse, err error) {
 	var responseType AcCipherTextMessageResponseAcCTRespMsgType
 	responseType = AcCipherTextMessageResponse_CTR_ADD
-	//var acctx * accp.SecKey
-
-	//fmt.Fprintf(os.Stderr, "CTADD Message: let's give the key\n")
-	//fmt.Fprintf(os.Stderr, "from myNick: %s\n", acMessageCtReq.GetNick())
-	//fmt.Fprintf(os.Stderr, "blob: %s\n", acMessageCtReq.GetBlob())
-	//fmt.Fprintf(os.Stderr, "channel: %s\n", acMessageCtReq.GetChannel())
 
 	reqChan := acMessageCtReq.GetChannel()
 	reqNick := acMessageCtReq.GetNick()
 	reqServ := acMessageCtReq.GetServer()
 	reqBlob := acMessageCtReq.GetBlob()
 
-	fmt.Fprintf(os.Stderr, "[+] CTADD %s/%s from %s:'%s' (%s)\n", reqChan, reqServ, reqNick, reqBlob)
+	acutl.DebugLog.Printf("(CALL) CTADD %s/%s from %s:'%s' (%s)\n", reqChan, reqServ, reqNick, reqBlob)
 
 	if len(reqChan) == 0 || len(reqNick) == 0 || len(reqServ) == 0 {
-		retErr := acpbError(-1, "CTADD_Handler().args(channel|serv|mynick): 0 bytes", nil)
+		retErr := &acutl.AcError{Value: -1, Msg: "CTADD_Handler().args(channel|serv|mynick): 0 bytes", Err: nil}
 		acMsgResponse = &AcCipherTextMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
 			ErrorCode: proto.Int32(-1),
 		}
+		acutl.DebugLog.Printf("(RET[!]) CTADD -> (-1) ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
 
@@ -278,28 +232,26 @@ func CTADD_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *A
 	skgen := new(ackp.SecretKeyGen)
 	err = skgen.Init([]byte(reqBlob), []byte(reqChan), []byte(reqNick), []byte(reqServ))
 	if err != nil {
-		retErr := acpbError(-2, "CTADD_Handler(): SK generator fail:", err)
+		retErr := &acutl.AcError{Value: -2, Msg: "CTADD_Handler(): SK generator fail!", Err: err}
 		acMsgResponse = &AcCipherTextMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
 			ErrorCode: proto.Int32(-2),
 		}
+		acutl.DebugLog.Printf("(RET[!]) CTADD -> (-2) ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
 
-	//acctx := new(accp.SecKey)
-	// XXX TODO: handle error...
+	// XXX TODO: handle error or remove it...
 	acctx, _ := ackp.CreateACContext([]byte(reqChan), 0)
 
 	key := make([]byte, 32)
 	io.ReadFull(skgen, key)
-	//fmt.Fprintf(os.Stderr, "ReqServ: %s reqChan: %s HEX KEY: %s\n", reqServ, reqChan, hex.EncodeToString(key))
 
 	newRnd := make([]byte, len(key))
 	_, err = rand.Read(newRnd)
 	if err != nil {
-		//return nil, nil, &protoError{value: -11, msg: "OpenKXMessage() no randomness to protect the key in memory: ", err: err}
-		retErr := acpbError(-3, "CTADD_Handler(): randomness to protect key failed:", err)
+		retErr := &acutl.AcError{Value: -3, Msg: "CTADD_Handler(): randomness fail!", Err: err}
 		acMsgResponse = &AcCipherTextMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
@@ -323,7 +275,7 @@ func CTADD_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *A
 		Blob: [][]byte{[]byte("OK")}, // this is an array of []byte
 	}
 
-	fmt.Fprintf(os.Stderr, "[+] CTADD -> (R) 0 ! %s/%s key added (entropy: '%s')\n", reqServ, reqChan, reqBlob)
+	acutl.DebugLog.Printf("(RET) CTADD -> (0) ! %s/%s key added (entropy: '%s')\n", reqServ, reqChan, reqBlob)
 	return acMsgResponse, nil
 }
 
@@ -334,31 +286,29 @@ func CTADD_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *A
 //
 func HandleACCtMsg(msg []byte) (msgReply []byte, err error) {
 	var acReplyCtMsg *AcCipherTextMessageResponse
-	fmt.Fprintf(os.Stderr, "HandleACPkMsg()\n")
+	acutl.DebugLog.Printf("(CALL) HandleACCtMsg()\n")
 
 	// unpack the old message
 	acMessageCtReq := &AcCipherTextMessageRequest{}
-	proto.Unmarshal(msg, acMessageCtReq)
+	err = proto.Unmarshal(msg, acMessageCtReq)
+	if err != nil {
+		return nil, err
+	}
 
 	switch ctMsg := acMessageCtReq.GetType(); ctMsg {
 	case AcCipherTextMessageRequest_CT_SEAL:
-		fmt.Fprintf(os.Stderr, "SEAL CT Message:!\n")
-		// TODO we don't handle errors correctly yet...
 		acReplyCtMsg, err = CTSEAL_Handler(acMessageCtReq)
 	case AcCipherTextMessageRequest_CT_OPEN:
-		fmt.Fprintf(os.Stderr, "OPEN CT Message:!\n")
-		// TODO we don't handle errors correctly yet...
 		acReplyCtMsg, err = CTOPEN_Handler(acMessageCtReq)
 	case AcCipherTextMessageRequest_CT_ADD:
-		fmt.Fprintf(os.Stderr, "ADD CT KEY Message:!\n")
-		// TODO we don't handle errors correctly yet...
 		acReplyCtMsg, err = CTADD_Handler(acMessageCtReq)
-		fmt.Fprintf(os.Stderr, "LEN: %v", *acReplyCtMsg)
 	default:
-		fmt.Fprintf(os.Stderr, "UNKNOWN Message: WTF?!?!\n")
-		// TODO need to send a valid reponse with error -255
+		err = &acutl.AcError{Value: -255, Msg: "HandleACCtMsg(): unknown CT request!", Err: nil}
+		acutl.DebugLog.Printf("(RET[!]) HandleACCtMsg(): unknown CT request\n")
+		return nil, err
 	}
 
 	msgReply, err = proto.Marshal(acReplyCtMsg)
+	acutl.DebugLog.Printf("(RET) HandleACCtMsg():\n\tacReplyCtMsg: %v\n\tmsgReply: %v\n\terr: %v\n", acReplyCtMsg, msgReply, err)
 	return msgReply, err
 }

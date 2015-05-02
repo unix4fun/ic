@@ -2,12 +2,10 @@
 package acpb
 
 import (
-	"encoding/hex"
-	"fmt"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ac/accp"
 	"github.com/unix4fun/ac/ackp"
-	"os"
+	"github.com/unix4fun/ac/acutl"
 )
 
 func KXPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgResponse *AcKeyExchangeMessageResponse, err error) {
@@ -18,39 +16,32 @@ func KXPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgResponse 
 	mynick := acMessageKxReq.GetMynick()
 	peernick := acMessageKxReq.GetPeernick()
 	reqServ := acMessageKxReq.GetServer()
-	fmt.Fprintf(os.Stderr, "[+] KXPACK <- DH( %s/%s <KX> '%s' -> '%s' ) \n", channel, reqServ, mynick, peernick)
+	acutl.DebugLog.Printf("(CALL) KXPACK <- DH( %s/%s <KX> '%s' -> '%s' ) \n", channel, reqServ, mynick, peernick)
 
 	if len(channel) == 0 || len(mynick) == 0 || len(peernick) == 0 || len(reqServ) == 0 {
-		retErr := acpbError(-1, "KXPACK_Handler().args(channel|serv|mynick|peernick): 0 bytes", nil)
+		retErr := &acutl.AcError{Value: -1, Msg: "KXPACK_Handler().args(channel|serv|mynick|peernick): 0 bytes", Err: nil}
 		acMsgResponse = &AcKeyExchangeMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
 			ErrorCode: proto.Int32(-1),
 		}
-		fmt.Fprintf(os.Stderr, "[!] KXPACK -> (R) -1 ! %s\n", retErr.Error())
+		acutl.DebugLog.Printf("(RET[!]) KXPACK -> (-1) ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
 
-	//func (psk PSKMap) GetSKMapEntry(server string, channel string) (*ACMsgContext, bool) {
-	//acctx, ok_a := Sk[channel]
 	acctx, ok_a := ackp.ACmap.GetSKMapEntry(reqServ, channel)
-	//fmt.Print(ok_a)
-	//me, ok_b := Pk[mynick]
 	me, ok_b := ackp.ACmap.GetPKMapEntry(reqServ, mynick)
-	//fmt.Print(ok_b)
-	//peer, ok_c := Pk[peernick]
 	peer, ok_c := ackp.ACmap.GetPKMapEntry(reqServ, peernick)
-	//fmt.Print(ok_c)
 	acrnd, ok_d := ackp.ACmap.GetRDMapEntry(reqServ, channel)
 
 	if ok_a == false || ok_b == false || ok_c == false || ok_d == false {
-		retErr := acpbError(-2, "KXPACK_Handler().GetSKMapEntry/GetPKMapEntry(): failed ", nil)
+		retErr := &acutl.AcError{Value: -2, Msg: "KXPACK_Handler().GetSKMapEntry/GetPKMapEntry(): failed ", Err: nil}
 		acMsgResponse = &AcKeyExchangeMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
 			ErrorCode: proto.Int32(-2),
 		}
-		fmt.Fprintf(os.Stderr, "[!] KXPACK -> (R) -2 ! %s\n", retErr.Error())
+		acutl.DebugLog.Printf("(RET[!]) KXPACK -> (-2) ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
 
@@ -76,16 +67,15 @@ func KXPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgResponse 
 	//        fmt.Printf("[+] KXPACK: not a channel, private conversation let's use this: %s\n", kx_channel)
 	//    }
 
-	//fmt.Printf("KEY: %s\n", hex.EncodeToString(acctx.GetKey()))
 	kxMsg, err := accp.CreateKXMessageNACL(acctx, acrnd, peer.GetPubkey(), me.GetPrivkey(), []byte(channel), []byte(mynick), []byte(peernick))
-	//fmt.Printf("kxMsg: %s\n", kxMsg)
 	if err != nil {
-		retErr := acpbError(-3, "KXPACK_Handler().CreateKXMessage(): ", err)
+		retErr := &acutl.AcError{Value: -3, Msg: "KXPACK_Handler().CreateKXMessage(): ", Err: err}
 		acMsgResponse = &AcKeyExchangeMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
 			ErrorCode: proto.Int32(-3),
 		}
+		acutl.DebugLog.Printf("(RET[!]) KXPACK -> (-3) ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
 
@@ -96,14 +86,13 @@ func KXPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgResponse 
 		ErrorCode: proto.Int32(0),
 		Nonce:     proto.Uint32(acctx.GetNonce()),
 	}
-	fmt.Fprintf(os.Stderr, "[+] KXPACK -> (R) 0 ! Key [%s/%s] %s packed for %s\n", reqServ, channel, hex.EncodeToString(acctx.GetKey()), peernick)
+	acutl.DebugLog.Printf("(RET) KXPACK -> (0) ! Key [%s/%s] key packed for %s\n", reqServ, channel, peernick)
 	return acMsgResponse, nil
 }
 
 func KXUNPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgResponse *AcKeyExchangeMessageResponse, err error) {
 	var responseType AcKeyExchangeMessageResponseAcKXRespMsgType
 	responseType = AcKeyExchangeMessageResponse_KXR_PACK
-	//var acctx * accp.ACMsgContext
 
 	channel := acMessageKxReq.GetChannel()
 	mynick := acMessageKxReq.GetMynick()
@@ -111,44 +100,33 @@ func KXUNPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgRespons
 	blobMsg := acMessageKxReq.GetBlob()
 	reqServ := acMessageKxReq.GetServer()
 
-	fmt.Fprintf(os.Stderr, "[+] KXUNPACK <- DH( %s/%s <KX:%s> '%s' -> '%s' ) \n", channel, reqServ, blobMsg, peernick, mynick)
-	//    fmt.Printf("KX UNPACK BLOB: %s\n", blobMsg)
+	acutl.DebugLog.Printf("(CALL) KXUNPACK <- DH( %s/%s <KX:%s> '%s' -> '%s' ) \n", channel, reqServ, blobMsg, peernick, mynick)
 
 	// XXX TODO: missing the server..
 	if len(channel) == 0 || len(mynick) == 0 || len(peernick) == 0 || len(blobMsg) == 0 || len(reqServ) == 0 {
-		retErr := acpbError(-1, "KXUNPACK_Handler().args(channel|serv|mynick|peernick): 0 bytes", nil)
+		retErr := &acutl.AcError{Value: -1, Msg: "KXUNPACK_Handler().args(channel|serv|mynick|peernick): 0 bytes", Err: nil}
 		acMsgResponse = &AcKeyExchangeMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
 			ErrorCode: proto.Int32(-1),
 		}
-		fmt.Fprintf(os.Stderr, "[!] KXUNPACK -> (R) -1 ! %s\n", retErr.Error())
+		acutl.DebugLog.Printf("(RET[!]) KXUNPACK -> (-1) ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
 
-	//acctx, ok_a := Sk[channel]
-	//me, ok_b := Pk[MAPMYKEY]
-	//    fmt.Fprintf(os.Stderr, "FIRST ME\n")
 	me, ok_b := ackp.ACmap.GetPKMapEntry(reqServ, mynick)
-	//me, ok_b := Pk[mynick]
-	//    fmt.Fprintf(os.Stderr, "THEN PEER\n")
 	peer, ok_c := ackp.ACmap.GetPKMapEntry(reqServ, peernick)
-	//peer, ok_c := Pk[peernick]
 
-	//    fmt.Println(ok_b)
-	//    fmt.Println(ok_c)
 	if ok_b == false || ok_c == false || peer.GetPubkey() == nil || me.GetPrivkey() == nil {
-		retErr := acpbError(-2, "KXUNPACK_Handler().PKMapLookup(mynick|peernick) failure", nil)
+		retErr := &acutl.AcError{Value: -2, Msg: "KXUNPACK_Handler().PKMapLookup(mynick|peernick) failure", Err: nil}
 		acMsgResponse = &AcKeyExchangeMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
 			ErrorCode: proto.Int32(-2),
 		}
-		fmt.Fprintf(os.Stderr, "[!] KXUNPACK -> (R) -2 ! GetPKMapEntry(%s): %t - GetPKMapEntry(%s): %t\n%s\n", mynick, ok_b, peernick, ok_c, retErr.Error())
+		acutl.DebugLog.Printf("(RET[!]) KXUNPACK -> (-2) ! GetPKMapEntry(%s): %t - GetPKMapEntry(%s): %t\n%s\n", mynick, ok_b, peernick, ok_c, retErr.Error())
 		return acMsgResponse, retErr
 	}
-
-	//acctx, err := CreateACContext(channel
 
 	// XXX ok this is how we handle private and channel key exchange as in
 	// private/queries there is no "channel"
@@ -172,17 +150,16 @@ func KXUNPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgRespons
 	acctx, acrnd, err := accp.OpenKXMessageNACL(peer.GetPubkey(), me.GetPrivkey(), blobMsg, []byte(channel), []byte(mynick), []byte(peernick))
 	//    acctx, err := accp.OpenKXMessage(peer.GetPubkey(), me.GetPrivkey(), blobMsg, kx_channel, []byte(mynick), []byte(peernick))
 	if err != nil {
-		retErr := acpbError(-3, "KXUNPACK_Handler().OpenKXMessage(): ", err)
+		retErr := &acutl.AcError{Value: -3, Msg: "KXUNPACK_Handler().OpenKXMessage(): ", Err: err}
 		acMsgResponse = &AcKeyExchangeMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
 			ErrorCode: proto.Int32(-3),
 		}
-		fmt.Fprintf(os.Stderr, "[!] KXUNPACK -> (R) -3 ! %s\n", retErr.Error())
+		acutl.DebugLog.Printf("(RET[!]) KXUNPACK -> (-3) ! %s\n", retErr.Error())
 		return acMsgResponse, retErr
 	}
 
-	//fmt.Printf("reqServ: %s channel: %s key: %s\n", reqServ, channel, hex.EncodeToString(acctx.GetKey()))
 	ackp.ACmap.SetSKMapEntry(reqServ, channel, acctx)
 	ackp.ACmap.SetRDMapEntry(reqServ, channel, acrnd)
 
@@ -193,7 +170,7 @@ func KXUNPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgRespons
 		Nonce:     proto.Uint32(acctx.GetNonce()),
 	}
 	// XXX TODO REMOVE THE REAL DISPLAY OF THE KEY!!!!
-	fmt.Fprintf(os.Stderr, "[+] KXUNPACK -> (R) 0 ! Key [%s/%s]: %s Unpacked\n", reqServ, channel, hex.EncodeToString(acctx.GetKey()))
+	acutl.DebugLog.Printf("(RET) KXUNPACK -> (0) ! Key [%s/%s]\n", reqServ, channel)
 	return acMsgResponse, nil
 }
 
@@ -204,26 +181,27 @@ func KXUNPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgRespons
 //
 func HandleACKxMsg(msg []byte) (msgReply []byte, err error) {
 	var acReplyKxMsg *AcKeyExchangeMessageResponse
-	//    fmt.Fprintf(os.Stderr, "HandleACPkMsg()\n")
+	acutl.DebugLog.Printf("(CALL) HandleACKxMsg()\n")
 
 	// unpack the old message
 	acMessageKxReq := &AcKeyExchangeMessageRequest{}
-	proto.Unmarshal(msg, acMessageKxReq)
+	err = proto.Unmarshal(msg, acMessageKxReq)
+	if err != nil {
+		return nil, err
+	}
 
 	switch kxMsg := acMessageKxReq.GetType(); kxMsg {
 	case AcKeyExchangeMessageRequest_KX_PACK:
-		//        fmt.Fprintf(os.Stderr, "PACK KX Message:!\n")
-		// TODO we don't handle errors correctly yet...
 		acReplyKxMsg, err = KXPACK_Handler(acMessageKxReq)
 	case AcKeyExchangeMessageRequest_KX_UNPACK:
-		//        fmt.Fprintf(os.Stderr, "UNPACK KX Message:!\n")
-		// TODO we don't handle errors correctly yet...
 		acReplyKxMsg, err = KXUNPACK_Handler(acMessageKxReq)
 	default:
-		//        fmt.Fprintf(os.Stderr, "UNKNOWN Message: WTF?!?!\n")
-		// TODO need to send a valid reponse with error -255
+		err = &acutl.AcError{Value: -255, Msg: "HandleACKxMsg(): unknown KX request!", Err: nil}
+		acutl.DebugLog.Printf("(RET[!]) HandleACKxMsg(): unknown KX request\n")
+		return nil, err
 	}
 
 	msgReply, err = proto.Marshal(acReplyKxMsg)
+	acutl.DebugLog.Printf("(RET) HandleACKxMsg():\n\tacReplyKxMsg: %v\n\tmsgReply: %v\n\terr: %v\n", acReplyKxMsg, msgReply, err)
 	return msgReply, err
 }
