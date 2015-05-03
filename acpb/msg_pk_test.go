@@ -110,6 +110,45 @@ var PKADDTests = []Test{
 			Blob:   []byte("DSix7zIaLXjaSrzBNkm3dtqdHqWLk2wnyVt/y+wNq01n5Avc6RaXdcrcDxAAAP//7okNxA=="),
 		}, AcPublicKeyMessageResponse_PKR_ADD, false, -1, nil, nil, true,
 	},
+
+	// TEST #5 : null nick
+	{AcPublicKeyMessageRequest_PK_ADD,
+		&AcPublicKeyMessageRequest{
+			Nick:   proto.String("nanother"),
+			Host:   proto.String("prout@hostname"),
+			Server: proto.String("freenode.net"),
+			Blob:   []byte("AAAAAAAADSix7zIaLXjaSrzBNkm3dtqdHqWLk2wnyVt/y+wNq01n5Avc6RaXdcrcDxAAAP//7okNxAAAAAAAAAAAAAAAAA=="),
+		}, AcPublicKeyMessageResponse_PKR_ADD, false, -2, nil, nil, true,
+	},
+
+	// TEST #6 : OK
+	{AcPublicKeyMessageRequest_PK_ADD,
+		&AcPublicKeyMessageRequest{
+			Nick:   proto.String("nick1"),
+			Host:   proto.String("prout@hostname"),
+			Server: proto.String("freenode.net"),
+			Blob:   []byte("DSix7zIaLXjaSrzBNkm3dtqdHqWLk2wnyVt/y+wNq01n5Avc6RaXdcrcDxAAAP//7okNxA=="),
+		}, AcPublicKeyMessageResponse_PKR_ADD, true, 0, nil, nil, false,
+	},
+
+}// End of PKADD TESTs
+
+var PKLISTTests = []Test{
+	// TEST #1 : OK
+	{AcPublicKeyMessageRequest_PK_LIST,
+		&AcPublicKeyMessageRequest{
+			Nick:   proto.String("nick1"),
+			Server: proto.String("freenode.net"),
+		}, AcPublicKeyMessageResponse_PKR_LIST, false, -2, nil, nil, true,
+	},
+
+	// TEST #2 : OK
+	{AcPublicKeyMessageRequest_PK_LIST,
+		&AcPublicKeyMessageRequest{
+			Nick:   proto.String("nick2"),
+			Server: nil,
+		}, AcPublicKeyMessageResponse_PKR_LIST, false, -1, nil, nil, true,
+	},
 }
 
 func TraceFunc2() string {
@@ -169,12 +208,17 @@ func oneTest(fn pkhandler, in *AcPublicKeyMessageRequest) (out *AcPublicKeyMessa
 	return
 }
 
-func TestPKGEN(t *testing.T) {
+func TestPK(t *testing.T) {
 	acutl.LogInit(os.Stderr)
 	// TEST PKGEN
 	fmt.Printf("\n== PKGEN TESTs ==\n")
 	makeTests(PKGENTests, PKGEN_Handler, t)
+
 	// TEST PKADD
 	fmt.Printf("\n== PKADD TESTs ==\n")
 	makeTests(PKADDTests, PKADD_Handler, t)
+
+	// TEST PKLIST
+	fmt.Printf("\n== PKLIST TESTs ==\n")
+	makeTests(PKLISTTests, PKLIST_Handler, t)
 }
