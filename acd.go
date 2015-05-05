@@ -96,10 +96,10 @@ func main() {
 
 		if *dbgFlag == true {
 			//log.SetOutput(os.Stderr)
-			acutl.LogInit(os.Stderr)
+			acutl.InitDebugLog(os.Stderr)
 		} else {
 			//log.SetOutput(ioutil.Discard)
-			acutl.LogInit(ioutil.Discard)
+			acutl.InitDebugLog(ioutil.Discard)
 		}
 
 		//fmt.Fprintf(os.Stderr, "[+] ac-%s\nstart\n", Version)

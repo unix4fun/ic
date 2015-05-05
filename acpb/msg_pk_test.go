@@ -5,8 +5,9 @@ import (
 	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ac/acutl"
 	"os"
-	"runtime"
+	//"runtime"
 	"testing"
+	"github.com/unix4fun/ac/ackp"
 )
 
 type pkhandler func(*AcPublicKeyMessageRequest) (acMsgResponse *AcPublicKeyMessageResponse, err error)
@@ -20,7 +21,8 @@ type Test struct {
 	oBada         bool
 	oErrorCode    int32
 	oBlob         []byte
-	oPubKeys      []*AcPublicKey
+	oPubKeys      []*AcPublicKey // we just compare nick and server && public keys
+	oPubKeysLen   int // number of pubkeys in the list!!
 	oHaveErrorMsg bool
 }
 
@@ -28,7 +30,7 @@ var PKGENTests = []Test{
 	// TEST #1 : OK
 	{AcPublicKeyMessageRequest_PK_GEN,
 		&AcPublicKeyMessageRequest{
-			Nick:   proto.String("nick1"),
+			Nick:   proto.String("myself"),
 			Host:   proto.String("prout@hostname"),
 			Server: proto.String("freenode.net"),
 		}, AcPublicKeyMessageResponse_PKR_GEN, true, 0, nil, nil, false,
@@ -55,7 +57,7 @@ var PKGENTests = []Test{
 	{AcPublicKeyMessageRequest_PK_GEN,
 		&AcPublicKeyMessageRequest{
 			Nick:   proto.String("eau"),
-			Host:   proto.String("h2o@unix4funnnn.net"),
+			Host:   nil,
 			Server: proto.String("freeenode.net"),
 		}, AcPublicKeyMessageResponse_PKR_GEN, true, 0, nil, nil, false,
 	},
@@ -81,7 +83,7 @@ var PKADDTests = []Test{
 		}, AcPublicKeyMessageResponse_PKR_ADD, true, 0, nil, nil, false,
 	},
 
-	// TEST #2 : Invalid base64 -2
+	// TEST #2 : FAIL -> Invalid base64 -2
 	{AcPublicKeyMessageRequest_PK_ADD,
 		&AcPublicKeyMessageRequest{
 			Nick:   proto.String("nick3"),
@@ -91,7 +93,7 @@ var PKADDTests = []Test{
 		}, AcPublicKeyMessageResponse_PKR_ADD, false, -2, nil, nil, true,
 	},
 
-	// TEST #3 : null blob -1
+	// TEST #3 : FAIL -> null blob -1
 	{AcPublicKeyMessageRequest_PK_ADD,
 		&AcPublicKeyMessageRequest{
 			Nick:   proto.String("nick4"),
@@ -101,7 +103,7 @@ var PKADDTests = []Test{
 		}, AcPublicKeyMessageResponse_PKR_ADD, false, -1, nil, nil, true,
 	},
 
-	// TEST #4 : null nick
+	// TEST #4 : FAIL -> null nick
 	{AcPublicKeyMessageRequest_PK_ADD,
 		&AcPublicKeyMessageRequest{
 			Nick:   nil,
@@ -111,7 +113,7 @@ var PKADDTests = []Test{
 		}, AcPublicKeyMessageResponse_PKR_ADD, false, -1, nil, nil, true,
 	},
 
-	// TEST #5 : null nick
+	// TEST #5 : FAIL -> null nick
 	{AcPublicKeyMessageRequest_PK_ADD,
 		&AcPublicKeyMessageRequest{
 			Nick:   proto.String("nanother"),
@@ -124,7 +126,7 @@ var PKADDTests = []Test{
 	// TEST #6 : OK
 	{AcPublicKeyMessageRequest_PK_ADD,
 		&AcPublicKeyMessageRequest{
-			Nick:   proto.String("nick1"),
+			Nick:   proto.String("nick2"),
 			Host:   proto.String("prout@hostname"),
 			Server: proto.String("freenode.net"),
 			Blob:   []byte("DSix7zIaLXjaSrzBNkm3dtqdHqWLk2wnyVt/y+wNq01n5Avc6RaXdcrcDxAAAP//7okNxA=="),
@@ -133,41 +135,48 @@ var PKADDTests = []Test{
 
 }// End of PKADD TESTs
 
+// TODO we need to create an array of public keys to test again
+// or the length in case of a list to not test again the whole list..
 var PKLISTTests = []Test{
-	// TEST #1 : OK
+	// TEST #0 : OK / But no such keys
 	{AcPublicKeyMessageRequest_PK_LIST,
 		&AcPublicKeyMessageRequest{
-			Nick:   proto.String("nick1"),
+			Nick:   proto.String("jdskjdskj"),
 			Server: proto.String("freenode.net"),
 		}, AcPublicKeyMessageResponse_PKR_LIST, false, -2, nil, nil, true,
 	},
 
-	// TEST #2 : OK
+	// TEST #1 : OK / key exists
+	{AcPublicKeyMessageRequest_PK_LIST,
+		&AcPublicKeyMessageRequest{
+			Nick:   proto.String("nick1"),
+			Server: proto.String("freenode.net"),
+		}, AcPublicKeyMessageResponse_PKR_LIST, true, 0, nil, nil, false,
+	},
+
+	// TEST #2 : FAIL -> -1
 	{AcPublicKeyMessageRequest_PK_LIST,
 		&AcPublicKeyMessageRequest{
 			Nick:   proto.String("nick2"),
 			Server: nil,
 		}, AcPublicKeyMessageResponse_PKR_LIST, false, -1, nil, nil, true,
 	},
-}
 
-func TraceFunc2() string {
-	pc := make([]uintptr, 10) // at least 1 entry needed
-	runtime.Callers(2, pc)
-	f := runtime.FuncForPC(pc[0])
-	file, line := f.FileLine(pc[0])
-	return fmt.Sprintf("[+] %s\n \\_ %s:%d\n", f.Name(), file, line)
-}
+	// TEST #3 : OK -> all keys...
+	{AcPublicKeyMessageRequest_PK_LIST,
+		&AcPublicKeyMessageRequest{
+			Nick:  nil,
+			Server: proto.String("freenode.net"),
+		}, AcPublicKeyMessageResponse_PKR_LIST, true, 0, nil, nil, false,
+	},
 
-func TraceFunc() *runtime.Func {
-	pc := make([]uintptr, 10) // at least 1 entry needed
-	runtime.Callers(2, pc)
-	return runtime.FuncForPC(pc[0])
-}
-
-func TraceHdr(f *runtime.Func) string {
-	file, line := f.FileLine(f.Entry())
-	return fmt.Sprintf("[+] %s\n \\_ %s:%d\n", f.Name(), file, line)
+	// TEST #4 : OK -> all keys... but wrong server nothing found!
+	{AcPublicKeyMessageRequest_PK_LIST,
+		&AcPublicKeyMessageRequest{
+			Nick:  nil,
+			Server: proto.String("net"),
+		}, AcPublicKeyMessageResponse_PKR_LIST, false, -2, nil, nil, true,
+	},
 }
 
 /*
@@ -200,6 +209,8 @@ func makeTests(tests []Test, fn pkhandler, t *testing.T) {
 		if r.GetErrorCode() != v.oErrorCode {
 			t.Errorf("[%d] exp: %d res: %d", i, v.oErrorCode, r.GetErrorCode())
 		}
+
+		// Public keys test..
 	}
 }
 
@@ -209,16 +220,46 @@ func oneTest(fn pkhandler, in *AcPublicKeyMessageRequest) (out *AcPublicKeyMessa
 }
 
 func TestPK(t *testing.T) {
-	acutl.LogInit(os.Stderr)
-	// TEST PKGEN
+
+	// init the Log
+	acutl.InitDebugLog(os.Stderr)
+	// init the key map for our tests..
+	ackp.ACmap = ackp.NewPSKMap()
+
+	// TEST PKGEN : myself & eau stored
 	fmt.Printf("\n== PKGEN TESTs ==\n")
 	makeTests(PKGENTests, PKGEN_Handler, t)
 
-	// TEST PKADD
+	// TEST PKADD : nick1 & nick2 stored too
 	fmt.Printf("\n== PKADD TESTs ==\n")
 	makeTests(PKADDTests, PKADD_Handler, t)
 
 	// TEST PKLIST
 	fmt.Printf("\n== PKLIST TESTs ==\n")
 	makeTests(PKLISTTests, PKLIST_Handler, t)
+
+	// TEST PKDEL
 }
+
+
+/*
+func TraceFunc2() string {
+	pc := make([]uintptr, 10) // at least 1 entry needed
+	runtime.Callers(2, pc)
+	f := runtime.FuncForPC(pc[0])
+	file, line := f.FileLine(pc[0])
+	return fmt.Sprintf("[+] %s\n \\_ %s:%d\n", f.Name(), file, line)
+}
+
+func TraceFunc() *runtime.Func {
+	pc := make([]uintptr, 10) // at least 1 entry needed
+	runtime.Callers(2, pc)
+	return runtime.FuncForPC(pc[0])
+}
+
+func TraceHdr(f *runtime.Func) string {
+	file, line := f.FileLine(f.Entry())
+	return fmt.Sprintf("[+] %s\n \\_ %s:%d\n", f.Name(), file, line)
+}
+*/
+
