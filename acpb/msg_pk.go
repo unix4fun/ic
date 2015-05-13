@@ -149,8 +149,8 @@ func PKLIST_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *A
 	reqServ := acMessagePkReq.GetServer()
 
 	acutl.DebugLog.Printf("(CALL) PKLIST <- '%s' ! <host> / %s\n", reqNick, reqServ)
-	if len(reqServ) == 0 {
-		retErr := &acutl.AcError{Value: -1, Msg: "PKLIST_Handler().reqServ: 0 bytes", Err: nil}
+	if len(reqServ) == 0 { //|| ok_map == false {
+		retErr := &acutl.AcError{Value: -1, Msg: "PKLIST_Handler(): reqServ is nil or non existent", Err: nil}
 		acMsgResponse = &AcPublicKeyMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
@@ -160,10 +160,75 @@ func PKLIST_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *A
 		return acMsgResponse, retErr
 	}
 
-	Pk, _ := ackp.ACmap.GetPKMap(reqServ)
+	pk, okMap := ackp.ACmap.GetPKMap(reqServ)
+	pkEntry, okEnt := ackp.ACmap.GetPKMapEntry(reqServ, reqNick)
 
-	if len(reqNick) > 0 { // IS A SPECIFIC NICK REQUESTED ?!?!
-		myKeys, ok := Pk[reqNick]
+	// we have one entry for the request
+	acutl.DebugLog.Printf("ok_map: %t ok_ent: %t\n", okMap, okEnt)
+	switch {
+	case okMap == true && len(reqNick) == 0: // REPLY ALL KEYS
+		for _, myKeys := range *pk {
+			// get the timestamp!!
+			timestamp := myKeys.CreaTime.Unix()
+			// acPublicKey
+			//fmt.Fprintf(os.Stderr, "[+] PKLIST %s!%s @ %s / priv: %t\n", myKeys.Nickname, myKeys.Userhost, myKeys.Server, myKeys.HasPriv)
+			acPubkey := &AcPublicKey{
+				Nick:      &myKeys.Nickname,
+				Pubkey:    &myKeys.Pubkey,
+				Host:      &myKeys.Userhost,
+				Server:    &myKeys.Server,
+				Haspriv:   &myKeys.HasPriv,
+				Fp:        myKeys.GetPubfp(),
+				Timestamp: &timestamp,
+			}
+			acPubkeyArray = append(acPubkeyArray, acPubkey)
+		}
+
+		acMsgResponse = &AcPublicKeyMessageResponse{
+			Type:       &responseType,
+			Bada:       proto.Bool(true),
+			PublicKeys: acPubkeyArray,
+		}
+		acutl.DebugLog.Printf("(RET) PKLIST -> (0) ! n Keys\n")
+		return acMsgResponse, nil
+	case okMap == true && okEnt == true: // REPLY ONE KEY
+		// get the timestamp!!
+		timestamp := pkEntry.CreaTime.Unix()
+		// acPublicKey object
+		//fmt.Fprintf(os.Stderr, "[+] PKLIST %s!%s @ %s / priv: %t\n", myKeys.Nickname, myKeys.Userhost, myKeys.Server, myKeys.HasPriv)
+		acPubkey := &AcPublicKey{
+			Nick:      &pkEntry.Nickname,
+			Pubkey:    &pkEntry.Pubkey,
+			Host:      &pkEntry.Userhost,
+			Server:    &pkEntry.Server,
+			Haspriv:   &pkEntry.HasPriv,
+			Fp:        pkEntry.GetPubfp(),
+			Timestamp: &timestamp,
+		}
+		// add that object to the array of public key..
+		acPubkeyArray = append(acPubkeyArray, acPubkey)
+		acMsgResponse = &AcPublicKeyMessageResponse{
+			Type:       &responseType,
+			Bada:       proto.Bool(true),
+			PublicKeys: acPubkeyArray,
+		}
+		acutl.DebugLog.Printf("(RET) PKLIST -> (0) ! one Key\n")
+		return acMsgResponse, nil
+	default: // NOTHING FOUND
+		retErr := &acutl.AcError{Value: -2, Msg: "PKLIST_Handler(): nothing found!", Err: nil}
+		acMsgResponse = &AcPublicKeyMessageResponse{
+			Type:      &responseType,
+			Bada:      proto.Bool(false),
+			ErrorCode: proto.Int32(-2), // no such nickname
+		}
+		acutl.DebugLog.Printf("(RET[!]) PKLIST -> (-2) ! %s\n", retErr.Error())
+		return acMsgResponse, retErr
+	}
+
+	/*
+	if len(reqNick) > 0 || !ok_map { // IS A SPECIFIC NICK REQUESTED ?!?!
+		//myKeys, ok := Pk[reqNick]
+		myKeys, ok := ackp.ACmap.GetPKMapEntry(reqServ, reqNick)
 		if ok == false { // We did NOT find the key! ERRORRRRRR!!
 			retErr := &acutl.AcError{Value: -2, Msg: "PKLIST_Handler().reqNick(!)", Err: nil}
 			acMsgResponse = &AcPublicKeyMessageResponse{
@@ -198,7 +263,7 @@ func PKLIST_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *A
 			return acMsgResponse, nil
 		}
 	} else { // USER IS REQUESTING ALL KEYS STORED IN MEMORY
-		for _, myKeys := range Pk {
+		for _, myKeys := range *Pk {
 			// get the timestamp!!
 			timestamp := myKeys.CreaTime.Unix()
 			// acPublicKey
@@ -223,6 +288,7 @@ func PKLIST_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *A
 		acutl.DebugLog.Printf("(RET) PKLIST -> (0) ! n Keys\n")
 		return acMsgResponse, nil
 	} // end of else
+	*/
 
 	retErr := &acutl.AcError{Value: -3, Msg: "PKLIST_Handler().unHandled", Err: nil}
 	acMsgResponse = &AcPublicKeyMessageResponse{
@@ -246,9 +312,10 @@ func PKDEL_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 
 	if len(reqNick) > 0 && len(reqServ) > 0 { // IS A SPECIFIC NICK REQUESTED ?!?!
 		//_, ok := Pk[reqNick]
-		Pk, ok := ackp.ACmap.GetPKMap(reqServ)
+		//Pk, ok := ackp.ACmap.GetPKMap(reqServ)
+		ok := ackp.ACmap.DelPKMapEntry(reqServ, reqNick)
 		if ok == true {
-			delete(Pk, reqNick)
+			//delete(Pk, reqNick)
 			acMsgResponse = &AcPublicKeyMessageResponse{
 				Type:      &responseType,
 				Bada:      proto.Bool(true),

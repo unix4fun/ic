@@ -28,7 +28,7 @@ type AcError struct {
 
 var DebugLog *log.Logger
 
-func LogInit(out io.Writer) {
+func InitDebugLog(out io.Writer) {
 	DebugLog = log.New(out, "<acDebug>:", log.Lmicroseconds|log.Lshortfile|log.LstdFlags)
 }
 
