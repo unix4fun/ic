@@ -33,7 +33,7 @@ var PKGENTests = []Test{
 			Nick:   proto.String("myself"),
 			Host:   proto.String("prout@hostname"),
 			Server: proto.String("freenode.net"),
-		}, AcPublicKeyMessageResponse_PKR_GEN, true, 0, nil, nil, false,
+		}, AcPublicKeyMessageResponse_PKR_GEN, true, 0, nil, nil, 0, false,
 	},
 	// TEST #2 : FAIL -1
 	{AcPublicKeyMessageRequest_PK_GEN,
@@ -41,7 +41,7 @@ var PKGENTests = []Test{
 			Nick:   nil,
 			Host:   proto.String("prout@hostname"),
 			Server: proto.String("freenode.net"),
-		}, AcPublicKeyMessageResponse_PKR_GEN, false, -1, nil, nil, true,
+		}, AcPublicKeyMessageResponse_PKR_GEN, false, -1, nil, nil, 0, true,
 	},
 
 	// TEST #3 : FAIL -1
@@ -50,7 +50,7 @@ var PKGENTests = []Test{
 			Nick:   proto.String("mynick"),
 			Host:   proto.String("eau@host.com"),
 			Server: nil,
-		}, AcPublicKeyMessageResponse_PKR_GEN, false, -1, nil, nil, true,
+		}, AcPublicKeyMessageResponse_PKR_GEN, false, -1, nil, nil, 0, true,
 	},
 
 	// TEST #4 : OK
@@ -59,7 +59,7 @@ var PKGENTests = []Test{
 			Nick:   proto.String("eau"),
 			Host:   nil,
 			Server: proto.String("freeenode.net"),
-		}, AcPublicKeyMessageResponse_PKR_GEN, true, 0, nil, nil, false,
+		}, AcPublicKeyMessageResponse_PKR_GEN, true, 0, nil, nil, 0, false,
 	},
 
 	// TEST #4 : FAIL -1
@@ -68,7 +68,7 @@ var PKGENTests = []Test{
 			Nick:   nil,
 			Host:   nil,
 			Server: nil,
-		}, AcPublicKeyMessageResponse_PKR_GEN, false, -1, nil, nil, true,
+		}, AcPublicKeyMessageResponse_PKR_GEN, false, -1, nil, nil, 0, true,
 	},
 }
 
@@ -80,7 +80,7 @@ var PKADDTests = []Test{
 			Host:   proto.String("prout@hostname"),
 			Server: proto.String("freenode.net"),
 			Blob:   []byte("DSix7zIaLXjaSrzBNkm3dtqdHqWLk2wnyVt/y+wNq01n5Avc6RaXdcrcDxAAAP//7okNxA=="),
-		}, AcPublicKeyMessageResponse_PKR_ADD, true, 0, nil, nil, false,
+		}, AcPublicKeyMessageResponse_PKR_ADD, true, 0, nil, nil, 0, false,
 	},
 
 	// TEST #2 : FAIL -> Invalid base64 -2
@@ -90,7 +90,7 @@ var PKADDTests = []Test{
 			Host:   proto.String("prout@hostname"),
 			Server: proto.String("freenode.net"),
 			Blob:   []byte("DSix7zIaLXjaSrzBNkm3dtqdHqWLk2wnyVt/y+wNq01n5Avc6RaXdcrcDxAAAP//7okNxA"),
-		}, AcPublicKeyMessageResponse_PKR_ADD, false, -2, nil, nil, true,
+		}, AcPublicKeyMessageResponse_PKR_ADD, false, -2, nil, nil, 0, true,
 	},
 
 	// TEST #3 : FAIL -> null blob -1
@@ -100,7 +100,7 @@ var PKADDTests = []Test{
 			Host:   proto.String("prout@hostname"),
 			Server: proto.String("freenode.net"),
 			Blob:   nil,
-		}, AcPublicKeyMessageResponse_PKR_ADD, false, -1, nil, nil, true,
+		}, AcPublicKeyMessageResponse_PKR_ADD, false, -1, nil, nil, 0, true,
 	},
 
 	// TEST #4 : FAIL -> null nick
@@ -110,7 +110,7 @@ var PKADDTests = []Test{
 			Host:   proto.String("prout@hostname"),
 			Server: proto.String("freenode.net"),
 			Blob:   []byte("DSix7zIaLXjaSrzBNkm3dtqdHqWLk2wnyVt/y+wNq01n5Avc6RaXdcrcDxAAAP//7okNxA=="),
-		}, AcPublicKeyMessageResponse_PKR_ADD, false, -1, nil, nil, true,
+		}, AcPublicKeyMessageResponse_PKR_ADD, false, -1, nil, nil, 0, true,
 	},
 
 	// TEST #5 : FAIL -> null nick
@@ -120,7 +120,7 @@ var PKADDTests = []Test{
 			Host:   proto.String("prout@hostname"),
 			Server: proto.String("freenode.net"),
 			Blob:   []byte("AAAAAAAADSix7zIaLXjaSrzBNkm3dtqdHqWLk2wnyVt/y+wNq01n5Avc6RaXdcrcDxAAAP//7okNxAAAAAAAAAAAAAAAAA=="),
-		}, AcPublicKeyMessageResponse_PKR_ADD, false, -2, nil, nil, true,
+		}, AcPublicKeyMessageResponse_PKR_ADD, false, -2, nil, nil, 0, true,
 	},
 
 	// TEST #6 : OK
@@ -130,7 +130,7 @@ var PKADDTests = []Test{
 			Host:   proto.String("prout@hostname"),
 			Server: proto.String("freenode.net"),
 			Blob:   []byte("DSix7zIaLXjaSrzBNkm3dtqdHqWLk2wnyVt/y+wNq01n5Avc6RaXdcrcDxAAAP//7okNxA=="),
-		}, AcPublicKeyMessageResponse_PKR_ADD, true, 0, nil, nil, false,
+		}, AcPublicKeyMessageResponse_PKR_ADD, true, 0, nil, nil, 0, false,
 	},
 } // End of PKADD TESTs
 
@@ -142,7 +142,7 @@ var PKLISTTests = []Test{
 		&AcPublicKeyMessageRequest{
 			Nick:   proto.String("jdskjdskj"),
 			Server: proto.String("freenode.net"),
-		}, AcPublicKeyMessageResponse_PKR_LIST, false, -2, nil, nil, true,
+		}, AcPublicKeyMessageResponse_PKR_LIST, false, -2, nil, nil, 0, true,
 	},
 
 	// TEST #1 : OK / key exists
@@ -150,7 +150,7 @@ var PKLISTTests = []Test{
 		&AcPublicKeyMessageRequest{
 			Nick:   proto.String("nick1"),
 			Server: proto.String("freenode.net"),
-		}, AcPublicKeyMessageResponse_PKR_LIST, true, 0, nil, nil, false,
+		}, AcPublicKeyMessageResponse_PKR_LIST, true, 0, nil, nil, 0, false,
 	},
 
 	// TEST #2 : FAIL -> -1
@@ -158,7 +158,7 @@ var PKLISTTests = []Test{
 		&AcPublicKeyMessageRequest{
 			Nick:   proto.String("nick2"),
 			Server: nil,
-		}, AcPublicKeyMessageResponse_PKR_LIST, false, -1, nil, nil, true,
+		}, AcPublicKeyMessageResponse_PKR_LIST, false, -1, nil, nil, 0, true,
 	},
 
 	// TEST #3 : OK -> all keys...
@@ -166,7 +166,7 @@ var PKLISTTests = []Test{
 		&AcPublicKeyMessageRequest{
 			Nick:  nil,
 			Server: proto.String("freenode.net"),
-		}, AcPublicKeyMessageResponse_PKR_LIST, true, 0, nil, nil, false,
+		}, AcPublicKeyMessageResponse_PKR_LIST, true, 0, nil, nil, 0, false,
 	},
 
 	// TEST #4 : OK -> all keys... but wrong server nothing found!
@@ -174,7 +174,7 @@ var PKLISTTests = []Test{
 		&AcPublicKeyMessageRequest{
 			Nick:  nil,
 			Server: proto.String("net"),
-		}, AcPublicKeyMessageResponse_PKR_LIST, false, -2, nil, nil, true,
+		}, AcPublicKeyMessageResponse_PKR_LIST, false, -2, nil, nil, 0, true,
 	},
 }
 

@@ -14,6 +14,13 @@ import (
 var ACmap * PSKMap
 var ACrun bool
 
+// import the package?! here is the init part
+func init() {
+	if ACmap == nil {
+		ACmap = NewPSKMap()
+	}
+}
+
 //
 //
 // we hash our data based on server we're connected to
