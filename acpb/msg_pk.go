@@ -188,7 +188,7 @@ func PKLIST_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *A
 			Type:       &responseType,
 			Bada:       proto.Bool(true),
 			PublicKeys: acPubkeyArray,
-			ErrorCode: proto.Int32(0),
+			ErrorCode:  proto.Int32(0),
 		}
 		acutl.DebugLog.Printf("(RET) PKLIST -> (0) ! n Keys\n")
 		return acMsgResponse, nil
@@ -212,7 +212,7 @@ func PKLIST_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *A
 			Type:       &responseType,
 			Bada:       proto.Bool(true),
 			PublicKeys: acPubkeyArray,
-			ErrorCode: proto.Int32(0),
+			ErrorCode:  proto.Int32(0),
 		}
 		acutl.DebugLog.Printf("(RET) PKLIST -> (0) ! one Key\n")
 		return acMsgResponse, nil

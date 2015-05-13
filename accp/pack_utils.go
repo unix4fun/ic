@@ -18,20 +18,6 @@ import (
 	//"time"
 )
 
-/*
-func HashSHA3Data(input []byte) (out []byte, err error) {
-	//sha3hash := sha3.NewKeccak256()
-	sha3hash := sha3.New256()
-	_, err = sha3hash.Write(input)
-	if err != nil {
-		//return nil, acprotoError(-1, "HashSHA3Data().Write(): ", err)
-		return nil, &protoError{value: -1, msg: "HashSHA3Data().Write(): ", Err: err}
-	}
-	out = sha3hash.Sum(nil)
-	return
-}
-*/
-
 func Nonce2Byte(nonce uint32) []byte {
 	// we KNOW the nonce is 32 bits but if we move to protobuf we can may be
 	// switch it to 64 bits as protobuf will optimize
@@ -132,6 +118,8 @@ func nonceBuildKX(kxChannel, myNick, peerNick, myCounter, msgHdr []byte) (out []
 		return nil, &acutl.AcError{Value: -1, Msg: "NonceBuildAC().nonceHash(): ", Err: nonceErr}
 	}
 
+	//acutl.DebugLog.Printf(os.Stderr, "[+] BuildNonceAC(%08x, %s, %s, %s) = %s (%s)\n", inonce, bob, mynick, hex.EncodeToString(myhdr), hex.EncodeToString(noncebyte[:]), hex.EncodeToString(nonce))
+
 	return nonceHash, nil
 }
 
@@ -151,7 +139,7 @@ func BuildNonceAC(inonce uint32, bob, mynick, myhdr []byte) (nonce []byte, nonce
 	// we just need 24 bytes nonce
 	copy(noncebyte[:], nonce[:24])
 
-	fmt.Fprintf(os.Stderr, "[+] BuildNonceAC(%08x, %s, %s, %s) = %s (%s)\n", inonce, bob, mynick, hex.EncodeToString(myhdr), hex.EncodeToString(noncebyte[:]), hex.EncodeToString(nonce))
+	acutl.DebugLog.Printf("[+] BuildNonceAC(%08x, %s, %s, %s) = %s (%s)\n", inonce, bob, mynick, hex.EncodeToString(myhdr), hex.EncodeToString(noncebyte[:]), hex.EncodeToString(nonce))
 
 	return nonce, noncebyte, nil
 }

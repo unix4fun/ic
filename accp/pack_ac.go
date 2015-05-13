@@ -71,7 +71,7 @@ func PredictLenNACL(input []byte) (outlen int) {
 	sboxLen += 2                  // 1 byte pb header value type + 1 byte size
 	outlen = base64.StdEncoding.EncodedLen(sboxLen)
 	//outlen += 14
-	fmt.Fprintf(os.Stderr, "PredictLenNACL(%d): %d\n", len(input), outlen)
+	acutl.DebugLog.Printf("PredictLenNACL(%d): %d\n", len(input), outlen)
 	return outlen
 }
 
