@@ -130,8 +130,7 @@ var PKADDTests = []Test{
 			Blob:   []byte("DSix7zIaLXjaSrzBNkm3dtqdHqWLk2wnyVt/y+wNq01n5Avc6RaXdcrcDxAAAP//7okNxA=="),
 		}, AcPublicKeyMessageResponse_PKR_ADD, true, 0, nil, nil, false,
 	},
-
-}// End of PKADD TESTs
+} // End of PKADD TESTs
 
 var PKLISTTests = []Test{
 	// TEST #1 : OK
