@@ -6,12 +6,12 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"os"
 	"github.com/unix4fun/ac/acutl"
+	"os"
 )
 
 // some variable to handle the maps and the run loop
-var ACmap * PSKMap
+var ACmap *PSKMap
 var ACrun bool
 
 // import the package?! here is the init part
@@ -51,19 +51,19 @@ func (ac *AcCOMM) String() string {
 	_, _ = buf.WriteString(fmt.Sprintf("---\n"))
 	// Public Keys
 	buf.WriteString(fmt.Sprintf("- PK\n"))
-	for k, v := range (*ac.Pk) {
+	for k, v := range *ac.Pk {
 		_, _ = buf.WriteString(fmt.Sprintf("{%s}\n%v\n", k, v))
 	}
 
 	// Secret/Symmetric Keys
 	buf.WriteString(fmt.Sprintf("- SK\n"))
-	for k, v := range (*ac.Sk) {
+	for k, v := range *ac.Sk {
 		_, _ = buf.WriteString(fmt.Sprintf("{%s}\n%v\n", k, v))
 	}
 
 	// Random values
 	buf.WriteString(fmt.Sprintf("- RD\n"))
-	for k, v := range (*ac.Rd) {
+	for k, v := range *ac.Rd {
 		_, _ = buf.WriteString(fmt.Sprintf("{%s}\n%v\n", k, v))
 	}
 
@@ -86,7 +86,7 @@ func NewPSKMap() (p *PSKMap) {
 
 func (psk *PSKMap) String() string {
 	buf := new(bytes.Buffer)
-	for k, v := range (*psk) {
+	for k, v := range *psk {
 		// for each AcCOMM structure call String() of AcCOMM
 		_, _ = buf.WriteString(fmt.Sprintf("-[%s]-\n%v\n", k, v))
 	}
@@ -172,11 +172,11 @@ func (psk *PSKMap) GetRDMapEntry(server string, channel string) ([]byte, bool) {
 func (psk *PSKMap) SetRDMapEntry(server, channel string, rnd []byte) {
 	acutl.DebugLog.Printf("===---=-=-=--==- SetRDMapEntry[@%p] (serv: %s channel: %s)! --==-=---=-=-=-==-\n", psk, server, channel)
 	/*
-	if psk == nil {
-		//(*psk) = make(PSKMap)
-		acutl.DebugLog.Printf("===---=-=-=--==- Nil PSKMap! --==-=---=-=-=-==-\n")
-		return &acutl.AcError{Value: -1, Msg: "Nil PSKMap", Err: nil}
-	}
+		if psk == nil {
+			//(*psk) = make(PSKMap)
+			acutl.DebugLog.Printf("===---=-=-=--==- Nil PSKMap! --==-=---=-=-=-==-\n")
+			return &acutl.AcError{Value: -1, Msg: "Nil PSKMap", Err: nil}
+		}
 	*/
 	rdmap, ok := psk.GetRDMap(server)
 	if ok == true {
@@ -225,11 +225,11 @@ func (psk *PSKMap) SetSKMapEntry(server string, channel string, sk *SecKey) {
 	acutl.DebugLog.Printf("===---=-=-=--==- SetSKMapEntry[@%p] (serv: %s channel: %s)! --==-=---=-=-=-==-\n", psk, server, channel)
 	// XXX MAKE SURE ACMap is allocated before using anything.
 	/*
-	if psk == nil {
-		//*psk = make(PSKMap)
-		acutl.DebugLog.Printf("===---=-=-=--==- Nil PSKMap! --==-=---=-=-=-==-\n")
-		return &acutl.AcError{Value: -1, Msg: "Nil PSKMap", Err: nil}
-	}
+		if psk == nil {
+			//*psk = make(PSKMap)
+			acutl.DebugLog.Printf("===---=-=-=--==- Nil PSKMap! --==-=---=-=-=-==-\n")
+			return &acutl.AcError{Value: -1, Msg: "Nil PSKMap", Err: nil}
+		}
 	*/
 	skmap, ok := psk.GetSKMap(server)
 	if ok == true {
@@ -280,12 +280,12 @@ func (psk *PSKMap) GetPKMapEntry(server string, nick string) (*KexKey, bool) {
 func (psk *PSKMap) SetPKMapEntry(server string, nick string, pk *KexKey) {
 	acutl.DebugLog.Printf("===---=-=-=--==- SetPKMapEntry[@%p] (serv: %s nick: %s)! --==-=---=-=-=-==-\n", psk, server, nick)
 	/*
-	if psk == nil {
-		//(*psk) = make(PSKMap)
-		//psk = NewPSKMap()
-		fmt.Fprintf(os.Stderr, "===---=-=-=--==- Nil PSKMap! --==-=---=-=-=-==-\n" )
-		return &acutl.AcError{Value: -1, Msg: "Nil PSKMap", Err: nil}
-	}
+		if psk == nil {
+			//(*psk) = make(PSKMap)
+			//psk = NewPSKMap()
+			fmt.Fprintf(os.Stderr, "===---=-=-=--==- Nil PSKMap! --==-=---=-=-=-==-\n" )
+			return &acutl.AcError{Value: -1, Msg: "Nil PSKMap", Err: nil}
+		}
 	*/
 	pkmap, ok := psk.GetPKMap(server)
 	if ok == true {
@@ -303,7 +303,7 @@ func (psk *PSKMap) DelPKMapEntry(server, nick string) bool {
 	acutl.DebugLog.Printf("===---=-=-=--==- DelPKMapEntry[@%p] (serv: %s nick: %s)! --==-=---=-=-=-==-\n", psk, server, nick)
 	pkmap, ok := psk.GetPKMap(server)
 	if ok == true {
-		delete ((*pkmap), nick)
+		delete((*pkmap), nick)
 		return true
 	}
 	return false
@@ -346,7 +346,7 @@ func (pkm PKMap) Init() {
 func (pkm *PKMap) String() string {
 	buf := new(bytes.Buffer)
 
-	for k, v := range (*pkm) {
+	for k, v := range *pkm {
 		buf.WriteString(fmt.Sprintf("\\%s/\n%v\n", k, v))
 	}
 
@@ -380,7 +380,7 @@ func (skm SKMap) Init() {
 func (skm *SKMap) String() string {
 	buf := new(bytes.Buffer)
 
-	for k, v := range (*skm) {
+	for k, v := range *skm {
 		buf.WriteString(fmt.Sprintf("\\%s/\n%v\n", k, v))
 	}
 
@@ -399,7 +399,7 @@ func (skm *SKMap) GetSK(channel string) *SecKey {
 // in memory, it is far from perfect, but better than pure plain text.
 type RDMap map[string]([]byte)
 
-func (rdm * RDMap) GetRD(channel string) []byte {
+func (rdm *RDMap) GetRD(channel string) []byte {
 	rd, ok := (*rdm)[channel]
 	if ok == true {
 		return rd

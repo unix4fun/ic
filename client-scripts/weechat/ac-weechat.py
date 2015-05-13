@@ -10,7 +10,7 @@
 
 SCRIPT_NAME    = 'ac-weechat'
 SCRIPT_AUTHOR  = 'eau <eau-code@unix4fun.net>'
-SCRIPT_VERSION = '20150502'
+SCRIPT_VERSION = '20150513'
 SCRIPT_LICENSE = 'BSD'
 SCRIPT_DESC    = 'AC script'
 
@@ -631,13 +631,13 @@ def skCmdAddKey(data, dabuffer, args):
 
 def skCmdUseKey(data, dabuffer, args):
     inf = ac_get_buflocalinfo(dabuffer)
-#    XXX replace with rcvKexPop
     if inf and inf.has_key(BUF_INFO_CHAN) and inf.has_key(BUF_INFO_SERV):
         kexinfo = acwee.rcvKexPop(inf[BI_SERV], inf[BI_CHAN]);
+        # TODO: better sanity checks..
         if kexinfo:
             myargs = { acwee.KEY_MYNICK:kexinfo[0], acwee.KEY_PEERNICK:kexinfo[1], acwee.KEY_CHANNEL:kexinfo[2], acwee.KEY_SERVER:kexinfo[3], acwee.KEY_BLOB:kexinfo[4] } 
             ac_kxr, err = acwee.acRequest(acwee.ACMSG_TYPE_KEX, acwee.ACMSG_SUBTYPE_KXUNPACK, myargs, acwee.BUF_LARGE)
-            if ac_kxr:
+            if ac_kxr and err is None:
                 if ac_kxr.bada == True:
                     acwee.pmbac(dabuffer, "using key received from %s @ [%s/%s]", kexinfo[1], kexinfo[2], kexinfo[3])
                     acwee.acEnable(dabuffer, inf[BI_SERV], inf[BI_CHAN])
@@ -645,8 +645,13 @@ def skCmdUseKey(data, dabuffer, args):
                     acwee.acUpdNonce(inf[BI_SERV], inf[BI_CHAN], ac_kxr.nonce)
                 else:
                     acwee.pmbac(dabuffer, "invalid key exchange received from %s @ [%s/%s]", kexinfo[1], kexinfo[2], kexinfo[3])
+            else:
+                acwee.pmbac(dabuffer, "AC proto communication error err:  %s", str(err))
             return weechat.WEECHAT_RC_OK
-    acwee.pmbac(dabuffer, "you're willing to use a key, but may be in the wrong place! (hint: the buffer where you received the key)")
+        else:
+            acwee.pmbac(dabuffer, "no KeX payload to process")
+    else:
+        acwee.pmbac(dabuffer, "you're willing to use a key, but may be in the wrong place! (hint: the buffer where you received the key)")
     return weechat.WEECHAT_RC_OK
 
 
@@ -1368,7 +1373,7 @@ class AcPbCom(object):
     acDebugFile = None
 
     def __init__(self, acBin, acDbg):
-        self.acBinary = acBin
+        self.acBinary = [ acBin, "-debug=true" ]
         self.acDebugFile = acDbg
         self.acDebugFd = open(acDbg, 'w')
 
@@ -1625,7 +1630,7 @@ class AcPbCom(object):
             print wlist
             print "XLIST"
             print xlist
-            return [ None,  None ]
+            return [ None, "No Read List Polled" ]
     
         # XXX TODO: surround with try/except
         acRcvEnvp = ac_pb2.ArseneCryptoMessage()
@@ -1641,7 +1646,7 @@ class AcPbCom(object):
         elif acRcvEnvp.type == ac_pb2.ArseneCryptoMessage.AC_ERROR:
             return [ None, acRcvEnvp.blob ] # AC_ERROR, I should have the message, don't know if it's nice this way..
         else:
-            return [ None, None ] # Unknown error
+            return [ None, "Unknown Error" ] # Unknown error
 
         # XXX TODO: surround in try/except
         acResponse.ParseFromString(acRcvEnvp.blob)

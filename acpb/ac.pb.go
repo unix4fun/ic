@@ -22,8 +22,8 @@ It has these top-level messages:
 */
 package acpb
 
-import proto "github.com/golang/protobuf/proto"
-import math "math"
+import "github.com/golang/protobuf/proto"
+import "math"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -609,8 +609,8 @@ func (m *AcKeyExchangeMessageRequest) GetBlob() []byte {
 type AcKeyExchangeMessageResponse struct {
 	Type             *AcKeyExchangeMessageResponseAcKXRespMsgType `protobuf:"varint,1,req,name=type,enum=acpb.AcKeyExchangeMessageResponseAcKXRespMsgType" json:"type,omitempty"`
 	Bada             *bool                                        `protobuf:"varint,2,req,name=bada" json:"bada,omitempty"`
-	Blob             []byte                                       `protobuf:"bytes,5,req,name=blob" json:"blob,omitempty"`
-	ErrorCode        *int32                                       `protobuf:"zigzag32,6,opt,name=error_code" json:"error_code,omitempty"`
+	ErrorCode        *int32                                       `protobuf:"zigzag32,6,req,name=error_code" json:"error_code,omitempty"`
+	Blob             []byte                                       `protobuf:"bytes,5,opt,name=blob" json:"blob,omitempty"`
 	Nonce            *uint32                                      `protobuf:"varint,7,opt,name=nonce" json:"nonce,omitempty"`
 	XXX_unrecognized []byte                                       `json:"-"`
 }
@@ -633,18 +633,18 @@ func (m *AcKeyExchangeMessageResponse) GetBada() bool {
 	return false
 }
 
-func (m *AcKeyExchangeMessageResponse) GetBlob() []byte {
-	if m != nil {
-		return m.Blob
-	}
-	return nil
-}
-
 func (m *AcKeyExchangeMessageResponse) GetErrorCode() int32 {
 	if m != nil && m.ErrorCode != nil {
 		return *m.ErrorCode
 	}
 	return 0
+}
+
+func (m *AcKeyExchangeMessageResponse) GetBlob() []byte {
+	if m != nil {
+		return m.Blob
+	}
+	return nil
 }
 
 func (m *AcKeyExchangeMessageResponse) GetNonce() uint32 {

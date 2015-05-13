@@ -92,7 +92,7 @@ func KXPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgResponse 
 
 func KXUNPACK_Handler(acMessageKxReq *AcKeyExchangeMessageRequest) (acMsgResponse *AcKeyExchangeMessageResponse, err error) {
 	var responseType AcKeyExchangeMessageResponseAcKXRespMsgType
-	responseType = AcKeyExchangeMessageResponse_KXR_PACK
+	responseType = AcKeyExchangeMessageResponse_KXR_UNPACK
 
 	channel := acMessageKxReq.GetChannel()
 	mynick := acMessageKxReq.GetMynick()

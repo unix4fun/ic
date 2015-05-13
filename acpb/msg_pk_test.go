@@ -6,8 +6,8 @@ import (
 	"github.com/unix4fun/ac/acutl"
 	"os"
 	//"runtime"
-	"testing"
 	"github.com/unix4fun/ac/ackp"
+	"testing"
 )
 
 type pkhandler func(*AcPublicKeyMessageRequest) (acMsgResponse *AcPublicKeyMessageResponse, err error)
@@ -22,7 +22,7 @@ type Test struct {
 	oErrorCode    int32
 	oBlob         []byte
 	oPubKeys      []*AcPublicKey // we just compare nick and server && public keys
-	oPubKeysLen   int // number of pubkeys in the list!!
+	oPubKeysLen   int            // number of pubkeys in the list!!
 	oHaveErrorMsg bool
 }
 
@@ -164,7 +164,7 @@ var PKLISTTests = []Test{
 	// TEST #3 : OK -> all keys...
 	{AcPublicKeyMessageRequest_PK_LIST,
 		&AcPublicKeyMessageRequest{
-			Nick:  nil,
+			Nick:   nil,
 			Server: proto.String("freenode.net"),
 		}, AcPublicKeyMessageResponse_PKR_LIST, true, 0, nil, nil, 0, false,
 	},
@@ -172,7 +172,7 @@ var PKLISTTests = []Test{
 	// TEST #4 : OK -> all keys... but wrong server nothing found!
 	{AcPublicKeyMessageRequest_PK_LIST,
 		&AcPublicKeyMessageRequest{
-			Nick:  nil,
+			Nick:   nil,
 			Server: proto.String("net"),
 		}, AcPublicKeyMessageResponse_PKR_LIST, false, -2, nil, nil, 0, true,
 	},
@@ -240,7 +240,6 @@ func TestPK(t *testing.T) {
 	// TEST PKDEL
 }
 
-
 /*
 func TraceFunc2() string {
 	pc := make([]uintptr, 10) // at least 1 entry needed
@@ -261,4 +260,3 @@ func TraceHdr(f *runtime.Func) string {
 	return fmt.Sprintf("[+] %s\n \\_ %s:%d\n", f.Name(), file, line)
 }
 */
-

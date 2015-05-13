@@ -79,8 +79,8 @@ message acKeyExchangeMessageResponse {
     }
     required acKXRespMsgType type = 1;
     required bool bada = 2; // did it work or not
-    required bytes blob = 5;
-    optional sint32 error_code = 6;
+    required sint32 error_code = 6;
+    optional bytes blob = 5;
     optional uint32 nonce = 7;
 }
 
@@ -177,37 +177,3 @@ message ArseneCryptoMessage {
     required bytes blob = 41;
 }
 
-
-
-
-//
-//
-//
-//service ArseneCryptoService {
-//      rpc acPublicKeyMessage (acPublicKeyMessageRequest) returns (acPublicKeyMessageResponse);
-//}
-// SYMETRIC AND KEY EXCHANGE
-//message ACKexMessageRequest {
-//    enum ACKexReqMsgType {
-//        KX_GEN = 0; // request: chan -> generate a random symmetric key!
-//        KX_GET = 1; // request: type && nick && chan
-//        KX_ADD = 2; // request: type && nick && blob  -> add or update a public key
-//        KX_LIST = 3; // request: type -> list symmetric keys keys/fp/timestamp
-//        KX_DEL = 4; // request: type && nick -> delete the specific public key
-//    }
-//    required ACKXReqMsgType type = 1;
-//    optional string nick = 2;
-//    optional bytes blob = 3;
-//}
-//message ACSymKeyMessageResponse {
-//}
-//message ArseneCryptoMessage {
-//}
-//      rpc acSymetricKey (acSymKeyMessageRequest) returns (acSymKeyMessageResponse);
-//      rpc
-//message ACMessage {
-//    required ACMessageType type = 0 [ default = P_CRYPTO ];
-//}
-//
-//
-//
