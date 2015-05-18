@@ -15,7 +15,6 @@ import (
 	"os"
 	"os/signal" // XXX deactivated
 	"syscall"   // XXX deactivated
-
 	//"runtime/pprof"
 	"github.com/unix4fun/ac/acutl"
 	"io/ioutil"

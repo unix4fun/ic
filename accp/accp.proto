@@ -34,6 +34,7 @@ message ACPackedMessage {
     optional uint32 nonce = 2;      // 32 bits unsigned integer counter starting at 0
     required bytes ciphertext = 3;  // the resulting blob
     optional uint32 options = 4;    // options: proto version (1st nibble), proto options (2nd nibble: AES-GCM / NaCL)
+    optional bytes sig = 5;         // sig: ECDSA / RSA / ED52219 signature.
 }
 
 

@@ -94,6 +94,7 @@ func PredictLenNACL(input []byte) (outlen int) {
 // 0x?0 = PROTO VERSION [ 0 - 15 ]
 //
 //
+
 func CreateACMessageNACL(context *ackp.SecKey, rnd, msg, myNick []byte) (out []byte, err error) {
 	//var noncebyte [24]byte
 
