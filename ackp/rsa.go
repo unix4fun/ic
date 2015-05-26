@@ -1,9 +1,10 @@
 package ackp
 
 import (
-	"crypto/rand"
+	//"crypto/rand"
 	"crypto/rsa"
-	"github.com/unix4fun/ac/acutl"
+	//"github.com/unix4fun/ac/acutl"
+	"io"
 )
 
 func GenKeysRSA(r io.Reader) (*rsa.PrivateKey, error) {

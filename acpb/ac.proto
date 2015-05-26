@@ -137,10 +137,9 @@ message acControlMessageRequest {
 //        CTL_LOAD_RSA =
     }
     required acCTLReqMsgType type = 1;
-    //required bool bada = 2; // did it work or not
-    //optional sint32 error_code = 3;
     optional int64 timestamp = 3;
     optional string filename = 2;
+    optional string savepass = 4
 }
 
 message acControlMessageResponse {

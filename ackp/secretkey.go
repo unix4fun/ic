@@ -13,11 +13,11 @@ import (
 )
 
 type SecKey struct {
-	nonce    uint32
-	bob      []byte
-	key      *[32]byte
-	CreaTime time.Time
-	Overhead int
+	Nonce uint32 `json:"nonce"`
+	Bob []byte `json:"bob"`
+	Key *[32]byte `json:"key"`
+	CreaTime time.Time `json:"creatime"`
+	Overhead int `json:"overhead"`
 }
 
 // if you Println() the struct then it call this as part of the type.
@@ -25,9 +25,9 @@ func (sk *SecKey) String() string {
 	var b bytes.Buffer
 	fmt.Fprintf(&b, "-\n")
 	fmt.Fprintf(&b, "SecKey struct @ %p\n", sk)
-	fmt.Fprintf(&b, "-> bob : %s\n", sk.bob)
-	fmt.Fprintf(&b, "-> key : %s\n", hex.EncodeToString(sk.key[:]))
-	fmt.Fprintf(&b, "-> nonce : %08x\n", sk.nonce)
+	fmt.Fprintf(&b, "-> bob : %s\n", sk.Bob)
+	fmt.Fprintf(&b, "-> key : %s\n", hex.EncodeToString(sk.Key[:]))
+	fmt.Fprintf(&b, "-> nonce : %08x\n", sk.Nonce)
 	fmt.Fprintf(&b, "-> created: %d\n", sk.CreaTime.Unix())
 	return b.String()
 }
@@ -35,46 +35,46 @@ func (sk *SecKey) String() string {
 func (sk *SecKey) GetKey() []byte {
 	// XXX TODO here we will be able to get the memory encrypted key instead of
 	// plain.
-	return sk.key[:]
+	return sk.Key[:]
 }
 
 func (sk *SecKey) NewKey() {
-	sk.key = new([32]byte)
+	sk.Key = new([32]byte)
 }
 func (sk *SecKey) GetKeyLen() int {
-	return len(sk.key)
+	return len(sk.Key)
 }
 
 func (sk *SecKey) GetSealKey() *[32]byte {
-	return sk.key
+	return sk.Key
 }
 
 func (sk *SecKey) SetKey(keydata []byte) {
-	copy(sk.key[:], keydata[:32])
+	copy(sk.Key[:], keydata[:32])
 	return
 }
 
 func (sk *SecKey) SetNonce(nonce uint32) {
-	sk.nonce = nonce
+	sk.Nonce = nonce
 }
 
 func (sk *SecKey) GetNonce() uint32 {
-	return sk.nonce
+	return sk.Nonce
 }
 
 func (sk *SecKey) SetBob(bob []byte) {
-	sk.bob = bob
+	sk.Bob = bob
 }
 func (sk *SecKey) GetBob() []byte {
-	return sk.bob
+	return sk.Bob
 }
 
 func (sk *SecKey) IncNonce(n uint32) {
 	//sk.nonce++
-	if n > sk.nonce {
-		sk.nonce = n + 1
+	if n > sk.Nonce {
+		sk.Nonce = n + 1
 	} else {
-		sk.nonce++
+		sk.Nonce++
 	}
 }
 
@@ -82,7 +82,7 @@ func (sk *SecKey) RndKey(rnd []byte) {
 	// OPEN the key
 	// XXX new to check rnd and context.key are the same size
 	for j := 0; j < len(rnd); j++ {
-		sk.key[j] = sk.key[j] ^ rnd[j]
+		sk.Key[j] = sk.Key[j] ^ rnd[j]
 	}
 }
 

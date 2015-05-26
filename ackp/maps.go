@@ -4,10 +4,15 @@ package ackp
 
 import (
 	"bytes"
-	"encoding/gob"
+	//"encoding/gob"
 	"fmt"
 	"github.com/unix4fun/ac/acutl"
 	"os"
+	"encoding/json"
+	//"io"
+	"io/ioutil"
+	"crypto/rand"
+	"encoding/pem"
 )
 
 // some variable to handle the maps and the run loop
@@ -116,43 +121,54 @@ func (psk *PSKMap) Map2File(outfilestr string, salt []byte, keystr []byte) (bool
 		return false, err
 	}
 
-	//buff := new(bytes.Buffer)
-	enc := gob.NewEncoder(outfile)
-
-	err = enc.Encode(ACmap)
+	jsonBuffer, err  := json.Marshal(ACmap)
 	if err != nil {
+		acutl.DebugLog.Printf("ERROR: %v", err)
 		return false, err
 	}
 
-	//	fmt.Fprintf(os.Stderr, "marshalled : %d bytes\n", len(buff.Bytes()))
-	//	n, err := outfile.Write(buff.Bytes())
-	//	fmt.Fprintf(os.Stderr, "marshalled : %d bytes\n", len(buff.Bytes()))
-	//	if err != nil {
-	//		fmt.Fprintf(os.Stderr, "ERROR: %v", err)
-	//		return false, err
-	//	}
-	//	fmt.Fprintf(os.Stderr, "writtent: %d bytes\n", n)
+	jsonPem, err := AEADEncryptPEMBlock(rand.Reader, "ACMAP", jsonBuffer, keystr)
+	if err != nil {
+		acutl.DebugLog.Printf("ERROR: %v", err)
+		return false, err
+	}
+
+	err = pem.Encode(outfile, jsonPem)
+	if err != nil {
+		acutl.DebugLog.Printf("ERROR: %v", err)
+		return false, err
+	}
+
 	return true, nil
 }
 
 func (psk *PSKMap) File2Map(infilestr string, salt []byte, keystr []byte) (bool, error) {
 	acutl.DebugLog.Printf("File2Map CALL to  %s\n", infilestr)
-	infile, err := os.Open(infilestr)
-	defer infile.Close()
+
+	fileBuffer, err := ioutil.ReadFile(infilestr)
 	if err != nil {
-		acutl.DebugLog.Printf("ERROR: %v\n", err)
+		acutl.DebugLog.Printf("load file read error: %s", err)
 		return false, err
 	}
 
-	dec := gob.NewDecoder(infile)
-	err = dec.Decode(&ACmap)
-	if err != nil {
-		acutl.DebugLog.Printf("ERROR: %v\n", err)
+	aeadBuffer, _ := pem.Decode(fileBuffer)
+	if aeadBuffer == nil {
+		acutl.DebugLog.Printf("load file read error: %s", err)
 		return false, err
 	}
 
-	/* let's display all SKMap */
-	acutl.DebugLog.Printf(">> ACMAP DISPLAY:\n%v\n", ACmap)
+	jsonBuffer, err := AEADDecryptPEMBlock(aeadBuffer, keystr)
+	if jsonBuffer == nil {
+		acutl.DebugLog.Printf("load file read error: %s", err)
+		return false, err
+	}
+
+	err = json.Unmarshal(jsonBuffer, ACmap)
+	if err != nil {
+		acutl.DebugLog.Printf("load file json unmarshalling error: %s", err)
+		return false, err
+	}
+
 	return true, nil
 }
 
