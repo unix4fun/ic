@@ -49,6 +49,7 @@ type ACPackedMessage struct {
 	Nonce            *uint32 `protobuf:"varint,2,opt,name=nonce" json:"nonce,omitempty"`
 	Ciphertext       []byte  `protobuf:"bytes,3,req,name=ciphertext" json:"ciphertext,omitempty"`
 	Options          *uint32 `protobuf:"varint,4,opt,name=options" json:"options,omitempty"`
+	Sig              []byte  `protobuf:"bytes,5,opt,name=sig" json:"sig,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
 
@@ -82,6 +83,13 @@ func (m *ACPackedMessage) GetOptions() uint32 {
 		return *m.Options
 	}
 	return 0
+}
+
+func (m *ACPackedMessage) GetSig() []byte {
+	if m != nil {
+		return m.Sig
+	}
+	return nil
 }
 
 func init() {
