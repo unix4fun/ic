@@ -43,11 +43,11 @@ func CTLPING_Handler(acMessageCtlReq *AcControlMessageRequest) (acMsgResponse *A
 func CTLLOAD_Handler(acMessageCtlReq *AcControlMessageRequest) (acMsgResponse *AcControlMessageResponse, err error) {
 	var responseType AcControlMessageResponseAcCTLRRespMsgType
 	responseType = AcControlMessageResponse_CTLR_LOADCTX
-	reqFilename := acMessageCtlReq.GetFilename()
+	reqPassword := acMessageCtlReq.GetPassword()
 
-	acutl.DebugLog.Printf("(CALL) LOADCTX '%s'\n", reqFilename)
+	acutl.DebugLog.Printf("(CALL) LOADCTX '%s'\n", []byte(reqPassword))
 
-	ok, err := ackp.ACmap.File2Map(reqFilename, []byte("proutprout"), []byte("proutkey"))
+	ok, err := ackp.ACmap.File2Map(ackp.AcSaveFile, []byte(reqPassword))
 	if err != nil || ok != false {
 		retErr := &acutl.AcError{Value: -1, Msg: "CTLLOAD_Handler().args(outfile, salt, keystr): 0 bytes", Err: nil}
 		acMsgResponse = &AcControlMessageResponse{
@@ -63,19 +63,20 @@ func CTLLOAD_Handler(acMessageCtlReq *AcControlMessageRequest) (acMsgResponse *A
 		Bada:      proto.Bool(true),
 		ErrorCode: proto.Int32(0),
 	}
-	acutl.DebugLog.Printf("(RET) LOADCTX -> (0) ! '%s' opened\n", reqFilename)
+	acutl.DebugLog.Printf("(RET) LOADCTX -> (0) ! '%s' opened\n", reqPassword)
 	return acMsgResponse, nil
 }
 
 func CTLSAVE_Handler(acMessageCtlReq *AcControlMessageRequest) (acMsgResponse *AcControlMessageResponse, err error) {
 	var responseType AcControlMessageResponseAcCTLRRespMsgType
 	responseType = AcControlMessageResponse_CTLR_SAVECTX
-	reqFilename := acMessageCtlReq.GetFilename()
+	reqPassword := acMessageCtlReq.GetPassword()
 
-	acutl.DebugLog.Printf("(CALL) SAVECTX '%s'\n", reqFilename)
+	acutl.DebugLog.Printf("(CALL) SAVECTX '%s'\n", reqPassword)
 
 	//func (psk PSKMap) Map2FileBlob(outfilestr string, salt []byte, keystr []byte) (bool, error) {
-	ok, err := ackp.ACmap.Map2File(reqFilename, []byte("proutprout"), []byte("proutkey"))
+	// TODO: we hardcode the save file
+	ok, err := ackp.ACmap.Map2File(ackp.AcSaveFile, []byte(reqPassword))
 	if err != nil || ok != false {
 		retErr := &acutl.AcError{Value: -1, Msg: "CTLSAVE_Handler().args(outfile, salt, keystr): 0 bytes", Err: nil}
 		acMsgResponse = &AcControlMessageResponse{
@@ -91,7 +92,7 @@ func CTLSAVE_Handler(acMessageCtlReq *AcControlMessageRequest) (acMsgResponse *A
 		Bada:      proto.Bool(true),
 		ErrorCode: proto.Int32(0),
 	}
-	acutl.DebugLog.Printf("(RET) SAVECTX -> (0) ! '%s' saved\n", reqFilename)
+	acutl.DebugLog.Printf("(RET) SAVECTX -> (0) ! '%s' saved\n", reqPassword)
 	return acMsgResponse, nil
 }
 

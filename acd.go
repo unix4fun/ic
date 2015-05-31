@@ -20,6 +20,8 @@ import (
 	"io/ioutil"
 	//"runtime"
 	//"log"
+	//"os/user"
+	"crypto/rand"
 )
 
 func usage(mycmd string) {
@@ -66,6 +68,7 @@ func main() {
 	// parsing the RSA code...
 	rsaFlag := flag.Bool("rsagen", false, "generate RSA identity keys")
 	ecFlag := flag.Bool("ecgen", false, "generate ECDSA identity keys (these are using NIST curve SecP384")
+	saecFlag := flag.Bool("ec25gen", false, "generate EC 25519 identify keys")
 	dbgFlag := flag.Bool("debug", false, "activate debug log")
 	// we cannot use more than 2048K anyway why bother with a flag then
 	//bitOpt := flag.Int("client", 2048, "generate Client SSL Certificate")
@@ -82,9 +85,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	if *rsaFlag == true || *ecFlag == true {
+	if *rsaFlag == true || *ecFlag == true || *saecFlag == true {
 		// generate a set of identity RSA keys and save them to file encrypted
 		//accp.GenRSAKeys()
+		switch {
+		case *rsaFlag == true:
+			ackp.GenKeysRSA(rand.Reader)
+		case *ecFlag == true:
+			ackp.GenKeysECDSA(rand.Reader)
+		case *saecFlag == true:
+			ackp.GenKeysED25519(rand.Reader)
+		}
 	} else {
 		// find and load the keys in memory to sign our requests
 		// private key will need to be unlocked using PB request
@@ -100,6 +111,7 @@ func main() {
 			//log.SetOutput(ioutil.Discard)
 			acutl.InitDebugLog(ioutil.Discard)
 		}
+
 
 		//fmt.Fprintf(os.Stderr, "[+] ac-%s\nstart\n", Version)
 		acutl.DebugLog.Printf("ac-%s", Version)

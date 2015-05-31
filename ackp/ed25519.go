@@ -7,15 +7,15 @@ import (
 	"io"
 )
 
-type PrivateKey struct {
+type Ed25519PrivateKey struct {
 	pub  *[ed25519.PublicKeySize]byte
 	priv *[ed25519.PrivateKeySize]byte
 }
 
-func GenKeysED25519(r io.Reader) (*PrivateKey, error) {
+func GenKeysED25519(r io.Reader) (*Ed25519PrivateKey, error) {
 	var err error
 
-	k := new(PrivateKey)
+	k := new(Ed25519PrivateKey)
 	pub, priv, err := ed25519.GenerateKey(r)
 	if err != nil {
 		return nil, err

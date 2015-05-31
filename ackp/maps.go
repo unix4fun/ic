@@ -13,17 +13,32 @@ import (
 	"io/ioutil"
 	"crypto/rand"
 	"encoding/pem"
+	"os/user"
 )
 
 // some variable to handle the maps and the run loop
 var ACmap *PSKMap
 var ACrun bool
+var AcSaveFile string
+var LocalUser *user.User
+var AcHomeDir string
 
 // import the package?! here is the init part
 func init() {
 	if ACmap == nil {
 		ACmap = NewPSKMap()
 	}
+
+	// init user directory..
+	LocalUser, err := user.Current()
+	AcHomeDir = fmt.Sprintf("%s/.ac", LocalUser.HomeDir)
+	AcSaveFile = fmt.Sprintf("%s/maps", AcHomeDir)
+
+	/* create our dir or nothing if it does exist already.. :) */
+	os.MkdirAll(AcHomeDir, 0700)
+
+	//acutl.DebugLog.Printf("Home: %p err: %s savefile: %p\n", LocalUser, err, AcSaveFile)
+	fmt.Fprintf(os.Stderr, "Home: %p (%s) Err: %s Savefile: %p (%s)", LocalUser, LocalUser.HomeDir, err, AcSaveFile, AcSaveFile)
 }
 
 //
@@ -98,7 +113,7 @@ func (psk *PSKMap) String() string {
 	return buf.String()
 }
 
-func (psk *PSKMap) Map2File(outfilestr string, salt []byte, keystr []byte) (bool, error) {
+func (psk *PSKMap) Map2File(outfilestr string, keystr []byte) (bool, error) {
 	/*
 	 *
 	 * here is the plan:
@@ -142,7 +157,7 @@ func (psk *PSKMap) Map2File(outfilestr string, salt []byte, keystr []byte) (bool
 	return true, nil
 }
 
-func (psk *PSKMap) File2Map(infilestr string, salt []byte, keystr []byte) (bool, error) {
+func (psk *PSKMap) File2Map(infilestr string, keystr []byte) (bool, error) {
 	acutl.DebugLog.Printf("File2Map CALL to  %s\n", infilestr)
 
 	fileBuffer, err := ioutil.ReadFile(infilestr)

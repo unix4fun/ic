@@ -9,7 +9,24 @@ import (
 	"golang.org/x/crypto/sha3"
 	"hash"
 	"io"
+	"crypto/rsa"
+	"crypto/ecdsa"
 )
+
+
+const (
+	KEYRSA  = iota
+	KEYECDSA
+	KEYEC25519
+)
+
+
+type IdentityKey struct {
+	keyType int
+	rsa *rsa.PrivateKey
+	ecdsa *ecdsa.PrivateKey
+	ec25519 *Ed25519PrivateKey
+}
 
 type SecretKeyGen struct {
 	hash        func() hash.Hash
