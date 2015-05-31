@@ -139,7 +139,6 @@ message acControlMessageRequest {
     required acCTLReqMsgType type = 1;
     optional string password = 2;
     optional int64 timestamp = 3;
-    //optional string filename = 2;
 }
 
 message acControlMessageResponse {
