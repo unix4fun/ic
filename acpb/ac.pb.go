@@ -22,8 +22,8 @@ It has these top-level messages:
 */
 package acpb
 
-import "github.com/golang/protobuf/proto"
-import "math"
+import proto "github.com/golang/protobuf/proto"
+import math "math"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -773,12 +773,11 @@ func (m *AcCipherTextMessageResponse) GetNonce() uint32 {
 //
 //
 type AcControlMessageRequest struct {
-	Type *AcControlMessageRequestAcCTLReqMsgType `protobuf:"varint,1,req,name=type,enum=acpb.AcControlMessageRequestAcCTLReqMsgType" json:"type,omitempty"`
-	// required bool bada = 2; // did it work or not
-	// optional sint32 error_code = 3;
-	Timestamp        *int64  `protobuf:"varint,3,opt,name=timestamp" json:"timestamp,omitempty"`
-	Filename         *string `protobuf:"bytes,2,opt,name=filename" json:"filename,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Type             *AcControlMessageRequestAcCTLReqMsgType `protobuf:"varint,1,req,name=type,enum=acpb.AcControlMessageRequestAcCTLReqMsgType" json:"type,omitempty"`
+	Timestamp        *int64                                  `protobuf:"varint,3,opt,name=timestamp" json:"timestamp,omitempty"`
+	Filename         *string                                 `protobuf:"bytes,2,opt,name=filename" json:"filename,omitempty"`
+	Savepass         *string                                 `protobuf:"bytes,4,opt,name=savepass" json:"savepass,omitempty"`
+	XXX_unrecognized []byte                                  `json:"-"`
 }
 
 func (m *AcControlMessageRequest) Reset()         { *m = AcControlMessageRequest{} }
@@ -802,6 +801,13 @@ func (m *AcControlMessageRequest) GetTimestamp() int64 {
 func (m *AcControlMessageRequest) GetFilename() string {
 	if m != nil && m.Filename != nil {
 		return *m.Filename
+	}
+	return ""
+}
+
+func (m *AcControlMessageRequest) GetSavepass() string {
+	if m != nil && m.Savepass != nil {
+		return *m.Savepass
 	}
 	return ""
 }
