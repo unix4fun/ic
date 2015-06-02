@@ -11,6 +11,9 @@ import (
 	"io"
 	"crypto/rsa"
 	"crypto/ecdsa"
+	"errors"
+	"fmt"
+	"encoding/json"
 )
 
 
@@ -26,6 +29,64 @@ type IdentityKey struct {
 	rsa *rsa.PrivateKey
 	ecdsa *ecdsa.PrivateKey
 	ec25519 *Ed25519PrivateKey
+}
+
+func (i *IdentityKey) Type() string {
+	switch i.keyType {
+	case KEYRSA:
+		return "ac-rsa"
+	case KEYECDSA:
+		return "ac-ecdsa"
+	case KEYEC25519:
+		return "ac-ec25519"
+	}
+	return ""
+}
+
+
+/*
+func (i *IdentityKey) Marshal() []byte {
+}
+
+
+func (i *IdentityKey) Verify([]byte, *ssh.Signature) error {
+	return
+}
+*/
+
+func NewIdentityKey(keytype int) (*IdentityKey, error){
+	var err error
+	i := new(IdentityKey)
+
+	switch keytype {
+	case KEYRSA:
+		i.keyType = keytype
+		i.rsa, err = GenKeysRSA(rand.Reader)
+	case KEYECDSA:
+		i.keyType = keytype
+		i.ecdsa, err = GenKeysECDSA(rand.Reader)
+		//fmt.Printf("ECDSAAAAA: %v / %v\n", i.ecdsa, err)
+		jsonProut, err := json.Marshal(i.ecdsa.Public())
+		jsonTa, err := json.Marshal(i.ecdsa)
+		fmt.Printf("ERROR: %s\n", err)
+		b64comp, err := acutl.CompressData(jsonProut)
+		b64pub := acutl.B64EncodeData(b64comp)
+		fmt.Printf("JSON PublicKey: %s\n", jsonProut)
+		fmt.Printf("JSON PublicKey: ac-ecdsa %s\n", b64pub)
+		fmt.Printf("JSON AllKey: %s\n", jsonTa)
+	case KEYEC25519:
+		i.keyType = keytype
+		i.ec25519, err = GenKeysED25519(rand.Reader)
+	default:
+		err = errors.New("invalid type")
+		return nil, err
+	}
+	fmt.Printf("C'EST BON ON A FINI\n")
+	return i, nil
+}
+
+func (i *IdentityKey) ToFile(dir string) error {
+	return nil
 }
 
 type SecretKeyGen struct {

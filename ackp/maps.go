@@ -30,7 +30,7 @@ func init() {
 	}
 
 	// init user directory..
-	LocalUser, err := user.Current()
+	LocalUser, _ := user.Current()
 	AcHomeDir = fmt.Sprintf("%s/.ac", LocalUser.HomeDir)
 	AcSaveFile = fmt.Sprintf("%s/maps", AcHomeDir)
 
@@ -38,7 +38,7 @@ func init() {
 	os.MkdirAll(AcHomeDir, 0700)
 
 	//acutl.DebugLog.Printf("Home: %p err: %s savefile: %p\n", LocalUser, err, AcSaveFile)
-	fmt.Fprintf(os.Stderr, "Home: %p (%s) Err: %s Savefile: %p (%s)", LocalUser, LocalUser.HomeDir, err, AcSaveFile, AcSaveFile)
+	//acutl.DebugLog.Printf("Home: %p (%s) Err: %s Savefile: %p (%s)\n", LocalUser, LocalUser.HomeDir, err, AcSaveFile, AcSaveFile)
 }
 
 //

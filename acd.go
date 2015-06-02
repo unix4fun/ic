@@ -21,7 +21,7 @@ import (
 	//"runtime"
 	//"log"
 	//"os/user"
-	"crypto/rand"
+	//"crypto/rand"
 )
 
 func usage(mycmd string) {
@@ -53,6 +53,10 @@ func handleStdin() (err error) {
 	return nil
 }
 
+func init() {
+	//fmt.Printf("INIT NINITNI INIT!!\n")
+}
+
 func main() {
 	Version := acVersion
 	/*
@@ -74,28 +78,41 @@ func main() {
 	//bitOpt := flag.Int("client", 2048, "generate Client SSL Certificate")
 	flag.Parse()
 
-	/*
-		fmt.Printf("rsaFlag: %v\n", *rsaFlag)
-		fmt.Printf("argc: %d\n", len(flag.Args()))
-	*/
-
 	if len(flag.Args()) != 0 {
 		usage(os.Args[0])
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
+	if *dbgFlag == true {
+		//log.SetOutput(os.Stderr)
+		acutl.InitDebugLog(os.Stderr)
+	} else {
+		//log.SetOutput(ioutil.Discard)
+		acutl.InitDebugLog(ioutil.Discard)
+	}
+
+
 	if *rsaFlag == true || *ecFlag == true || *saecFlag == true {
 		// generate a set of identity RSA keys and save them to file encrypted
 		//accp.GenRSAKeys()
+		var i *ackp.IdentityKey
+		var err error
+
 		switch {
 		case *rsaFlag == true:
-			ackp.GenKeysRSA(rand.Reader)
+			i, err = ackp.NewIdentityKey(ackp.KEYRSA)
+			//ackp.GenKeysRSA(rand.Reader)
 		case *ecFlag == true:
-			ackp.GenKeysECDSA(rand.Reader)
+			fmt.Printf("LET'S SWITCH!!: %v\n", *ecFlag)
+			i, err = ackp.NewIdentityKey(ackp.KEYECDSA)
+			//ackp.GenKeysECDSA(rand.Reader)
 		case *saecFlag == true:
-			ackp.GenKeysED25519(rand.Reader)
+			i, err = ackp.NewIdentityKey(ackp.KEYEC25519)
+			//ackp.GenKeysED25519(rand.Reader)
 		}
+		acutl.DebugLog.Printf("bleh i: %p err: %p", i, err)
+
 	} else {
 		// find and load the keys in memory to sign our requests
 		// private key will need to be unlocked using PB request
@@ -103,14 +120,6 @@ func main() {
 		// memory storage maps init..
 		//ackp.ACmap = make(ackp.PSKMap)
 		ackp.ACrun = true
-
-		if *dbgFlag == true {
-			//log.SetOutput(os.Stderr)
-			acutl.InitDebugLog(os.Stderr)
-		} else {
-			//log.SetOutput(ioutil.Discard)
-			acutl.InitDebugLog(ioutil.Discard)
-		}
 
 
 		//fmt.Fprintf(os.Stderr, "[+] ac-%s\nstart\n", Version)
