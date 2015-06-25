@@ -92,7 +92,6 @@ func main() {
 		acutl.InitDebugLog(ioutil.Discard)
 	}
 
-
 	if *rsaFlag == true || *ecFlag == true || *saecFlag == true {
 		// generate a set of identity RSA keys and save them to file encrypted
 		//accp.GenRSAKeys()
@@ -112,15 +111,23 @@ func main() {
 			//ackp.GenKeysED25519(rand.Reader)
 		}
 		acutl.DebugLog.Printf("bleh i: %p err: %p", i, err)
+		err = i.ToKeyFiles("/Users/eau/.ac/ac_id", []byte("proutprout"))
+		if err != nil {
+			panic(err)
+		}
 
 	} else {
 		// find and load the keys in memory to sign our requests
 		// private key will need to be unlocked using PB request
-		//accp.LoadRSAKeys()
+		// may be it should be loaded on-demand
+		//ackp.LoadIdentityKeys()
+
+		// load authorized_nicks file
+		//ackp.LoadAuthFile()
+
 		// memory storage maps init..
 		//ackp.ACmap = make(ackp.PSKMap)
 		ackp.ACrun = true
-
 
 		//fmt.Fprintf(os.Stderr, "[+] ac-%s\nstart\n", Version)
 		acutl.DebugLog.Printf("ac-%s", Version)

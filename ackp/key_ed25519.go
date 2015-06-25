@@ -4,8 +4,8 @@ import (
 	//"crypto/rand"
 	"github.com/agl/ed25519"
 	//"github.com/unix4fun/ac/acutl"
-	"io"
 	"crypto"
+	"io"
 )
 
 type Ed25519PrivateKey struct {

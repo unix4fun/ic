@@ -5,14 +5,14 @@ package ackp
 import (
 	"bytes"
 	//"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"github.com/unix4fun/ac/acutl"
 	"os"
-	"encoding/json"
 	//"io"
-	"io/ioutil"
 	"crypto/rand"
 	"encoding/pem"
+	"io/ioutil"
 	"os/user"
 )
 
@@ -22,6 +22,8 @@ var ACrun bool
 var AcSaveFile string
 var LocalUser *user.User
 var AcHomeDir string
+var AcIdPubFile string
+var AcIdPrivFile string
 
 // import the package?! here is the init part
 func init() {
@@ -33,6 +35,8 @@ func init() {
 	LocalUser, _ := user.Current()
 	AcHomeDir = fmt.Sprintf("%s/.ac", LocalUser.HomeDir)
 	AcSaveFile = fmt.Sprintf("%s/maps", AcHomeDir)
+	AcIdPubFile = fmt.Sprintf("%s/ac_id.pub", AcHomeDir)
+	AcIdPrivFile = fmt.Sprintf("%s/ac_id", AcHomeDir)
 
 	/* create our dir or nothing if it does exist already.. :) */
 	os.MkdirAll(AcHomeDir, 0700)
@@ -136,7 +140,7 @@ func (psk *PSKMap) Map2File(outfilestr string, keystr []byte) (bool, error) {
 		return false, err
 	}
 
-	jsonBuffer, err  := json.Marshal(ACmap)
+	jsonBuffer, err := json.Marshal(ACmap)
 	if err != nil {
 		acutl.DebugLog.Printf("ERROR: %v", err)
 		return false, err
