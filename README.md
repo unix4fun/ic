@@ -1,6 +1,8 @@
 # **A**(nother) **C**(rypto) = AC
 # WORK IN PROGRESS
 
+[![Join the chat at https://gitter.im/unix4fun/ac](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/unix4fun/ac?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 An attempt to provide a rather simple (to use and maintain) IRC encryption mechanism, but hopefully better than plaintext and current used ones..
 with (hopefully) no "false" sense of security.
 
