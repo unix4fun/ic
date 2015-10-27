@@ -21,7 +21,7 @@ import (
 func CTSEAL_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *AcCipherTextMessageResponse, err error) {
 	var responseType AcCipherTextMessageResponseAcCTRespMsgType
 	responseType = AcCipherTextMessageResponse_CTR_SEAL
-	var acctx *ackp.SecKey
+	var acctx *ackp.SecretKey
 	var acBlobArray [][]byte
 	var out []byte
 	var reqBlobTmp []byte
@@ -131,7 +131,7 @@ func CTSEAL_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *
 func CTOPEN_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *AcCipherTextMessageResponse, err error) {
 	var responseType AcCipherTextMessageResponseAcCTRespMsgType
 	responseType = AcCipherTextMessageResponse_CTR_OPEN
-	var acctx *ackp.SecKey
+	var acctx *ackp.SecretKey
 
 	channel := acMessageCtReq.GetChannel()
 	peernick := acMessageCtReq.GetNick()
@@ -229,7 +229,7 @@ func CTADD_Handler(acMessageCtReq *AcCipherTextMessageRequest) (acMsgResponse *A
 	// lets derive the key.
 	//    randsalt :=  rand.Read()
 	//    func (skgen ACSecretKeyGen) Init(input []byte, channel []byte, nick []byte, serv []byte) {
-	skgen := new(ackp.SecretKeyGen)
+	skgen := new(ackp.KeyGenerator)
 	err = skgen.Init([]byte(reqBlob), []byte(reqChan), []byte(reqNick), []byte(reqServ))
 	if err != nil {
 		retErr := &acutl.AcError{Value: -2, Msg: "CTADD_Handler(): SK generator fail!", Err: err}

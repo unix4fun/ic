@@ -1,15 +1,19 @@
 package ackp
 
 import (
-	"crypto/rsa"
 	"crypto/ecdsa"
-	"io"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/x509"
 	"encoding/asn1"
-	"errors"
-	"crypto/rand"
 	"encoding/pem"
+	"errors"
+	"io"
 	"os"
+	"github.com/unix4fun/ac/acutl"
+	//"io/ioutil"
+	//"strings"
+	//"bytes"
 )
 
 const (
@@ -20,9 +24,16 @@ const (
 
 type IdentityKey struct {
 	keyType int
+	keyOwner string
 	rsa     *rsa.PrivateKey
 	ecdsa   *ecdsa.PrivateKey
 	ec25519 *Ed25519PrivateKey
+}
+
+type IdentityPublicKey struct {
+	KeyType int
+	KeyOwner string
+	KeyBin []byte
 }
 
 func (i *IdentityKey) Type() string {
@@ -37,7 +48,21 @@ func (i *IdentityKey) Type() string {
 	return ""
 }
 
-func (i *IdentityKey) PubToPKIX(wr io.Writer) error {
+func (i *IdentityKey) PubToFile(filename string) error {
+	/*
+	b := new(bytes.Buffer)
+
+	pubStr, err := i.PubToPKIX()
+	if err != nil {
+	}
+
+	//ioutil.WriteFile()
+	*/
+	return nil
+}
+
+func (i *IdentityKey) PubToPKIX() ([]byte, error) {
+	/*
 	var err error
 	var keyBin, keyHdr []byte
 
@@ -52,24 +77,56 @@ func (i *IdentityKey) PubToPKIX(wr io.Writer) error {
 		keyBin, err = asn1.Marshal(i.ec25519.Pub[:])
 		keyHdr = []byte("ac-25519")
 	default:
-		return errors.New("invalid key type")
+		return nil, errors.New("invalid key type")
 	}
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 	b64comp, err := acutl.CompressData(keyBin)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	b64pub := acutl.B64EncodeData(b64comp)
 
+*/
 	// let's write our stuff...
+	/*
 	wr.Write(keyHdr)
 	wr.Write([]byte(" "))
 	wr.Write(b64pub)
+	wr.Write([]byte(" "))
+	wr.Write([]byte(i.keyOwner))
+	*/
 	// we're good
-	return nil
+	//return b64pub, nil
+	return nil, nil
+}
+
+func PKIXToPub(rd io.Reader) (pub interface{}, err error) {
+	/*
+	pbuf, err := ioutil.ReadAll(rd)
+	if err != nil {
+		return nil, err
+	}
+
+	pstrArr := strings.Split(string(pbuf), " ")
+	if len(pstrArr) != 3 {
+		return nil, errors.New("invalid pubkey file")
+	}
+
+	deb64, err := acutl.B64DecodeData(pstrArr[1])
+	if err != nil {
+		return nil, err
+	}
+
+	pubraw, err := acutl.DecompressData(deb64)
+	if err != nil {
+		return nil, err
+	}
+	*/
+
+	return nil, nil
 }
 
 func (i *IdentityKey) PrivToPKIX(wr io.Writer, passwd []byte) error {
@@ -101,18 +158,21 @@ func (i *IdentityKey) PrivToPKIX(wr io.Writer, passwd []byte) error {
 }
 
 func (i *IdentityKey) ToKeyFiles(prefix string, passwd []byte) error {
+	/*
 	pubFile, err := os.OpenFile(prefix+".pub", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
 	defer pubFile.Close()
 	if err != nil {
 		return err
 	}
+	*/
 	privFile, err := os.OpenFile(prefix, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0700)
 	defer privFile.Close()
 	if err != nil {
 		return err
 	}
 
-	err = i.PubToPKIX(pubFile)
+	//err = i.PubToPKIX(pubFile)
+	err = i.PubToFile(prefix+".pub")
 	if err != nil {
 		return err
 	}
@@ -127,12 +187,12 @@ func (i *IdentityKey) ToKeyFiles(prefix string, passwd []byte) error {
 
 // will try to load fprefix.pub / fprefix
 func FromKeyFiles(prefix string) (i *IdentityKey, err error) {
-	pubFile, err := os.OpenFile(prefix+".pub", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
+	pubFile, err := os.Open(prefix+".pub")
 	defer pubFile.Close()
 	if err != nil {
 		return nil, err
 	}
-	privFile, err := os.OpenFile(prefix, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0700)
+	privFile, err := os.Open(prefix)
 	defer privFile.Close()
 	if err != nil {
 		return nil, err
@@ -140,9 +200,11 @@ func FromKeyFiles(prefix string) (i *IdentityKey, err error) {
 	return nil, nil
 }
 
-func NewIdentityKey(keytype int) (*IdentityKey, error) {
+func NewIdentityKey(keytype int, owner string) (*IdentityKey, error) {
 	var err error
 	i := new(IdentityKey)
+
+	acutl.DebugLog.Printf("bleh bleh keygen for %s\n", owner)
 
 	switch keytype {
 	case KEYRSA:
@@ -189,6 +251,6 @@ func NewIdentityKey(keytype int) (*IdentityKey, error) {
 		return nil, err
 	}
 	//fmt.Printf("C'EST BON ON A FINI\n")
+	i.keyOwner = owner
 	return i, nil
 }
-

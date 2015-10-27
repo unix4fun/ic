@@ -30,11 +30,12 @@ option py_generic_services = false;
 //
 //
 message ACPackedMessage {
-    required fixed32 header = 1;    // obfuscate('AC')
+    required fixed32 header = 1;    // obfuscate('AC', 'PK', 'KX')
     optional uint32 nonce = 2;      // 32 bits unsigned integer counter starting at 0
     required bytes ciphertext = 3;  // the resulting blob
     optional uint32 options = 4;    // options: proto version (1st nibble), proto options (2nd nibble: AES-GCM / NaCL)
-    optional bytes sig = 5;         // sig: ECDSA / RSA / ED52219 signature.
+    optional bytes sigwho = 5;      // signature identity (to match in authorized_key file) we limit this to 8 bytes max.
+    optional bytes sig = 6;         // sig: ECDSA / RSA / ED52219 signature.
 }
 
 

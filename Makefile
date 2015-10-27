@@ -14,6 +14,7 @@ GOBIN=$(shell which go)
 LNBIN=/bin/ln
 LSBIN=/bin/ls
 RMBIN=/bin/rm
+MKDIR=/bin/mkdir
 
 ACBIN=$(GOPATH)/bin/ac
 ACROOT=$(GOPATH)/src/github.com/unix4fun/ac
@@ -22,6 +23,8 @@ ACWSCRIPT=${ACROOT}/client-scripts/weechat
 ACW_ROOT=$(HOME)/.weechat
 ACW_PYTHON=$(ACW_ROOT)/python
 ACW_AUTOLOAD=$(ACW_PYTHON)/autoload
+
+AC_HOME=$(HOME)/.ac
 
 CURRENT=$(shell date +%Y%m%d)
 
@@ -75,6 +78,8 @@ install:
 	@echo "AC Weechat Root: ${ACW_ROOT}"
 	@echo "AC Weechat Python: ${ACW_PYTHON}"
 	@echo "AC Weechat Autoload: ${ACW_AUTOLOAD}"
+	@echo "AC Home: ${AC_HOME}"
+	${MKDIR} -p ${AC_HOME}
 	${RMBIN} -f ${ACW_PYTHON}/ac_pb2.py ${ACW_AUTOLOAD}/ac-weechat.py
 	${LNBIN} -s ${ACWSCRIPT}/ac_pb2.py ${ACW_PYTHON}/ac_pb2.py
 	${LNBIN} -s ${ACWSCRIPT}/ac-weechat.py ${ACW_AUTOLOAD}/ac-weechat.py

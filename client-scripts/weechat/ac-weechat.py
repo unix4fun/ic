@@ -10,7 +10,7 @@
 
 SCRIPT_NAME    = 'ac-weechat'
 SCRIPT_AUTHOR  = 'eau <eau-code@unix4fun.net>'
-SCRIPT_VERSION = '20150531'
+SCRIPT_VERSION = '20150717'
 SCRIPT_LICENSE = 'BSD'
 SCRIPT_DESC    = 'AC script'
 
@@ -698,34 +698,37 @@ def acCmd_CB(data, dabuffer, args):
 def acCmdSave(data, dabuffer, args):
     cb_argv = args.split()
     cb_argc = len(cb_argv)
+    cb_passwd = weechat.string_eval_expression("${sec.data.acmaps}", {}, {}, {})
 
-    
-    if cb_argc == 0:
-        acwee.pmbac(dabuffer, "no filename given for saving! /ac save <filename> or /ac help for more information")
+    if len(cb_passwd) == 0:
+        acwee.pmbac(dabuffer, "no password set to protect your map file! /ac save or /ac help for more information")
+    elif len(cb_passwd) < 4:
+        acwee.pmbac(dabuffer, "maps password is way TOO SHORT! /ac save or /ac help for more information")
     else:
-        acwee.pmbac(dabuffer, "NOW SAVING on %s!!", cb_argv[0])
-        myargs = { acwee.KEY_FILENAME:cb_argv[0] } 
+        acwee.pmbac(dabuffer, "NOW SAVING!!")
+        myargs = { acwee.KEY_MAPSPASS:cb_passwd }
         ac_ctlr, err = acwee.acRequest(acwee.ACMSG_TYPE_CTL, acwee.ACMSG_SUBTYPE_CTLSAVE, myargs, acwee.BUF_LARGE)
         if ac_ctlr:
             if ac_ctlr.bada == True:
-                acwee.pmbac(dabuffer, "saved in  [%s]", cb_argv[0])
+                acwee.pmbac(dabuffer, "saved in [~/.ac/acmaps]")
 
     return weechat.WEECHAT_RC_OK
 
 def acCmdLoad(data, dabuffer, args):
     cb_argv = args.split()
     cb_argc = len(cb_argv)
+    cb_passwd = weechat.string_eval_expression("${sec.data.acmaps}", {}, {}, {})
 
     
-    if cb_argc == 0:
-        acwee.pmbac(dabuffer, "no filename given for loading! /ac load <filename> or /ac help for more information")
+    if len(cb_passwd) == 0:
+        acwee.pmbac(dabuffer, "no password set to protect your map file! /ac save or /ac help for more information")
     else:
         acwee.pmbac(dabuffer, "NOW LOADING from %s!!", cb_argv[0])
-        myargs = { acwee.KEY_FILENAME:cb_argv[0] } 
+        myargs = { acwee.KEY_MAPSPASS:cb_passwd }
         ac_ctlr, err = acwee.acRequest(acwee.ACMSG_TYPE_CTL, acwee.ACMSG_SUBTYPE_CTLLOAD, myargs, acwee.BUF_LARGE)
         if ac_ctlr:
             if ac_ctlr.bada == True:
-                acwee.pmbac(dabuffer, "saved in  [%s]", cb_argv[0])
+                acwee.pmbac(dabuffer, "loaded successfully")
     return weechat.WEECHAT_RC_OK
 
 def acCmdToggle(data, dabuffer, args):
@@ -1337,7 +1340,7 @@ class AcPbCom(object):
     KEY_OPT = 'opt'
 
     # for CTL messages
-    KEY_FILENAME = "filename"
+    KEY_MAPSPASS = "mapspass"
 
     # the subtypes of public key msg generation
     ACMSG_SUBTYPE_PKGEN     = 0
@@ -1535,14 +1538,14 @@ class AcPbCom(object):
 
     def msgCtlLoad(self, args):
         acctreq = ac_pb2.acControlMessageRequest()
-        acctreq.filename = args[self.KEY_FILENAME]
+        acctreq.password = args[self.KEY_MAPSPASS]
         acctreq.type = ac_pb2.acControlMessageRequest.CTL_LOADCTX
         # bleh
         return acctreq.SerializeToString()
 
     def msgCtlSave(self, args):
         acctreq = ac_pb2.acControlMessageRequest()
-        acctreq.filename = args[self.KEY_FILENAME]
+        acctreq.password = args[self.KEY_MAPSPASS]
         acctreq.type = ac_pb2.acControlMessageRequest.CTL_SAVECTX
         # bleh
         return acctreq.SerializeToString()

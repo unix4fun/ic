@@ -12,7 +12,7 @@ import (
 	//"debug/elf"
 )
 
-type SecKey struct {
+type SecretKey struct {
 	Nonce uint32 `json:"nonce"`
 	Bob []byte `json:"bob"`
 	Key *[32]byte `json:"key"`
@@ -21,7 +21,7 @@ type SecKey struct {
 }
 
 // if you Println() the struct then it call this as part of the type.
-func (sk *SecKey) String() string {
+func (sk *SecretKey) String() string {
 	var b bytes.Buffer
 	fmt.Fprintf(&b, "-\n")
 	fmt.Fprintf(&b, "SecKey struct @ %p\n", sk)
@@ -32,44 +32,44 @@ func (sk *SecKey) String() string {
 	return b.String()
 }
 
-func (sk *SecKey) GetKey() []byte {
+func (sk *SecretKey) GetKey() []byte {
 	// XXX TODO here we will be able to get the memory encrypted key instead of
 	// plain.
 	return sk.Key[:]
 }
 
-func (sk *SecKey) NewKey() {
+func (sk *SecretKey) NewKey() {
 	sk.Key = new([32]byte)
 }
-func (sk *SecKey) GetKeyLen() int {
+func (sk *SecretKey) GetKeyLen() int {
 	return len(sk.Key)
 }
 
-func (sk *SecKey) GetSealKey() *[32]byte {
+func (sk *SecretKey) GetSealKey() *[32]byte {
 	return sk.Key
 }
 
-func (sk *SecKey) SetKey(keydata []byte) {
+func (sk *SecretKey) SetKey(keydata []byte) {
 	copy(sk.Key[:], keydata[:32])
 	return
 }
 
-func (sk *SecKey) SetNonce(nonce uint32) {
+func (sk *SecretKey) SetNonce(nonce uint32) {
 	sk.Nonce = nonce
 }
 
-func (sk *SecKey) GetNonce() uint32 {
+func (sk *SecretKey) GetNonce() uint32 {
 	return sk.Nonce
 }
 
-func (sk *SecKey) SetBob(bob []byte) {
+func (sk *SecretKey) SetBob(bob []byte) {
 	sk.Bob = bob
 }
-func (sk *SecKey) GetBob() []byte {
+func (sk *SecretKey) GetBob() []byte {
 	return sk.Bob
 }
 
-func (sk *SecKey) IncNonce(n uint32) {
+func (sk *SecretKey) IncNonce(n uint32) {
 	//sk.nonce++
 	if n > sk.Nonce {
 		sk.Nonce = n + 1
@@ -78,7 +78,7 @@ func (sk *SecKey) IncNonce(n uint32) {
 	}
 }
 
-func (sk *SecKey) RndKey(rnd []byte) {
+func (sk *SecretKey) RndKey(rnd []byte) {
 	// OPEN the key
 	// XXX new to check rnd and context.key are the same size
 	for j := 0; j < len(rnd); j++ {
@@ -86,8 +86,8 @@ func (sk *SecKey) RndKey(rnd []byte) {
 	}
 }
 
-func CreateACContext(channel []byte, nonce uint32) (context *SecKey, err error) {
-	context = new(SecKey)
+func CreateACContext(channel []byte, nonce uint32) (context *SecretKey, err error) {
+	context = new(SecretKey)
 	// TODO XXX: we need to be careful after a key exchange we can re-encrypt a
 	// message with the same nonce, so we should give the nonce with the KEX
 	// and also update the nonce on every received message

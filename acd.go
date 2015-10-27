@@ -78,11 +78,13 @@ func main() {
 	//bitOpt := flag.Int("client", 2048, "generate Client SSL Certificate")
 	flag.Parse()
 
-	if len(flag.Args()) != 0 {
+	/*
+	if len(flag.Args()) != 1 {
 		usage(os.Args[0])
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
+	*/
 
 	if *dbgFlag == true {
 		//log.SetOutput(os.Stderr)
@@ -98,16 +100,18 @@ func main() {
 		var i *ackp.IdentityKey
 		var err error
 
+		identity := flag.Arg(0)
+
 		switch {
 		case *rsaFlag == true:
-			i, err = ackp.NewIdentityKey(ackp.KEYRSA)
+			i, err = ackp.NewIdentityKey(ackp.KEYRSA, identity)
 			//ackp.GenKeysRSA(rand.Reader)
 		case *ecFlag == true:
-			fmt.Printf("LET'S SWITCH!!: %v\n", *ecFlag)
-			i, err = ackp.NewIdentityKey(ackp.KEYECDSA)
+			fmt.Printf("LET'S SWITCH!!: %v -> %s\n", *ecFlag, identity)
+			i, err = ackp.NewIdentityKey(ackp.KEYECDSA, identity)
 			//ackp.GenKeysECDSA(rand.Reader)
 		case *saecFlag == true:
-			i, err = ackp.NewIdentityKey(ackp.KEYEC25519)
+			i, err = ackp.NewIdentityKey(ackp.KEYEC25519, identity)
 			//ackp.GenKeysED25519(rand.Reader)
 		}
 		acutl.DebugLog.Printf("bleh i: %p err: %p", i, err)

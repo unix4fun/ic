@@ -117,7 +117,7 @@ func (psk *PSKMap) String() string {
 	return buf.String()
 }
 
-func (psk *PSKMap) Map2File(outfilestr string, keystr []byte) (bool, error) {
+func (psk *PSKMap) Map2File(outfilestr string, passwd []byte) (bool, error) {
 	/*
 	 *
 	 * here is the plan:
@@ -146,7 +146,7 @@ func (psk *PSKMap) Map2File(outfilestr string, keystr []byte) (bool, error) {
 		return false, err
 	}
 
-	jsonPem, err := AEADEncryptPEMBlock(rand.Reader, "ACMAP", jsonBuffer, keystr)
+	jsonPem, err := AEADEncryptPEMBlock(rand.Reader, "ACMAP", jsonBuffer, passwd)
 	if err != nil {
 		acutl.DebugLog.Printf("ERROR: %v", err)
 		return false, err
@@ -161,7 +161,7 @@ func (psk *PSKMap) Map2File(outfilestr string, keystr []byte) (bool, error) {
 	return true, nil
 }
 
-func (psk *PSKMap) File2Map(infilestr string, keystr []byte) (bool, error) {
+func (psk *PSKMap) File2Map(infilestr string, passwd []byte) (bool, error) {
 	acutl.DebugLog.Printf("File2Map CALL to  %s\n", infilestr)
 
 	fileBuffer, err := ioutil.ReadFile(infilestr)
@@ -176,7 +176,7 @@ func (psk *PSKMap) File2Map(infilestr string, keystr []byte) (bool, error) {
 		return false, err
 	}
 
-	jsonBuffer, err := AEADDecryptPEMBlock(aeadBuffer, keystr)
+	jsonBuffer, err := AEADDecryptPEMBlock(aeadBuffer, passwd)
 	if jsonBuffer == nil {
 		acutl.DebugLog.Printf("load file read error: %s", err)
 		return false, err
@@ -245,7 +245,7 @@ func (psk *PSKMap) initRDMapWith(server string, channel string, rnd []byte) {
 //
 // SKMaps
 //
-func (psk *PSKMap) GetSKMapEntry(server string, channel string) (*SecKey, bool) {
+func (psk *PSKMap) GetSKMapEntry(server string, channel string) (*SecretKey, bool) {
 	acutl.DebugLog.Printf("===---=-=-=--==- GetSKMapEntry[@%p] (serv: %s channel: %s)! --==-=---=-=-=-==-\n", server, channel)
 	skmap, ok := psk.GetSKMap(server)
 	if ok == true {
@@ -256,7 +256,7 @@ func (psk *PSKMap) GetSKMapEntry(server string, channel string) (*SecKey, bool) 
 	return nil, false
 }
 
-func (psk *PSKMap) SetSKMapEntry(server string, channel string, sk *SecKey) {
+func (psk *PSKMap) SetSKMapEntry(server string, channel string, sk *SecretKey) {
 	acutl.DebugLog.Printf("===---=-=-=--==- SetSKMapEntry[@%p] (serv: %s channel: %s)! --==-=---=-=-=-==-\n", psk, server, channel)
 	// XXX MAKE SURE ACMap is allocated before using anything.
 	/*
@@ -287,7 +287,7 @@ func (psk *PSKMap) GetSKMap(server string) (*SKMap, bool) {
 }
 
 // call only if SKMap s empty
-func (psk *PSKMap) initSKMapWith(server string, channel string, sk *SecKey) {
+func (psk *PSKMap) initSKMapWith(server string, channel string, sk *SecretKey) {
 	ac := new(AcCOMM)
 	ac.Init()
 	(*psk)[server] = ac
@@ -404,7 +404,7 @@ func (pkm *PKMap) GetPK(nick string) *KexKey {
 //
 //
 //
-type SKMap map[string](*SecKey)
+type SKMap map[string](*SecretKey)
 
 /*
 func (skm SKMap) Init() {
@@ -422,7 +422,7 @@ func (skm *SKMap) String() string {
 	return buf.String()
 }
 
-func (skm *SKMap) GetSK(channel string) *SecKey {
+func (skm *SKMap) GetSK(channel string) *SecretKey {
 	sk, ok := (*skm)[channel]
 	if ok == true {
 		return sk

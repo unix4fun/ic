@@ -85,7 +85,7 @@ func IsChannelOrPriv(channel, myNick, peerNick []byte) []byte {
 // SHA3( 'CHANNEL' || ':' || 'MY_NICK' || ':' || 'PEER_NICK' || ':' || 'NONCE_VALUE' || ':' || 'HDR_RAW' )
 //
 
-func CreateKXMessageNACL(context *ackp.SecKey, rnd []byte, peerPubkey, myPrivkey *[32]byte, channel, myNick, peerNick []byte) (out []byte, err error) {
+func CreateKXMessageNACL(context *ackp.SecretKey, rnd []byte, peerPubkey, myPrivkey *[32]byte, channel, myNick, peerNick []byte) (out []byte, err error) {
 
 	/* lets build our header */
 	myHdr, intHdr, err := BuildHeader([]byte(msgHdrKX))
@@ -129,7 +129,7 @@ func CreateKXMessageNACL(context *ackp.SecKey, rnd []byte, peerPubkey, myPrivkey
 	return
 }
 
-func OpenKXMessageNACL(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerNick []byte) (context *ackp.SecKey, SecRnd []byte, err error) {
+func OpenKXMessageNACL(peerPubkey, myPrivkey *[32]byte, cmsg, channel, myNick, peerNick []byte) (context *ackp.SecretKey, SecRnd []byte, err error) {
 	// check that we are indeed
 	if peerPubkey == nil || myPrivkey == nil {
 		//return nil, acprotoError(-1, "OpenKXMessage().invalidPubPrivKeys(): ", err)

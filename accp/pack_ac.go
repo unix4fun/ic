@@ -95,7 +95,7 @@ func PredictLenNACL(input []byte) (outlen int) {
 //
 //
 
-func CreateACMessageNACL(context *ackp.SecKey, rnd, msg, myNick []byte) (out []byte, err error) {
+func CreateACMessageNACL(context *ackp.SecretKey, rnd, msg, myNick []byte) (out []byte, err error) {
 	//var noncebyte [24]byte
 
 	/* lets build our header */
@@ -143,7 +143,7 @@ func CreateACMessageNACL(context *ackp.SecKey, rnd, msg, myNick []byte) (out []b
 	return out, nil
 }
 
-func OpenACMessageNACL(context *ackp.SecKey, rnd, cmsg, peerNick, myNick []byte) (out []byte, err error) {
+func OpenACMessageNACL(context *ackp.SecretKey, rnd, cmsg, peerNick, myNick []byte) (out []byte, err error) {
 	fmt.Fprintf(os.Stderr, "OpenACMessageNACL()\n")
 	b64, err := acutl.B64DecodeData(cmsg)
 	if err != nil {

@@ -25,8 +25,8 @@ const (
 	msgHdrKX = "KX"
 )
 
-func CreateACContextWithInputEntropy(channel []byte, inputEntropy []byte) (context *ackp.SecKey, err error) {
-	context = new(ackp.SecKey)
+func CreateACContextWithInputEntropy(channel []byte, inputEntropy []byte) (context *ackp.SecretKey, err error) {
+	context = new(ackp.SecretKey)
 
 	context.SetNonce(0)
 	//context.nonce = 0
