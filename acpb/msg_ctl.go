@@ -45,17 +45,28 @@ func CTLLOAD_Handler(acMessageCtlReq *AcControlMessageRequest) (acMsgResponse *A
 	responseType = AcControlMessageResponse_CTLR_LOADCTX
 	reqPassword := acMessageCtlReq.GetPassword()
 
-	acutl.DebugLog.Printf("(CALL) LOADCTX '%s'\n", []byte(reqPassword))
+	acutl.DebugLog.Printf("(CALL) LOADCTX '%s'\n", reqPassword)
 
-	ok, err := ackp.ACmap.File2Map(ackp.AcSaveFile, []byte(reqPassword))
-	if err != nil || ok != false {
-		retErr := &acutl.AcError{Value: -1, Msg: "CTLLOAD_Handler().args(outfile, salt, keystr): 0 bytes", Err: nil}
+	if len(reqPassword) == 0 {
+		retErr := &acutl.AcError{Value: -1, Msg: "CTLLOAD_Handler().args(): empty password", Err: nil}
 		acMsgResponse = &AcControlMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
 			ErrorCode: proto.Int32(-1),
 		}
-		acutl.DebugLog.Printf("(RET[!]) LOADCTX -> (-1)\n")
+		acutl.DebugLog.Printf("(RET[!]) LOADCTX -> (-1) File2Map failed\n")
+		return acMsgResponse, retErr
+	}
+
+	ok, err := ackp.ACmap.File2Map(ackp.AcSaveFile, []byte(reqPassword))
+	if err != nil || ok != true {
+		retErr := &acutl.AcError{Value: -2, Msg: "CTLLOAD_Handler().args(outfile, keystr): 0 bytes", Err: nil}
+		acMsgResponse = &AcControlMessageResponse{
+			Type:      &responseType,
+			Bada:      proto.Bool(false),
+			ErrorCode: proto.Int32(-2),
+		}
+		acutl.DebugLog.Printf("(RET[!]) LOADCTX -> (-2) File2Map failed\n")
 		return acMsgResponse, retErr
 	}
 	acMsgResponse = &AcControlMessageResponse{
@@ -73,18 +84,28 @@ func CTLSAVE_Handler(acMessageCtlReq *AcControlMessageRequest) (acMsgResponse *A
 	reqPassword := acMessageCtlReq.GetPassword()
 
 	acutl.DebugLog.Printf("(CALL) SAVECTX '%s'\n", reqPassword)
-
-	//func (psk PSKMap) Map2FileBlob(outfilestr string, salt []byte, keystr []byte) (bool, error) {
-	// TODO: we hardcode the save file
-	ok, err := ackp.ACmap.Map2File(ackp.AcSaveFile, []byte(reqPassword))
-	if err != nil || ok != false {
-		retErr := &acutl.AcError{Value: -1, Msg: "CTLSAVE_Handler().args(outfile, salt, keystr): 0 bytes", Err: nil}
+	if len(reqPassword) == 0 {
+		retErr := &acutl.AcError{Value: -1, Msg: "CTLSAVE_Handler().args(): empty password", Err: nil}
 		acMsgResponse = &AcControlMessageResponse{
 			Type:      &responseType,
 			Bada:      proto.Bool(false),
 			ErrorCode: proto.Int32(-1),
 		}
 		acutl.DebugLog.Printf("(RET[!]) SAVECTX -> (-1) Map2File failed\n")
+		return acMsgResponse, retErr
+	}
+
+	//func (psk PSKMap) Map2FileBlob(outfilestr string, salt []byte, keystr []byte) (bool, error) {
+	// TODO: we hardcode the save file
+	ok, err := ackp.ACmap.Map2File(ackp.AcSaveFile, []byte(reqPassword))
+	if err != nil || ok != true {
+		retErr := &acutl.AcError{Value: -2, Msg: "CTLSAVE_Handler().args(outfile, salt, keystr): 0 bytes", Err: nil}
+		acMsgResponse = &AcControlMessageResponse{
+			Type:      &responseType,
+			Bada:      proto.Bool(false),
+			ErrorCode: proto.Int32(-2),
+		}
+		acutl.DebugLog.Printf("(RET[!]) SAVECTX -> (-2) Map2File failed\n")
 		return acMsgResponse, retErr
 	}
 	acMsgResponse = &AcControlMessageResponse{
