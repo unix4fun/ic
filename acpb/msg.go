@@ -6,6 +6,7 @@ import (
 	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ac/ackp"
 	//"os"
+	"errors"
 	"github.com/unix4fun/ac/acutl"
 )
 
@@ -100,6 +101,7 @@ func HandleACMsg(msg []byte) (msgReply []byte, err error) {
 	case ArseneCryptoMessage_AC_QUIT:
 		// we go out!!
 		ackp.ACrun = false
+		return ACEnvelopePack(ArseneCryptoMessage_AC_QUIT, nil, errors.New("QUITTING"))
 	default:
 		err = &acutl.AcError{Value: -255, Msg: "Invalid/Unhandled Message Envelope", Err: nil}
 		acutl.DebugLog.Printf("(RET[!])\n\tUNHANDLED\n")

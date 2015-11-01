@@ -270,7 +270,7 @@ func PKDEL_Handler(acMessagePkReq *AcPublicKeyMessageRequest) (acMsgResponse *Ac
 		Bada:      proto.Bool(false),
 		ErrorCode: proto.Int32(-1), // no such nickname
 	}
-	acutl.DebugLog.Printf("(RET[!]) PKDEL -> (-1) ! missing argument\n")
+	acutl.DebugLog.Printf("(RET[!]) PKDEL -> (-1) ! error\n")
 	return acMsgResponse, retErr
 }
 

@@ -338,8 +338,11 @@ func (psk *PSKMap) DelPKMapEntry(server, nick string) bool {
 	acutl.DebugLog.Printf("===---=-=-=--==- DelPKMapEntry[@%p] (serv: %s nick: %s)! --==-=---=-=-=-==-\n", psk, server, nick)
 	pkmap, ok := psk.GetPKMap(server)
 	if ok == true {
-		delete((*pkmap), nick)
-		return true
+		_, ok := (*pkmap)[nick]
+		if ok == true {
+			delete((*pkmap), nick)
+			return true
+		}
 	}
 	return false
 }

@@ -8,9 +8,9 @@ import (
 	"encoding/asn1"
 	"encoding/pem"
 	"errors"
+	"github.com/unix4fun/ac/acutl"
 	"io"
 	"os"
-	"github.com/unix4fun/ac/acutl"
 	//"io/ioutil"
 	//"strings"
 	//"bytes"
@@ -23,17 +23,17 @@ const (
 )
 
 type IdentityKey struct {
-	keyType int
+	keyType  int
 	keyOwner string
-	rsa     *rsa.PrivateKey
-	ecdsa   *ecdsa.PrivateKey
-	ec25519 *Ed25519PrivateKey
+	rsa      *rsa.PrivateKey
+	ecdsa    *ecdsa.PrivateKey
+	ec25519  *Ed25519PrivateKey
 }
 
 type IdentityPublicKey struct {
-	KeyType int
+	KeyType  int
 	KeyOwner string
-	KeyBin []byte
+	KeyBin   []byte
 }
 
 func (i *IdentityKey) Type() string {
@@ -50,53 +50,53 @@ func (i *IdentityKey) Type() string {
 
 func (i *IdentityKey) PubToFile(filename string) error {
 	/*
-	b := new(bytes.Buffer)
+		b := new(bytes.Buffer)
 
-	pubStr, err := i.PubToPKIX()
-	if err != nil {
-	}
+		pubStr, err := i.PubToPKIX()
+		if err != nil {
+		}
 
-	//ioutil.WriteFile()
+		//ioutil.WriteFile()
 	*/
 	return nil
 }
 
 func (i *IdentityKey) PubToPKIX() ([]byte, error) {
 	/*
-	var err error
-	var keyBin, keyHdr []byte
+		var err error
+		var keyBin, keyHdr []byte
 
-	switch i.keyType {
-	case KEYRSA:
-		keyBin, err = x509.MarshalPKIXPublicKey(i.rsa.Public())
-		keyHdr = []byte("ac-rsa")
-	case KEYECDSA:
-		keyBin, err = x509.MarshalPKIXPublicKey(i.ecdsa.Public())
-		keyHdr = []byte("ac-ecdsa")
-	case KEYEC25519:
-		keyBin, err = asn1.Marshal(i.ec25519.Pub[:])
-		keyHdr = []byte("ac-25519")
-	default:
-		return nil, errors.New("invalid key type")
-	}
+		switch i.keyType {
+		case KEYRSA:
+			keyBin, err = x509.MarshalPKIXPublicKey(i.rsa.Public())
+			keyHdr = []byte("ac-rsa")
+		case KEYECDSA:
+			keyBin, err = x509.MarshalPKIXPublicKey(i.ecdsa.Public())
+			keyHdr = []byte("ac-ecdsa")
+		case KEYEC25519:
+			keyBin, err = asn1.Marshal(i.ec25519.Pub[:])
+			keyHdr = []byte("ac-25519")
+		default:
+			return nil, errors.New("invalid key type")
+		}
 
-	if err != nil {
-		return nil, err
-	}
-	b64comp, err := acutl.CompressData(keyBin)
-	if err != nil {
-		return nil, err
-	}
-	b64pub := acutl.B64EncodeData(b64comp)
+		if err != nil {
+			return nil, err
+		}
+		b64comp, err := acutl.CompressData(keyBin)
+		if err != nil {
+			return nil, err
+		}
+		b64pub := acutl.B64EncodeData(b64comp)
 
-*/
+	*/
 	// let's write our stuff...
 	/*
-	wr.Write(keyHdr)
-	wr.Write([]byte(" "))
-	wr.Write(b64pub)
-	wr.Write([]byte(" "))
-	wr.Write([]byte(i.keyOwner))
+		wr.Write(keyHdr)
+		wr.Write([]byte(" "))
+		wr.Write(b64pub)
+		wr.Write([]byte(" "))
+		wr.Write([]byte(i.keyOwner))
 	*/
 	// we're good
 	//return b64pub, nil
@@ -105,25 +105,25 @@ func (i *IdentityKey) PubToPKIX() ([]byte, error) {
 
 func PKIXToPub(rd io.Reader) (pub interface{}, err error) {
 	/*
-	pbuf, err := ioutil.ReadAll(rd)
-	if err != nil {
-		return nil, err
-	}
+		pbuf, err := ioutil.ReadAll(rd)
+		if err != nil {
+			return nil, err
+		}
 
-	pstrArr := strings.Split(string(pbuf), " ")
-	if len(pstrArr) != 3 {
-		return nil, errors.New("invalid pubkey file")
-	}
+		pstrArr := strings.Split(string(pbuf), " ")
+		if len(pstrArr) != 3 {
+			return nil, errors.New("invalid pubkey file")
+		}
 
-	deb64, err := acutl.B64DecodeData(pstrArr[1])
-	if err != nil {
-		return nil, err
-	}
+		deb64, err := acutl.B64DecodeData(pstrArr[1])
+		if err != nil {
+			return nil, err
+		}
 
-	pubraw, err := acutl.DecompressData(deb64)
-	if err != nil {
-		return nil, err
-	}
+		pubraw, err := acutl.DecompressData(deb64)
+		if err != nil {
+			return nil, err
+		}
 	*/
 
 	return nil, nil
@@ -159,11 +159,11 @@ func (i *IdentityKey) PrivToPKIX(wr io.Writer, passwd []byte) error {
 
 func (i *IdentityKey) ToKeyFiles(prefix string, passwd []byte) error {
 	/*
-	pubFile, err := os.OpenFile(prefix+".pub", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
-	defer pubFile.Close()
-	if err != nil {
-		return err
-	}
+		pubFile, err := os.OpenFile(prefix+".pub", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
+		defer pubFile.Close()
+		if err != nil {
+			return err
+		}
 	*/
 	privFile, err := os.OpenFile(prefix, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0700)
 	defer privFile.Close()
@@ -172,7 +172,7 @@ func (i *IdentityKey) ToKeyFiles(prefix string, passwd []byte) error {
 	}
 
 	//err = i.PubToPKIX(pubFile)
-	err = i.PubToFile(prefix+".pub")
+	err = i.PubToFile(prefix + ".pub")
 	if err != nil {
 		return err
 	}
@@ -187,7 +187,7 @@ func (i *IdentityKey) ToKeyFiles(prefix string, passwd []byte) error {
 
 // will try to load fprefix.pub / fprefix
 func FromKeyFiles(prefix string) (i *IdentityKey, err error) {
-	pubFile, err := os.Open(prefix+".pub")
+	pubFile, err := os.Open(prefix + ".pub")
 	defer pubFile.Close()
 	if err != nil {
 		return nil, err

@@ -10,18 +10,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/pkg/profile"
 	"github.com/unix4fun/ac/ackp"
 	"github.com/unix4fun/ac/acpb"
-	"os"
-	"os/signal" // XXX deactivated
-	"syscall"   // XXX deactivated
-	//"runtime/pprof"
 	"github.com/unix4fun/ac/acutl"
 	"io/ioutil"
-	//"runtime"
-	//"log"
-	//"os/user"
-	//"crypto/rand"
+	"os"
 )
 
 func usage(mycmd string) {
@@ -59,31 +53,46 @@ func init() {
 
 func main() {
 	Version := acVersion
+
+	cpuProfile := profile.Start(profile.ProfilePath("."), profile.CPUProfile)
+
 	/*
-		f, err := os.Create("toto.pprof")
+		f, err := os.Create("ac.pprof")
+		if err != nil {
+			panic(err)
+		}
+		g, err := os.Create("ac.mprof")
 		if err != nil {
 			panic(err)
 		}
 
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()
+		err = pprof.StartCPUProfile(f)
+		if err != nil {
+			panic(err)
+		}
 	*/
+	//defer f.Close()
+	//defer pprof.StopCPUProfile()
 
 	// parsing the RSA code...
 	rsaFlag := flag.Bool("rsagen", false, "generate RSA identity keys")
 	ecFlag := flag.Bool("ecgen", false, "generate ECDSA identity keys (these are using NIST curve SecP384")
 	saecFlag := flag.Bool("ec25gen", false, "generate EC 25519 identify keys")
 	dbgFlag := flag.Bool("debug", false, "activate debug log")
+	/*
+		cpuProfile := flag.String("cpuprofile", "", "write cpu profile to file")
+		memProfile := flag.String("memprofile", "", "write mem profile to file")
+	*/
 	// we cannot use more than 2048K anyway why bother with a flag then
 	//bitOpt := flag.Int("client", 2048, "generate Client SSL Certificate")
 	flag.Parse()
 
 	/*
-	if len(flag.Args()) != 1 {
-		usage(os.Args[0])
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
+		if len(flag.Args()) != 1 {
+			usage(os.Args[0])
+			flag.PrintDefaults()
+			os.Exit(1)
+		}
 	*/
 
 	if *dbgFlag == true {
@@ -135,25 +144,20 @@ func main() {
 
 		//fmt.Fprintf(os.Stderr, "[+] ac-%s\nstart\n", Version)
 		acutl.DebugLog.Printf("ac-%s", Version)
-		// XXX TODO: this is not stable enough but should do the trick for now..
-		// it is not clear what happens if the ACrun = false is done first
-		// but i close the socket on both sides.. and it should clean the
-		// socket file running... let's test with the script now :)
-		// XXX deactivated
-		sig := make(chan os.Signal, 2)
-		signal.Notify(sig, os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGKILL, syscall.SIGQUIT, syscall.SIGSEGV, syscall.SIGINT)
-		//    signal.Notify(sig, nil)
-		go func() {
-			<-sig
-			ackp.ACrun = false
-			//fmt.Fprintf(os.Stderr, "[+] exiting...!\n")
-			acutl.DebugLog.Fatalf("exiting.\n")
-			//os.Exit(3)
-		}()
 
 		for ackp.ACrun == true {
 			handleStdin()
 		}
+
+		acutl.DebugLog.Printf("ac-%s QUITTING NOW!", Version)
+		/*
+			pprof.WriteHeapProfile(g)
+			g.Close()
+			pprof.StopCPUProfile()
+			f.Close()
+		*/
 	}
+	cpuProfile.Stop()
+
 	os.Exit(0)
 }

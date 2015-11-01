@@ -10,7 +10,7 @@
 
 SCRIPT_NAME    = 'ac-weechat'
 SCRIPT_AUTHOR  = 'eau <eau-code@unix4fun.net>'
-SCRIPT_VERSION = '20150717'
+SCRIPT_VERSION = '20151031'
 SCRIPT_LICENSE = 'BSD'
 SCRIPT_DESC    = 'AC script'
 
@@ -1388,13 +1388,18 @@ class AcPbCom(object):
         return None
 
     def acStopDaemon(self):
-        self.acProc.terminate()
+        # XXX daemon should stop properly and not with a terminate
+        #self.acProc.terminate()
         # XXX TODO check return code to see if it's out.
         #self.acProc.returncode
         # XXX TODO that or terminate, let's go with terminate first..
-#        acblob = self.acMsg(ACMSG_TYPE_QUIT, 0, None)
-#        ac_pkr, err = self.acRequest(acblob, 0, BUF_LARGE)
-#        ac_pkr, err = self.acRequest(self.ACMSG_TYPE_QUIT, 0, None, self.BUF_LARGE)
+        #acblob = self.acMsg(ACMSG_TYPE_QUIT, 0, None)
+        #ac_pkr, err = self.acRequest(acblob, 0, BUF_LARGE)
+        ac_quit, err = self.acRequest(self.ACMSG_TYPE_QUIT, 0, None, self.BUF_LARGE)
+        if ac_quit and ac_quit.type == ac_pb2.ArseneCryptoMessage.AC_QUIT:
+            print "QUIT BLOB: %s\n" % ac_quit.blob
+        else:
+            print "QUIT ERROR!"
         return None
 
     def msgPkGen(self, args):
@@ -1639,12 +1644,16 @@ class AcPbCom(object):
         acRcvEnvp = ac_pb2.ArseneCryptoMessage()
         acRcvEnvp.ParseFromString(rcvBlob)
     
+# ac_quit, err = self.acRequest(self.ACMSG_TYPE_QUIT, 0, None, self.BUF_LARGE)
+# ac_pkr, err = acwee.acRequest(acwee.ACMSG_TYPE_PK, acwee.ACMSG_SUBTYPE_PKLIST, myargs, acwee.BUF_LARGE)
         if acRcvEnvp.type == ac_pb2.ArseneCryptoMessage.AC_PK and actype == self.ACMSG_TYPE_PK:
             acResponse = ac_pb2.acPublicKeyMessageResponse()
         elif acRcvEnvp.type == ac_pb2.ArseneCryptoMessage.AC_KEX and actype == self.ACMSG_TYPE_KEX:
             acResponse = ac_pb2.acKeyExchangeMessageResponse()
         elif acRcvEnvp.type == ac_pb2.ArseneCryptoMessage.AC_CRYPTO and actype == self.ACMSG_TYPE_CRYPTO:
             acResponse = ac_pb2.acCipherTextMessageResponse()
+        elif acRcvEnvp.type == ac_pb2.ArseneCryptoMessage.AC_QUIT and actype == self.ACMSG_TYPE_QUIT:
+            return [ acRcvEnvp, None ]
         # XXX TODO: error to should be handled..
         elif acRcvEnvp.type == ac_pb2.ArseneCryptoMessage.AC_ERROR:
             return [ None, acRcvEnvp.blob ] # AC_ERROR, I should have the message, don't know if it's nice this way..
@@ -1675,8 +1684,8 @@ class AcCore(AcDisplay, AcPbCom):
     acNonces = {} # sha1 hash 'channel:server' store bar items value for now.
     acBarItems = []
 
-    A_title = [ "Arrivist", "Afghan", "Alternate", "Achille", "Archivist", "Aborted", "Applied", "Armani", "Asynchronous", "Armenian", "American", "Advanced", "Acrobatic" ]
-    S_title = [ "System", "Sodomist", "Sudoku", "Subculture", "Slider", "Sledge", "Shit", "Shoarma", "Shuriken", "Sheeva", "Sonia", "Sucker" ]
+    A_title = [ "Arrivist", "Afghan", "Alternate", "Achille", "Archivist", "Aborted", "Applied", "Armani", "Asynchronous", "Armenian", "American", "Advanced", "Acrobatic", "Agile", "Audible", "Angular" ]
+    S_title = [ "System", "Sodomist", "Sudoku", "Subculture", "Slider", "Sledge", "Shit", "Shoarma", "Shuriken", "Sheeva", "Sonia", "Sucker", "Script", "Skater" ]
 
     def __init__(self, coreBuffer, acBinFile, acDbgFile):
         AcDisplay.__init__(self, "")
@@ -1691,7 +1700,7 @@ class AcCore(AcDisplay, AcPbCom):
     def acBanner(self, buffer):
 #        buffer = weechat.current_buffer();
         self.pmb(buffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$%%@#$%%@#$%%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
-        self.pmb(buffer, "%s Crypto %s %s (c) 2013-2014 Security Gigolos ", random.choice(self.A_title), random.choice(self.S_title), SCRIPT_VERSION)
+        self.pmb(buffer, "%s Crypto %s %s (c) 2013-2015 Security Gigolos ", random.choice(self.A_title), random.choice(self.S_title), SCRIPT_VERSION)
         self.pmb(buffer, "by %s", SCRIPT_AUTHOR)
         self.pmb(buffer, "Implements AEAD: NaCL/ECC Curve 25519 w/ Salsa20/Poly1305 (more later)")
         self.pmb(buffer, "type: /ac help to get HELP!")

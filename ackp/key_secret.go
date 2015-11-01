@@ -13,11 +13,11 @@ import (
 )
 
 type SecretKey struct {
-	Nonce uint32 `json:"nonce"`
-	Bob []byte `json:"bob"`
-	Key *[32]byte `json:"key"`
+	Nonce    uint32    `json:"nonce"`
+	Bob      []byte    `json:"bob"`
+	Key      *[32]byte `json:"key"`
 	CreaTime time.Time `json:"creatime"`
-	Overhead int `json:"overhead"`
+	Overhead int       `json:"overhead"`
 }
 
 // if you Println() the struct then it call this as part of the type.

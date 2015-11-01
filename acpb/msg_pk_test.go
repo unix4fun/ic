@@ -178,6 +178,59 @@ var PKLISTTests = []Test{
 	},
 }
 
+var PKDELTests = []Test{
+	// TEST #0: description
+	{AcPublicKeyMessageRequest_PK_DEL,
+		&AcPublicKeyMessageRequest{
+			Nick:   proto.String("nick1"),
+			Server: proto.String("freenode.net"),
+		}, AcPublicKeyMessageResponse_PKR_DEL, true, 0, nil, nil, 0, false,
+	},
+	// TEST #1: description it was already deleted..
+	{AcPublicKeyMessageRequest_PK_DEL,
+		&AcPublicKeyMessageRequest{
+			Nick:   proto.String("nick1"),
+			Server: proto.String("freenode.net"),
+		}, AcPublicKeyMessageResponse_PKR_DEL, false, -1, nil, nil, 0, true,
+	},
+
+	// TEST #2: description it was already deleted..
+	{AcPublicKeyMessageRequest_PK_DEL,
+		&AcPublicKeyMessageRequest{
+			Nick:   proto.String("nick1"),
+			Server: proto.String("ode.net"),
+		}, AcPublicKeyMessageResponse_PKR_DEL, false, -1, nil, nil, 0, true,
+	},
+	// TEST #3: description it was already deleted..
+	{AcPublicKeyMessageRequest_PK_DEL,
+		&AcPublicKeyMessageRequest{
+			Nick:   nil,
+			Server: proto.String("ode.net"),
+		}, AcPublicKeyMessageResponse_PKR_DEL, false, -1, nil, nil, 0, true,
+	},
+	// TEST #4: description it was already deleted..
+	{AcPublicKeyMessageRequest_PK_DEL,
+		&AcPublicKeyMessageRequest{
+			Nick:   nil,
+			Server: nil,
+		}, AcPublicKeyMessageResponse_PKR_DEL, false, -1, nil, nil, 0, true,
+	},
+	// TEST #5: description it was already deleted..
+	{AcPublicKeyMessageRequest_PK_DEL,
+		&AcPublicKeyMessageRequest{
+			Nick:   proto.String("nick1"),
+			Server: nil,
+		}, AcPublicKeyMessageResponse_PKR_DEL, false, -1, nil, nil, 0, true,
+	},
+	// TEST #6: nick2 regular delete
+	{AcPublicKeyMessageRequest_PK_DEL,
+		&AcPublicKeyMessageRequest{
+			Nick:   proto.String("nick2"),
+			Server: proto.String("freenode.net"),
+		}, AcPublicKeyMessageResponse_PKR_DEL, true, 0, nil, nil, 0, false,
+	},
+}
+
 /*
  * TESTs needed
  * PKGEN -> PKR_GEN
@@ -238,6 +291,8 @@ func TestPK(t *testing.T) {
 	makeTests(PKLISTTests, PKLIST_Handler, t)
 
 	// TEST PKDEL
+	fmt.Printf("\n== PKDEL TESTs ==\n")
+	makeTests(PKDELTests, PKDEL_Handler, t)
 }
 
 /*
