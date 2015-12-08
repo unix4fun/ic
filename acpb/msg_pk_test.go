@@ -27,7 +27,7 @@ type Test struct {
 }
 
 var PKGENTests = []Test{
-	// TEST #1 : OK
+	// TEST #0 : OK
 	{AcPublicKeyMessageRequest_PK_GEN,
 		&AcPublicKeyMessageRequest{
 			Nick:   proto.String("myself"),
@@ -35,7 +35,7 @@ var PKGENTests = []Test{
 			Server: proto.String("freenode.net"),
 		}, AcPublicKeyMessageResponse_PKR_GEN, true, 0, nil, nil, 0, false,
 	},
-	// TEST #2 : FAIL -1
+	// TEST #1 : FAIL -1
 	{AcPublicKeyMessageRequest_PK_GEN,
 		&AcPublicKeyMessageRequest{
 			Nick:   nil,
@@ -44,7 +44,7 @@ var PKGENTests = []Test{
 		}, AcPublicKeyMessageResponse_PKR_GEN, false, -1, nil, nil, 0, true,
 	},
 
-	// TEST #3 : FAIL -1
+	// TEST #2 : FAIL -1
 	{AcPublicKeyMessageRequest_PK_GEN,
 		&AcPublicKeyMessageRequest{
 			Nick:   proto.String("mynick"),
@@ -53,12 +53,12 @@ var PKGENTests = []Test{
 		}, AcPublicKeyMessageResponse_PKR_GEN, false, -1, nil, nil, 0, true,
 	},
 
-	// TEST #4 : OK
+	// TEST #3 : OK
 	{AcPublicKeyMessageRequest_PK_GEN,
 		&AcPublicKeyMessageRequest{
 			Nick:   proto.String("eau"),
 			Host:   nil,
-			Server: proto.String("freeenode.net"),
+			Server: proto.String("othernet.net"),
 		}, AcPublicKeyMessageResponse_PKR_GEN, true, 0, nil, nil, 0, false,
 	},
 
@@ -73,7 +73,7 @@ var PKGENTests = []Test{
 }
 
 var PKADDTests = []Test{
-	// TEST #1 : OK
+	// TEST #0 : OK
 	{AcPublicKeyMessageRequest_PK_ADD,
 		&AcPublicKeyMessageRequest{
 			Nick:   proto.String("nick1"),
@@ -83,7 +83,7 @@ var PKADDTests = []Test{
 		}, AcPublicKeyMessageResponse_PKR_ADD, true, 0, nil, nil, 0, false,
 	},
 
-	// TEST #2 : FAIL -> Invalid base64 -2
+	// TEST #1 : FAIL -> Invalid base64 -2
 	{AcPublicKeyMessageRequest_PK_ADD,
 		&AcPublicKeyMessageRequest{
 			Nick:   proto.String("nick3"),
@@ -93,7 +93,7 @@ var PKADDTests = []Test{
 		}, AcPublicKeyMessageResponse_PKR_ADD, false, -2, nil, nil, 0, true,
 	},
 
-	// TEST #3 : FAIL -> null blob -1
+	// TEST #2 : FAIL -> null blob -1
 	{AcPublicKeyMessageRequest_PK_ADD,
 		&AcPublicKeyMessageRequest{
 			Nick:   proto.String("nick4"),
@@ -103,7 +103,7 @@ var PKADDTests = []Test{
 		}, AcPublicKeyMessageResponse_PKR_ADD, false, -1, nil, nil, 0, true,
 	},
 
-	// TEST #4 : FAIL -> null nick
+	// TEST #3 : FAIL -> null nick
 	{AcPublicKeyMessageRequest_PK_ADD,
 		&AcPublicKeyMessageRequest{
 			Nick:   nil,
@@ -113,7 +113,7 @@ var PKADDTests = []Test{
 		}, AcPublicKeyMessageResponse_PKR_ADD, false, -1, nil, nil, 0, true,
 	},
 
-	// TEST #5 : FAIL -> null nick
+	// TEST #4 : FAIL -> null nick
 	{AcPublicKeyMessageRequest_PK_ADD,
 		&AcPublicKeyMessageRequest{
 			Nick:   proto.String("nanother"),
@@ -123,7 +123,7 @@ var PKADDTests = []Test{
 		}, AcPublicKeyMessageResponse_PKR_ADD, false, -2, nil, nil, 0, true,
 	},
 
-	// TEST #6 : OK
+	// TEST #5 : OK
 	{AcPublicKeyMessageRequest_PK_ADD,
 		&AcPublicKeyMessageRequest{
 			Nick:   proto.String("nick2"),
@@ -136,6 +136,19 @@ var PKADDTests = []Test{
 
 // TODO we need to create an array of public keys to test again
 // or the length in case of a list to not test again the whole list..
+
+var acPubkeyArrayTest1 = []*AcPublicKey{
+	&AcPublicKey{
+		Nick:      proto.String("nick1"),
+		Pubkey:    proto.String("DSix7zIaLXjaSrzBNkm3dtqdHqWLk2wnyVt/y+wNq01n5Avc6RaXdcrcDxAAAP//7okNxA=="),
+		Host:      proto.String("prout@hostname"),
+		Server:    proto.String("freenode.net"),
+		Haspriv:   proto.Bool(false),
+		Fp:        nil,
+		Timestamp: proto.Int64(0),
+	},
+}
+
 var PKLISTTests = []Test{
 	// TEST #0 : OK / But no such keys
 	{AcPublicKeyMessageRequest_PK_LIST,
@@ -150,7 +163,7 @@ var PKLISTTests = []Test{
 		&AcPublicKeyMessageRequest{
 			Nick:   proto.String("nick1"),
 			Server: proto.String("freenode.net"),
-		}, AcPublicKeyMessageResponse_PKR_LIST, true, 0, nil, nil, 0, false,
+		}, AcPublicKeyMessageResponse_PKR_LIST, true, 0, nil, acPubkeyArrayTest1, 1, false,
 	},
 
 	// TEST #2 : FAIL -> -1
@@ -166,7 +179,7 @@ var PKLISTTests = []Test{
 		&AcPublicKeyMessageRequest{
 			Nick:   nil,
 			Server: proto.String("freenode.net"),
-		}, AcPublicKeyMessageResponse_PKR_LIST, true, 0, nil, nil, 0, false,
+		}, AcPublicKeyMessageResponse_PKR_LIST, true, 0, nil, nil, 4, false,
 	},
 
 	// TEST #4 : OK -> all keys... but wrong server nothing found!
@@ -178,6 +191,7 @@ var PKLISTTests = []Test{
 	},
 }
 
+// PKDEL message simples functionnal tests
 var PKDELTests = []Test{
 	// TEST #0: description
 	{AcPublicKeyMessageRequest_PK_DEL,
@@ -251,18 +265,30 @@ func makeTests(tests []Test, fn pkhandler, t *testing.T) {
 
 		// type REPLY ?
 		if r.GetType() != v.oType {
-			t.Errorf("[%d] type exp: %v res: [%v]", i, v.oType, r.GetType())
+			t.Errorf("[%d] Type exp: %v res: [%v]", i, v.oType, r.GetType())
 		}
 		// did it succeed or not
 		if r.GetBada() != v.oBada {
-			t.Errorf("[%d] exp: %t res: %t", i, v.oBada, r.GetBada())
+			t.Errorf("[%d] Bada exp: %t res: %t", i, v.oBada, r.GetBada())
 		}
 		// is it the expected error code?
 		if r.GetErrorCode() != v.oErrorCode {
-			t.Errorf("[%d] exp: %d res: %d", i, v.oErrorCode, r.GetErrorCode())
+			t.Errorf("[%d] ErrorCode exp: %d res: %d", i, v.oErrorCode, r.GetErrorCode())
 		}
 
-		// Public keys test..
+		// Public keys test.. if they have to run..
+		if reqType == AcPublicKeyMessageRequest_PK_LIST {
+			pubKeys := r.GetPublicKeys()
+			//fmt.Printf("PUBKEYS: %v\n", pubKeys)
+			numPubKeys := len(pubKeys)
+
+			if numPubKeys != v.oPubKeysLen {
+				t.Errorf("[%d] Number of Keys exp: %d res: %d", i, v.oPubKeysLen, numPubKeys)
+			} else {
+				// XXX TODO: test public keys content to see if it's what was expected
+			}
+		}
+
 	}
 }
 
