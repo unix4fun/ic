@@ -11,17 +11,22 @@ import (
 	"flag"
 	"fmt"
 	"github.com/pkg/profile"
+	"github.com/unix4fun/ac/acjs"
 	"github.com/unix4fun/ac/ackp"
-	"github.com/unix4fun/ac/acpb"
 	"github.com/unix4fun/ac/acutl"
 	"io/ioutil"
 	"os"
+	// we are replacing protobuf with basic json, so we can get rid of the
+	// protobuf dependency in the client script..
+	//"github.com/unix4fun/ac/acpb"
 )
 
 func usage(mycmd string) {
 	fmt.Fprintf(os.Stderr, "%s [options]", mycmd)
 }
 
+// this function now lies in acjs package
+/*
 func handleStdin() (err error) {
 	buf := make([]byte, 4096)
 	for {
@@ -42,10 +47,11 @@ func handleStdin() (err error) {
 
 		os.Stdout.Write(msgReply)
 		return nil
-	} /* end of for() */
+	} // end of for()
 	// XXX need to return Error.New() really...
 	return nil
 }
+*/
 
 func init() {
 	//fmt.Printf("INIT NINITNI INIT!!\n")
@@ -79,6 +85,7 @@ func main() {
 	ecFlag := flag.Bool("ecgen", false, "generate ECDSA identity keys (these are using NIST curve SecP384")
 	saecFlag := flag.Bool("ec25gen", false, "generate EC 25519 identify keys")
 	dbgFlag := flag.Bool("debug", false, "activate debug log")
+	jsonFlag := flag.Bool("json", true, "use json communication channel")
 	/*
 		cpuProfile := flag.String("cpuprofile", "", "write cpu profile to file")
 		memProfile := flag.String("memprofile", "", "write mem profile to file")
@@ -146,7 +153,7 @@ func main() {
 		acutl.DebugLog.Printf("ac-%s", Version)
 
 		for ackp.ACrun == true {
-			handleStdin()
+			acjs.handleStdin()
 		}
 
 		acutl.DebugLog.Printf("ac-%s QUITTING NOW!", Version)
