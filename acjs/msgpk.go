@@ -3,7 +3,10 @@ package acjs
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/unix4fun/ac/accp"
+	"github.com/unix4fun/ac/ackp"
 	"github.com/unix4fun/ac/acutl"
+	"time"
 )
 
 type ACPkMessage struct {
@@ -126,7 +129,7 @@ func (pk *ACPkMessage) HandlerPKADD() (msgReply []byte, err error) {
 	newkey.Nickname = pk.Nick
 	newkey.Userhost = pk.Host
 	newkey.Server = pk.Server
-	newkey.Pubkey = pk.Blob
+	newkey.Pubkey = string(pk.Blob)
 	newkey.HasPriv = false
 	newkey.CreaTime = time.Now()
 

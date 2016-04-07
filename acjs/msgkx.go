@@ -2,6 +2,7 @@ package acjs
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/unix4fun/ac/accp"
 	"github.com/unix4fun/ac/ackp"
 	"github.com/unix4fun/ac/acutl"
@@ -113,7 +114,7 @@ func (kx *ACKxMessage) HandlerKXPACK() (msgReply []byte, err error) {
 		Type:  R_KXPACK,
 		Bada:  true,
 		Errno: 0,
-		Blob:  keyMsg,
+		Blob:  kxMsg,
 		Nonce: acctx.GetNonce(),
 	})
 	acutl.DebugLog.Printf("RET [%p] HandleKXPACK(%d:%s -> %s (%s/%s)) -> [OK]\n",
@@ -124,6 +125,10 @@ func (kx *ACKxMessage) HandlerKXPACK() (msgReply []byte, err error) {
 		kx.Server,
 		kx.Channel)
 	return
+	return
+}
+
+func (kx *ACKxMessage) HandlerKXUNPACK() (msgReply []byte, err error) {
 	return
 }
 
