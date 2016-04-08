@@ -164,7 +164,7 @@ func HandleQuitMsg(msg []byte) (msgReply []byte, err error) {
 	return
 }
 
-func handleStdin() (err error) {
+func HandleStdin() (err error) {
 	buf := make([]byte, 4096)
 	for {
 		n, err := os.Stdin.Read(buf[0:])
@@ -192,11 +192,13 @@ func handleStdin() (err error) {
 	return nil
 }
 
+/*
 func main() {
 	fmt.Printf("prout proutprout\n")
 	for k, v := range MsgType {
 		fmt.Printf("[%d]:%s\n", k, v)
 	}
 
-	handleStdin()
+	HandleStdin()
 }
+*/

@@ -191,27 +191,36 @@ func (pk *ACPkMessage) HandlerPKLIST() (msgReply []byte, err error) {
 	acutl.DebugLog.Printf("ok_map: %t ok_ent: %t\n", okMap, okEnt)
 	switch {
 	case okMap == true && len(pk.Nick) == 0: // REPLY ALL KEYS
-		for _, myKeys := range *pkMap {
-			// get the timestamp!!
-			timestamp := myKeys.CreaTime.Unix()
-			// acPublicKey
-			//fmt.Fprintf(os.Stderr, "[+] PKLIST %s!%s @ %s / priv: %t\n", myKeys.Nickname, myKeys.Userhost, myKeys.Server, myKeys.HasPriv)
-			acPubkey := &AcPublicKey{
-				Nick:      &myKeys.Nickname,
-				Pubkey:    &myKeys.Pubkey,
-				Host:      &myKeys.Userhost,
-				Server:    &myKeys.Server,
-				Haspriv:   &myKeys.HasPriv,
-				Fp:        myKeys.GetPubfp(),
-				Timestamp: &timestamp,
+		/*
+			for _, myKeys := range *pkMap {
+				// get the timestamp!!
+				timestamp := myKeys.CreaTime.Unix()
+				// acPublicKey
+				//fmt.Fprintf(os.Stderr, "[+] PKLIST %s!%s @ %s / priv: %t\n", myKeys.Nickname, myKeys.Userhost, myKeys.Server, myKeys.HasPriv)
+				acPubkey := &AcPublicKey{
+					Nick:      &myKeys.Nickname,
+					Pubkey:    &myKeys.Pubkey,
+					Host:      &myKeys.Userhost,
+					Server:    &myKeys.Server,
+					Haspriv:   &myKeys.HasPriv,
+					Fp:        myKeys.GetPubfp(),
+					Timestamp: &timestamp,
+				}
+				acPubkeyArray = append(acPubkeyArray, acPubkey)
 			}
-			acPubkeyArray = append(acPubkeyArray, acPubkey)
+		*/
+
+		msgReplyBlob, rErr := json.Marshal(*pkMap)
+		if rErr != nil {
+			panic(rErr)
 		}
 
+		acutl.DebugLog.Printf("(INFO) PKLIST -> (Blob: %s) ! n Keys\n", msgReplyBlob)
 		msgReply, _ = json.Marshal(&ACPkReply{
 			Type:  R_PKLIST,
 			Bada:  true,
 			Errno: 0,
+			Blob:  msgReplyBlob,
 		})
 		/*
 			acMsgResponse = &AcPublicKeyMessageResponse{
@@ -225,39 +234,56 @@ func (pk *ACPkMessage) HandlerPKLIST() (msgReply []byte, err error) {
 		return
 
 	case okMap == true && okEnt == true: // REPLY ONE KEY
-		// get the timestamp!!
-		timestamp := pkEntry.CreaTime.Unix()
-		// acPublicKey object
-		//fmt.Fprintf(os.Stderr, "[+] PKLIST %s!%s @ %s / priv: %t\n", myKeys.Nickname, myKeys.Userhost, myKeys.Server, myKeys.HasPriv)
-		acPubkey := &AcPublicKey{
-			Nick:      &pkEntry.Nickname,
-			Pubkey:    &pkEntry.Pubkey,
-			Host:      &pkEntry.Userhost,
-			Server:    &pkEntry.Server,
-			Haspriv:   &pkEntry.HasPriv,
-			Fp:        pkEntry.GetPubfp(),
-			Timestamp: &timestamp,
+		/*
+			// get the timestamp!!
+			timestamp := pkEntry.CreaTime.Unix()
+			// acPublicKey object
+			//fmt.Fprintf(os.Stderr, "[+] PKLIST %s!%s @ %s / priv: %t\n", myKeys.Nickname, myKeys.Userhost, myKeys.Server, myKeys.HasPriv)
+			acPubkey := &AcPublicKey{
+				Nick:      &pkEntry.Nickname,
+				Pubkey:    &pkEntry.Pubkey,
+				Host:      &pkEntry.Userhost,
+				Server:    &pkEntry.Server,
+				Haspriv:   &pkEntry.HasPriv,
+				Fp:        pkEntry.GetPubfp(),
+				Timestamp: &timestamp,
+			}
+			// add that object to the array of public key..
+			acPubkeyArray = append(acPubkeyArray, acPubkey)
+			acMsgResponse = &AcPublicKeyMessageResponse{
+				Type:       &responseType,
+				Bada:       proto.Bool(true),
+				PublicKeys: acPubkeyArray,
+				ErrorCode:  proto.Int32(0),
+			}
+		*/
+
+		msgReplyBlob, rErr := json.Marshal(pkEntry)
+		if rErr != nil {
+			panic(rErr)
 		}
-		// add that object to the array of public key..
-		acPubkeyArray = append(acPubkeyArray, acPubkey)
-		acMsgResponse = &AcPublicKeyMessageResponse{
-			Type:       &responseType,
-			Bada:       proto.Bool(true),
-			PublicKeys: acPubkeyArray,
-			ErrorCode:  proto.Int32(0),
-		}
-		acutl.DebugLog.Printf("(RET) PKLIST -> (0) ! one Key\n")
-		return acMsgResponse, nil
-	default: // NOTHING FOUND
-		retErr := &acutl.AcError{Value: -2, Msg: "PKLIST_Handler(): nothing found!", Err: nil}
+
+		acutl.DebugLog.Printf("(INFO) PKLIST -> (Blob: %s) ! n Keys\n", msgReplyBlob)
 		msgReply, _ = json.Marshal(&ACPkReply{
 			Type:  R_PKLIST,
-			Bada:  false,
-			Errno: -2,
-			Blob:  []byte(err.Error()),
+			Bada:  true,
+			Errno: 0,
+			Blob:  msgReplyBlob,
 		})
-		acutl.DebugLog.Printf("(RET[!]) PKLIST -> (-2) ! %s\n", retErr.Error())
-		return acMsgResponse, retErr
+		acutl.DebugLog.Printf("(RET) PKLIST -> (0) ! one Key\n")
+		return //acMsgResponse, nil
+		/*
+			default: // NOTHING FOUND
+				retErr := &acutl.AcError{Value: -2, Msg: "PKLIST_Handler(): nothing found!", Err: nil}
+				msgReply, _ = json.Marshal(&ACPkReply{
+					Type:  R_PKLIST,
+					Bada:  false,
+					Errno: -2,
+					Blob:  []byte(err.Error()),
+				})
+				acutl.DebugLog.Printf("(RET[!]) PKLIST -> (-2) ! %s\n", retErr.Error())
+				return //acMsgResponse, retErr
+		*/
 	}
 
 	// all good we return the data
@@ -265,6 +291,7 @@ func (pk *ACPkMessage) HandlerPKLIST() (msgReply []byte, err error) {
 		Type:  R_PKLIST,
 		Bada:  true,
 		Errno: 0,
+		Blob:  nil,
 	})
 	acutl.DebugLog.Printf("RET [%p] HandlePKLIST(%d:%s/%s) -> [reply: %s]\n", pk, pk.Type, pk.Server, pk.Nick)
 	return

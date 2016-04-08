@@ -85,7 +85,7 @@ func main() {
 	ecFlag := flag.Bool("ecgen", false, "generate ECDSA identity keys (these are using NIST curve SecP384")
 	saecFlag := flag.Bool("ec25gen", false, "generate EC 25519 identify keys")
 	dbgFlag := flag.Bool("debug", false, "activate debug log")
-	jsonFlag := flag.Bool("json", true, "use json communication channel")
+	//jsonFlag := flag.Bool("json", true, "use json communication channel")
 	/*
 		cpuProfile := flag.String("cpuprofile", "", "write cpu profile to file")
 		memProfile := flag.String("memprofile", "", "write mem profile to file")
@@ -153,7 +153,7 @@ func main() {
 		acutl.DebugLog.Printf("ac-%s", Version)
 
 		for ackp.ACrun == true {
-			acjs.handleStdin()
+			acjs.HandleStdin()
 		}
 
 		acutl.DebugLog.Printf("ac-%s QUITTING NOW!", Version)

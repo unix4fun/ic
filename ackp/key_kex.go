@@ -23,7 +23,7 @@ type KexKey struct {
 	HasPriv  bool
 	//    Pubfp string // 32 bytes hex encoded string of the hash... XXX we will see if it's problematic later..
 	CreaTime time.Time
-	pubfp    [32]byte  // 32 bytes hash of the public key...
+	PubFP    [32]byte  // 32 bytes hash of the public key...
 	pubkey   *[32]byte // 32 bytes TODO: we need to box those info, and unbox them when necessary...
 	privkey  *[32]byte // 32 bytes TODO: we need to box those info, and unbox them when necessary...
 }
@@ -42,10 +42,10 @@ func (pk *KexKey) SetPubkey(pubkey []byte) error {
 		copy(pk.pubkey[:], pubkey)
 
 		// XXX TODO: handle error here...
-		pubfp, _ := acutl.HashSHA3Data(pubkey)
+		PubFP, _ := acutl.HashSHA3Data(pubkey)
 
 		// copy and store the public fingerprint..
-		copy(pk.pubfp[:], pubfp)
+		copy(pk.PubFP[:], PubFP)
 		return nil
 	}
 
@@ -61,8 +61,8 @@ func (pk *KexKey) GetPrivkey() (privkey *[32]byte) {
 
 // GetPubfp retrieve and return the public key fingerprint associated with the
 // current key.
-func (pk *KexKey) GetPubfp() (pubfp []byte) {
-	pubfp = pk.pubfp[:]
+func (pk *KexKey) GetPubfp() (PubFP []byte) {
+	PubFP = pk.PubFP[:]
 	return
 }
 
@@ -88,13 +88,13 @@ func CreateKxKeys(nickname, userhost, server string) (mykeys *KexKey, err error)
 		return nil, &acutl.AcError{Value: -1, Msg: "CreateMyKeys().GenerateKey(): ", Err: err}
 	}
 
-	pubfp, err := acutl.HashSHA3Data(mykeys.pubkey[:])
+	PubFP, err := acutl.HashSHA3Data(mykeys.pubkey[:])
 	if err != nil {
 		return nil, &acutl.AcError{Value: -2, Msg: "CreateMyKeys().hash(): ", Err: err}
 	}
 
 	// copy and store the public fingerprint..
-	copy(mykeys.pubfp[:], pubfp)
+	copy(mykeys.PubFP[:], PubFP)
 
 	/*
 		PK, err := CreatePKMessageNACL(mykeys.pubkey[:])
@@ -121,7 +121,7 @@ func CreateKxKeys2(nickname, userhost, server string) (*KexKey, error) {
 			return nil, &acutl.AcError{Value: -1, Msg: "CreateMyKeys().GenerateKey(): ", Err: err}
 		}
 
-		pubfp, err := acutl.HashSHA3Data(pubkey[:])
+		PubFP, err := acutl.HashSHA3Data(pubkey[:])
 	*/
 	return nil, nil
 
