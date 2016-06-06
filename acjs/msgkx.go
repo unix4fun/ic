@@ -305,7 +305,7 @@ func HandleKXMsg(msg []byte) (msgReply []byte, err error) {
 		msgReply, err = req.HandlerKXUNPACK()
 	default:
 		err = fmt.Errorf("Invalid KX Message.")
-		msgReply, _ = json.Marshal(&ACPkReply{
+		msgReply, _ = json.Marshal(&ACKxReply{
 			Type:  R_KXERR,
 			Bada:  false,
 			Errno: -2,

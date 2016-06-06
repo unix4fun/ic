@@ -42,6 +42,30 @@ const (
 	R_KXUNPACK
 
 	R_KXERR
+
+	// CT Messages
+	CTSEAL
+	R_CTSEAL
+
+	CTOPEN
+	R_CTOPEN
+
+	CTADD
+	R_CTADD
+
+	R_CTERR
+
+	// CL Messages
+	CLLOAD
+	R_CLLOAD
+
+	CLSAVE
+	R_CLSAVE
+
+	CLIAC
+	R_CLIAC
+
+	R_CLERR
 )
 
 // function pointers
@@ -58,9 +82,11 @@ var (
 		QTMSG: HandleQuitMsg,
 	}
 
-	ACPkMessageHandlerMap = map[int]ACMsgHandler{
-		PKGEN: nil,
-	}
+	/*
+		ACPkMessageHandlerMap = map[int]ACMsgHandler{
+			PKGEN: nil,
+		}
+	*/
 
 	MsgType = map[int]string{
 		PKMSG: "PKMSG",
@@ -80,6 +106,24 @@ var (
 		PKDEL:    "PKDEL",
 		R_PKDEL:  "R_PKDEL",
 		R_PKERR:  "R_PKERR",
+
+		// KXMSG
+		KXPACK:     "KXPACK",
+		R_KXPACK:   "R_KXPACK",
+		KXUNPACK:   "KXUNPACK",
+		R_KXUNPACK: "R_KXUNPACK",
+		R_KXERR:    "R_KXERR",
+
+		// CTMSG
+		CTSEAL:   "CTSEAL",
+		R_CTSEAL: "R_CTSEAL",
+		CTOPEN:   "CTOPEN",
+		R_CTOPEN: "R_CTOPEN",
+		CTADD:    "CTADD",
+		R_CTADD:  "R_CTADD",
+		R_CTERR:  "R_CTERR",
+
+		// CTLMSG
 	}
 )
 
@@ -103,6 +147,8 @@ func (ac *ACComMessage) Validate() (ACComHandler, error) {
 			if ok == true {
 				acutl.DebugLog.Printf("RET [%p] Validate(%d:%s) -> [OK]\n", ac, ac.Type, ac.Payload)
 				return h, nil
+			} else {
+				acutl.DebugLog.Printf("RET [%p] Validate(%d:%s) -> [Error: No handlers registered]\n", ac, ac.Type, ac.Payload)
 			}
 		}
 	}

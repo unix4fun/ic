@@ -2,7 +2,8 @@
 
 [![Build Status](https://travis-ci.org/unix4fun/ac.svg?branch=master)](https://travis-ci.org/unix4fun/ac)
 
-# WORK IN PROGRESS
+# WORK IN PROGRESS 
+# CURRENTLY BROKEN AS IT'S TRANSITING TO JS INSTEAD OF PROTOBUF
 
 [![Join the chat at https://gitter.im/unix4fun/ac](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/unix4fun/ac?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
