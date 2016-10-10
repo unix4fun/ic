@@ -152,6 +152,7 @@ func main() {
 		//fmt.Fprintf(os.Stderr, "[+] ac-%s\nstart\n", Version)
 		acutl.DebugLog.Printf("ac-%s", Version)
 
+		// main loop
 		for ackp.ACrun == true {
 			acjs.HandleStdin()
 		}
