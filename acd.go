@@ -1,16 +1,14 @@
 // +build go1.4
 //go:generate protoc --go_out=accp -Iaccp accp/accp.proto
-//go:generate protoc --go_out=acpb -Iacpb acpb/ac.proto
-//go:generate protoc --python_out=client-scripts/weechat/ -Iacpb acpb/ac.proto
 //make version
 //echo "package main\nvar Version string '`date +%Y%m%d`'\n" > version.go
-// ACD: Arsene Crypto Daemon main file
+
 package main
 
 import (
 	"flag"
 	"fmt"
-	"github.com/pkg/profile"
+	//"github.com/pkg/profile"
 	"github.com/unix4fun/ac/acjs"
 	"github.com/unix4fun/ac/ackp"
 	"github.com/unix4fun/ac/acutl"
@@ -21,37 +19,28 @@ import (
 	//"github.com/unix4fun/ac/acpb"
 )
 
+//
+//        ____ ___     _______  _____
+//  __ __/ / // _/    /  _/ _ |/ ___/
+// / // /_  _/ _/  ^  / // __ / /_
+// \_,_/ /_//_/     /___/_/ |_\___/ (irc advanced crypto)
+// Unix4Fun
+// Some people doing some stuff somewhere for some reasons...
+//
+// https://unix4fun.github.io/
+//
+// This is u4f Irc A. Crypto
+//
+// A simple way to crypt your conversation(s) if, like us, you remain on IRC.
+// #Slack / HipChat / whatever are soooo overrated...
+//
+//
+
+// ACD will be renamed uIAC -> u4f Irc Annoying Crypto
+// iacd -> irc advanced crypto daemon
 func usage(mycmd string) {
 	fmt.Fprintf(os.Stderr, "%s [options]", mycmd)
 }
-
-// this function now lies in acjs package
-/*
-func handleStdin() (err error) {
-	buf := make([]byte, 4096)
-	for {
-		n, err := os.Stdin.Read(buf[0:])
-		if err != nil {
-			return err
-		}
-
-		//fmt.Fprintf(os.Stderr, "STDIN READ: %d bytes\n", n)
-		msgReply, acErr := acpb.HandleACMsg(buf[:n])
-		if acErr != nil {
-			//fmt.Println(acErr)
-			if msgReply != nil {
-				os.Stdout.Write(msgReply)
-			}
-			return acErr
-		}
-
-		os.Stdout.Write(msgReply)
-		return nil
-	} // end of for()
-	// XXX need to return Error.New() really...
-	return nil
-}
-*/
 
 func init() {
 	//fmt.Printf("INIT NINITNI INIT!!\n")
@@ -60,7 +49,7 @@ func init() {
 func main() {
 	Version := acVersion
 
-	cpuProfile := profile.Start(profile.ProfilePath("."), profile.CPUProfile)
+	//cpuProfile := profile.Start(profile.ProfilePath("."), profile.CPUProfile)
 
 	/*
 		f, err := os.Create("ac.pprof")
@@ -165,7 +154,7 @@ func main() {
 			f.Close()
 		*/
 	}
-	cpuProfile.Stop()
+	//cpuProfile.Stop()
 
 	os.Exit(0)
 }

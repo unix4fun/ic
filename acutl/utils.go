@@ -9,12 +9,6 @@ import (
 	"golang.org/x/crypto/sha3" // sha3 is now here.
 	"io"
 	"io/ioutil"
-	//"encoding/binary"
-	//"encoding/hex"
-	//"github.com/unix4fun/ac/obf"
-	//"os"
-	//"regexp"
-	//"time"
 	"log"
 )
 

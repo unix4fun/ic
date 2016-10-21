@@ -17,11 +17,11 @@ type Test struct {
 	inType AcKeyExchangeMessageRequestAcKXReqMsgType
 	in     *AcKeyExchangeMessageRequest // input
 	// Expected output
-	oType AcKeyExchangeMessageResponseAcKXRespMsgType
+	oType         AcKeyExchangeMessageResponseAcKXRespMsgType
 	oBada         bool
 	oErrorCode    int32
 	oBlob         []byte
-	oNonce          uint32
+	oNonce        uint32
 	oHaveErrorMsg bool
 	//oType         AcPublicKeyMessageResponseAcPKRespMsgType
 	//inType AcPublicKeyMessageRequestAcPKReqMsgType
@@ -34,48 +34,48 @@ var KXPACKTests = []Test{
 	// TEST #0 : OK
 	{AcKeyExchangeMessageRequest_KX_PACK,
 		&AcKeyExchangeMessageRequest{
-			Channel: nil,
-			Mynick: proto.String("toto"),
+			Channel:  nil,
+			Mynick:   proto.String("toto"),
 			Peernick: proto.String("bleh"),
-			Server: proto.String("freenode.net"),
+			Server:   proto.String("freenode.net"),
 		}, AcKeyExchangeMessageResponse_KXR_PACK, false, -1, nil, nil, 0, false,
 	},
 	/*
-	// TEST #1 : FAIL -1
-	{AcPublicKeyMessageRequest_PK_GEN,
-		&AcPublicKeyMessageRequest{
-			Nick:   nil,
-			Host:   proto.String("prout@hostname"),
-			Server: proto.String("freenode.net"),
-		}, AcPublicKeyMessageResponse_PKR_GEN, false, -1, nil, nil, 0, true,
-	},
+		// TEST #1 : FAIL -1
+		{AcPublicKeyMessageRequest_PK_GEN,
+			&AcPublicKeyMessageRequest{
+				Nick:   nil,
+				Host:   proto.String("prout@hostname"),
+				Server: proto.String("freenode.net"),
+			}, AcPublicKeyMessageResponse_PKR_GEN, false, -1, nil, nil, 0, true,
+		},
 
-	// TEST #2 : FAIL -1
-	{AcPublicKeyMessageRequest_PK_GEN,
-		&AcPublicKeyMessageRequest{
-			Nick:   proto.String("mynick"),
-			Host:   proto.String("eau@host.com"),
-			Server: nil,
-		}, AcPublicKeyMessageResponse_PKR_GEN, false, -1, nil, nil, 0, true,
-	},
+		// TEST #2 : FAIL -1
+		{AcPublicKeyMessageRequest_PK_GEN,
+			&AcPublicKeyMessageRequest{
+				Nick:   proto.String("mynick"),
+				Host:   proto.String("eau@host.com"),
+				Server: nil,
+			}, AcPublicKeyMessageResponse_PKR_GEN, false, -1, nil, nil, 0, true,
+		},
 
-	// TEST #3 : OK
-	{AcPublicKeyMessageRequest_PK_GEN,
-		&AcPublicKeyMessageRequest{
-			Nick:   proto.String("eau"),
-			Host:   nil,
-			Server: proto.String("othernet.net"),
-		}, AcPublicKeyMessageResponse_PKR_GEN, true, 0, nil, nil, 0, false,
-	},
+		// TEST #3 : OK
+		{AcPublicKeyMessageRequest_PK_GEN,
+			&AcPublicKeyMessageRequest{
+				Nick:   proto.String("eau"),
+				Host:   nil,
+				Server: proto.String("othernet.net"),
+			}, AcPublicKeyMessageResponse_PKR_GEN, true, 0, nil, nil, 0, false,
+		},
 
-	// TEST #4 : FAIL -1
-	{AcPublicKeyMessageRequest_PK_GEN,
-		&AcPublicKeyMessageRequest{
-			Nick:   nil,
-			Host:   nil,
-			Server: nil,
-		}, AcPublicKeyMessageResponse_PKR_GEN, false, -1, nil, nil, 0, true,
-	},
+		// TEST #4 : FAIL -1
+		{AcPublicKeyMessageRequest_PK_GEN,
+			&AcPublicKeyMessageRequest{
+				Nick:   nil,
+				Host:   nil,
+				Server: nil,
+			}, AcPublicKeyMessageResponse_PKR_GEN, false, -1, nil, nil, 0, true,
+		},
 	*/
 }
 
@@ -131,16 +131,16 @@ func TestKX(t *testing.T) {
 
 	// TEST PKADD : nick1 & nick2 stored too
 	/*
-	fmt.Printf("\n== PKADD TESTs ==\n")
-	makeTests(PKADDTests, PKADD_Handler, t)
+		fmt.Printf("\n== PKADD TESTs ==\n")
+		makeTests(PKADDTests, PKADD_Handler, t)
 
-	// TEST PKLIST
-	fmt.Printf("\n== PKLIST TESTs ==\n")
-	makeTests(PKLISTTests, PKLIST_Handler, t)
+		// TEST PKLIST
+		fmt.Printf("\n== PKLIST TESTs ==\n")
+		makeTests(PKLISTTests, PKLIST_Handler, t)
 
-	// TEST PKDEL
-	fmt.Printf("\n== PKDEL TESTs ==\n")
-	makeTests(PKDELTests, PKDEL_Handler, t)
+		// TEST PKDEL
+		fmt.Printf("\n== PKDEL TESTs ==\n")
+		makeTests(PKDELTests, PKDEL_Handler, t)
 	*/
 }
 

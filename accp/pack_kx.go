@@ -11,11 +11,11 @@ import (
 	"os"
 )
 
-func packMessageKX(hdr *uint32, nonce uint32, dst, blob []byte) (out []byte, err error) {
+func packMessageKX(hdr uint32, nonce uint32, dst, blob []byte) (out []byte, err error) {
 
 	acOut := &ACPackedMessage{}
 	acOut.Header = hdr
-	acOut.Nonce = proto.Uint32(nonce)
+	acOut.Nonce = nonce
 	//acOut.Dst = dst
 	acOut.Ciphertext = blob
 
@@ -42,7 +42,7 @@ func unpackMessageKX(in []byte) (mNonce uint32, myHdr, ciphertext []byte, err er
 		return 0, nil, nil, err
 	}
 
-	myHdr, err = CheckHeader([]byte(msgHdrKX), acIn.GetHeader())
+	myHdr, err = CheckHeader([]byte(msgHdrKX), acIn.Header)
 	if err != nil {
 		return 0, nil, nil, err
 	}
@@ -54,7 +54,7 @@ func unpackMessageKX(in []byte) (mNonce uint32, myHdr, ciphertext []byte, err er
 	//XXX TODO more meaningful updates from here...
 	//fmt.Printf("Nonce: %d(%08x)\n", acIn.GetNonce(), acIn.GetNonce())
 	//return acIn.GetNonce(), myHdr, acIn.GetDst(), acIn.GetCiphertext(), nil
-	return acIn.GetNonce(), myHdr, acIn.GetCiphertext(), nil
+	return acIn.Nonce, myHdr, acIn.Ciphertext, nil
 }
 
 func IsChannelOrPriv(channel, myNick, peerNick []byte) []byte {
@@ -119,7 +119,7 @@ func CreateKXMessageNACL(context *ackp.SecretKey, rnd []byte, peerPubkey, myPriv
 	cipherKex := box.Seal(nil, myBody, noncebyte, peerPubkey, myPrivkey)
 
 	//func packMessageKX(hdr, nonce *uint32, dst, blob *[]byte) (out []byte, err error) {
-	out, err = packMessageKX(&intHdr, context.GetNonce(), peerNick, cipherKex)
+	out, err = packMessageKX(intHdr, context.GetNonce(), peerNick, cipherKex)
 	if err != nil {
 		return nil, &acutl.AcError{Value: -3, Msg: "CreateKXMessageNACL().packMessageKX(): ", Err: err}
 	}

@@ -37,7 +37,7 @@ func (ct *ACCtMessage) validate() error {
 				return nil
 			}
 		case CTOPEN:
-			if len(ct.Blob) > 6 && len(ct.Opt) > 0 {
+			if len(ct.Blob) > 6 { //&& len(ct.Opt) > 0 {
 				return nil
 			}
 		case CTADD:
@@ -46,7 +46,7 @@ func (ct *ACCtMessage) validate() error {
 		} // end of switch..
 	} // end of if...
 
-	acutl.DebugLog.Printf("RET [%p] Validate(%d) -> [Error: Invalid KX message]\n", ct, ct.Type)
+	acutl.DebugLog.Printf("RET [%p] Validate(%d) -> [Error: Invalid CT message]\n", ct, ct.Type)
 	return fmt.Errorf("Invalid KX[%d] message!\n", ct.Type)
 }
 
@@ -171,7 +171,7 @@ func (ct *ACCtMessage) HandlerCTOPEN() (msgReply []byte, err error) {
 			Errno: -1,
 			Blob:  []byte(err.Error()),
 		})
-		acutl.DebugLog.Printf("RET [%p] HandlerCTSEAL([%d/%s/%s] <%s> %04s) -> [Error: %s]\n",
+		acutl.DebugLog.Printf("RET [%p] HandlerCTOPEN([%d/%s/%s] <%s> %04s) -> [Error: %s]\n",
 			ct,
 			ct.Type,
 			ct.Server,
@@ -337,7 +337,7 @@ func HandleCTMsg(msg []byte) (msgReply []byte, err error) {
 	// let's unmarshall the message first
 	err = json.Unmarshal(msg, req)
 	if err != nil {
-		acutl.DebugLog.Printf("RET HandlerCtMsg(%s) -> [Error: %s]\n", msg, err.Error())
+		acutl.DebugLog.Printf("RET HandlerCTMsg(%s) -> [Error: %s]\n", msg, err.Error())
 		msgReply, _ = json.Marshal(&ACCtReply{
 			Type:  R_CTERR,
 			Bada:  false,

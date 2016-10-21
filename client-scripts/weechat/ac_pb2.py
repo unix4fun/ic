@@ -18,6 +18,7 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='ac.proto',
   package='acpb',
+  syntax='proto2',
   serialized_pb=_b('\n\x08\x61\x63.proto\x12\x04\x61\x63pb\"\xd6\x01\n\x19\x61\x63PublicKeyMessageRequest\x12<\n\x04type\x18\x01 \x02(\x0e\x32..acpb.acPublicKeyMessageRequest.acPKReqMsgType\x12\x0c\n\x04nick\x18\x02 \x01(\t\x12\x0c\n\x04host\x18\x04 \x01(\t\x12\x0e\n\x06server\x18\x05 \x02(\t\x12\x0c\n\x04\x62lob\x18\x03 \x01(\x0c\"A\n\x0e\x61\x63PKReqMsgType\x12\n\n\x06PK_GEN\x10\n\x12\n\n\x06PK_ADD\x10\x0b\x12\x0b\n\x07PK_LIST\x10\x0c\x12\n\n\x06PK_DEL\x10\r\"y\n\x0b\x61\x63PublicKey\x12\x0c\n\x04nick\x18\x01 \x02(\t\x12\n\n\x02\x66p\x18\x02 \x02(\x0c\x12\x11\n\ttimestamp\x18\x03 \x02(\x03\x12\x0e\n\x06pubkey\x18\x04 \x02(\t\x12\x0f\n\x07haspriv\x18\x05 \x02(\x08\x12\x0c\n\x04host\x18\x06 \x01(\t\x12\x0e\n\x06server\x18\x07 \x01(\t\"\x89\x02\n\x1a\x61\x63PublicKeyMessageResponse\x12>\n\x04type\x18\x01 \x02(\x0e\x32\x30.acpb.acPublicKeyMessageResponse.acPKRespMsgType\x12\x0c\n\x04\x62\x61\x64\x61\x18\x02 \x02(\x08\x12\x12\n\nerror_code\x18\x03 \x01(\x11\x12\x0c\n\x04\x62lob\x18\x04 \x01(\x0c\x12&\n\x0bpublic_keys\x18\x05 \x03(\x0b\x32\x11.acpb.acPublicKey\"S\n\x0f\x61\x63PKRespMsgType\x12\x0b\n\x07PKR_GEN\x10\x00\x12\x0b\n\x07PKR_ADD\x10\x01\x12\x0c\n\x08PKR_LIST\x10\x02\x12\x0b\n\x07PKR_DEL\x10\x03\x12\x0b\n\x07PKR_ERR\x10\x04\"\xdc\x01\n\x1b\x61\x63KeyExchangeMessageRequest\x12>\n\x04type\x18\x01 \x02(\x0e\x32\x30.acpb.acKeyExchangeMessageRequest.acKXReqMsgType\x12\x0e\n\x06mynick\x18\x02 \x02(\t\x12\x10\n\x08peernick\x18\x03 \x02(\t\x12\x0f\n\x07\x63hannel\x18\x04 \x02(\t\x12\x0e\n\x06server\x18\x05 \x02(\t\x12\x0c\n\x04\x62lob\x18\x06 \x01(\x0c\",\n\x0e\x61\x63KXReqMsgType\x12\x0b\n\x07KX_PACK\x10\x14\x12\r\n\tKX_UNPACK\x10\x15\"\xdd\x01\n\x1c\x61\x63KeyExchangeMessageResponse\x12@\n\x04type\x18\x01 \x02(\x0e\x32\x32.acpb.acKeyExchangeMessageResponse.acKXRespMsgType\x12\x0c\n\x04\x62\x61\x64\x61\x18\x02 \x02(\x08\x12\x12\n\nerror_code\x18\x06 \x02(\x11\x12\x0c\n\x04\x62lob\x18\x05 \x01(\x0c\x12\r\n\x05nonce\x18\x07 \x01(\r\"<\n\x0f\x61\x63KXRespMsgType\x12\x0c\n\x08KXR_PACK\x10\x16\x12\x0e\n\nKXR_UNPACK\x10\x17\x12\x0b\n\x07KXR_ERR\x10\x18\"\xdd\x01\n\x1a\x61\x63\x43ipherTextMessageRequest\x12=\n\x04type\x18\x01 \x02(\x0e\x32/.acpb.acCipherTextMessageRequest.acCTReqMsgType\x12\x0c\n\x04nick\x18\x02 \x02(\t\x12\x0f\n\x07\x63hannel\x18\x03 \x02(\t\x12\x0e\n\x06server\x18\x04 \x02(\t\x12\x0c\n\x04\x62lob\x18\x05 \x02(\x0c\x12\x0b\n\x03opt\x18\x06 \x01(\t\"6\n\x0e\x61\x63\x43TReqMsgType\x12\x0b\n\x07\x43T_SEAL\x10\x1e\x12\x0b\n\x07\x43T_OPEN\x10\x1f\x12\n\n\x06\x43T_ADD\x10 \"\xe6\x01\n\x1b\x61\x63\x43ipherTextMessageResponse\x12?\n\x04type\x18\x01 \x02(\x0e\x32\x31.acpb.acCipherTextMessageResponse.acCTRespMsgType\x12\x0c\n\x04\x62\x61\x64\x61\x18\x02 \x02(\x08\x12\x0c\n\x04\x62lob\x18\x05 \x03(\x0c\x12\x12\n\nerror_code\x18\x06 \x01(\x11\x12\r\n\x05nonce\x18\x07 \x01(\r\"G\n\x0f\x61\x63\x43TRespMsgType\x12\x0c\n\x08\x43TR_SEAL\x10 \x12\x0c\n\x08\x43TR_OPEN\x10!\x12\x0b\n\x07\x43TR_ADD\x10\"\x12\x0b\n\x07\x43TR_ERR\x10#\"\xcf\x01\n\x17\x61\x63\x43ontrolMessageRequest\x12;\n\x04type\x18\x01 \x02(\x0e\x32-.acpb.acControlMessageRequest.acCTLReqMsgType\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x11\n\ttimestamp\x18\x03 \x01(\x03\"R\n\x0f\x61\x63\x43TLReqMsgType\x12\x0c\n\x08\x43TL_PING\x10(\x12\x0f\n\x0b\x43TL_SAVECTX\x10)\x12\x0f\n\x0b\x43TL_LOADCTX\x10*\x12\x0f\n\x0b\x43TL_VERSION\x10+\"\xe6\x01\n\x18\x61\x63\x43ontrolMessageResponse\x12>\n\x04type\x18\x01 \x02(\x0e\x32\x30.acpb.acControlMessageResponse.acCTLRRespMsgType\x12\x0c\n\x04\x62\x61\x64\x61\x18\x02 \x02(\x08\x12\x12\n\nerror_code\x18\x03 \x01(\x11\x12\x11\n\ttimestamp\x18\x04 \x01(\x03\"U\n\x11\x61\x63\x43TLRRespMsgType\x12\r\n\tCTLR_PONG\x10\x32\x12\x10\n\x0c\x43TLR_SAVECTX\x10\x33\x12\x10\n\x0c\x43TLR_LOADCTX\x10\x34\x12\r\n\tCTLR_QUIT\x10\x35\"\xb8\x01\n\x13\x41rseneCryptoMessage\x12\x35\n\x04type\x18( \x02(\x0e\x32\'.acpb.ArseneCryptoMessage.acMessageType\x12\x0c\n\x04\x62lob\x18) \x02(\x0c\"\\\n\racMessageType\x12\t\n\x05\x41\x43_PK\x10\x14\x12\n\n\x06\x41\x43_KEX\x10\x15\x12\r\n\tAC_CRYPTO\x10\x16\x12\n\n\x06\x41\x43_CTL\x10\x17\x12\x0b\n\x07\x41\x43_QUIT\x10\x18\x12\x0c\n\x08\x41\x43_ERROR\x10\x19\x42\x0bH\x03\x80\x01\x00\x88\x01\x00\x90\x01\x00')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
@@ -342,6 +343,7 @@ _ACPUBLICKEYMESSAGEREQUEST = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -414,6 +416,7 @@ _ACPUBLICKEY = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -473,6 +476,7 @@ _ACPUBLICKEYMESSAGERESPONSE = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -539,6 +543,7 @@ _ACKEYEXCHANGEMESSAGEREQUEST = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -598,6 +603,7 @@ _ACKEYEXCHANGEMESSAGERESPONSE = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -664,6 +670,7 @@ _ACCIPHERTEXTMESSAGEREQUEST = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -723,6 +730,7 @@ _ACCIPHERTEXTMESSAGERESPONSE = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -768,6 +776,7 @@ _ACCONTROLMESSAGEREQUEST = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -820,6 +829,7 @@ _ACCONTROLMESSAGERESPONSE = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -858,6 +868,7 @@ _ARSENECRYPTOMESSAGE = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],

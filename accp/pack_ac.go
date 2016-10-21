@@ -3,12 +3,12 @@ package accp
 
 import (
 	"encoding/base64"
-	"fmt"
+	//"fmt"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ac/ackp"
 	"github.com/unix4fun/ac/acutl"
 	"golang.org/x/crypto/nacl/secretbox"
-	"os"
+	//"os"
 	//	"bytes"
 	//	"compress/zlib"
 	//	"encoding/binary"
@@ -16,11 +16,11 @@ import (
 	//	"io"
 )
 
-func packMessageAC(hdr *uint32, nonce uint32, blob *[]byte) (out []byte, err error) {
+func packMessageAC(hdr uint32, nonce uint32, blob *[]byte) (out []byte, err error) {
 
 	acOut := &ACPackedMessage{}
 	acOut.Header = hdr
-	acOut.Nonce = proto.Uint32(nonce)
+	acOut.Nonce = nonce
 	acOut.Ciphertext = *blob
 	//acOut.Options = proto.Uint32(10034)
 
@@ -46,14 +46,14 @@ func unpackMessageAC(in []byte) (mNonce uint32, myHdr, ciphertext []byte, err er
 		return 0, nil, nil, err
 	}
 
-	myHdr, err = CheckHeader([]byte(msgHdrAC), acIn.GetHeader())
+	myHdr, err = CheckHeader([]byte(msgHdrAC), acIn.Header)
 	if err != nil {
 		return 0, nil, nil, err
 	}
 
 	//XXX TODO more meaningful updates from here...
 	//fmt.Printf("Nonce: %d(%08x)\n", acIn.GetNonce(), acIn.GetNonce())
-	return acIn.GetNonce(), myHdr, acIn.GetCiphertext(), nil
+	return acIn.Nonce, myHdr, acIn.Ciphertext, nil
 }
 
 // A very pragmatic approach to protobuf encoding it's roughly true for most cases.
@@ -134,7 +134,7 @@ func CreateACMessageNACL(context *ackp.SecretKey, rnd, msg, myNick []byte) (out 
 	*/
 
 	// XXX error checking
-	out, err = packMessageAC(&intHdr, context.GetNonce(), &myCipher)
+	out, err = packMessageAC(intHdr, context.GetNonce(), &myCipher)
 
 	//fmt.Fprintf(os.Stderr, "NACL PB == AC MSG OUT[%d]: %s\n", len(out), out)
 	//context.nonce++
@@ -144,7 +144,7 @@ func CreateACMessageNACL(context *ackp.SecretKey, rnd, msg, myNick []byte) (out 
 }
 
 func OpenACMessageNACL(context *ackp.SecretKey, rnd, cmsg, peerNick, myNick []byte) (out []byte, err error) {
-	fmt.Fprintf(os.Stderr, "OpenACMessageNACL()\n")
+	//fmt.Fprintf(os.Stderr, "OpenACMessageNACL()\n")
 	b64, err := acutl.B64DecodeData(cmsg)
 	if err != nil {
 		return nil, &acutl.AcError{Value: -1, Msg: "OpenACMessageNACL(): ", Err: err}
@@ -160,7 +160,7 @@ func OpenACMessageNACL(context *ackp.SecretKey, rnd, cmsg, peerNick, myNick []by
 	//
 	ac_bob := context.GetBob()
 	ok_bob, _ := IsValidChannelName(ac_bob)
-	fmt.Fprintf(os.Stderr, "[+] OpenACMessage: is %s a valid channel: %t\n", ac_bob, ok_bob)
+	//fmt.Fprintf(os.Stderr, "[+] OpenACMessage: is %s a valid channel: %t\n", ac_bob, ok_bob)
 	if ok_bob == false && len(myNick) > 0 {
 		ac_bob = myNick
 	}

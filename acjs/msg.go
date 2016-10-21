@@ -211,27 +211,35 @@ func HandleQuitMsg(msg []byte) (msgReply []byte, err error) {
 }
 
 func HandleStdin() (err error) {
+	acutl.DebugLog.Printf("CALL HandleStdin()\n")
+
 	buf := make([]byte, 4096)
 	for {
 		n, err := os.Stdin.Read(buf[0:])
 		if err != nil {
+			acutl.DebugLog.Printf("RET HandleStdin(): [Error: %s]\n", err.Error())
 			return err
 		}
 		// TODO:
 		// NewACComMessage()
 
-		//fmt.Fprintf(os.Stderr, "STDIN READ: %d bytes\n", n)
 		msgReply, acErr := HandleACComMsg(buf[:n])
-		//fmt.Printf("PROUTPROUT: %s\n", msgReply)
+		// XXX seems like a useless condition here.. review and fix..
 		if acErr != nil {
 			//fmt.Println(acErr)
 			if msgReply != nil {
 				os.Stdout.Write(msgReply)
+				// TODO to remove...
+				fmt.Fprintf(os.Stderr, "\n")
 			}
+			acutl.DebugLog.Printf("RET HandleStdin(): [Error: %s]\n", acErr.Error())
 			return acErr
 		}
 
 		os.Stdout.Write(msgReply)
+		// TODO to remove...
+		fmt.Fprintf(os.Stderr, "\n")
+		//		acutl.DebugLog.Printf("2143241\n")
 		return nil
 	} /* end of for() */
 	// XXX need to return Error.New() really...

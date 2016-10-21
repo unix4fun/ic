@@ -10,7 +10,7 @@
 
 SCRIPT_NAME    = 'ac-weechat'
 SCRIPT_AUTHOR  = 'eau <eau-code@unix4fun.net>'
-SCRIPT_VERSION = '20151031'
+SCRIPT_VERSION = '20161018'
 SCRIPT_LICENSE = 'BSD'
 SCRIPT_DESC    = 'AC script'
 

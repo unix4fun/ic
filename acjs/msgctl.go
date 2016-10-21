@@ -9,7 +9,7 @@ import (
 
 type ACClMessage struct {
 	Type    int    `json:"type"`
-	Channel string `json:"host"`
+	Channel string `json:"channel"`
 	Server  string `json:"server"`
 	Blob    []byte `json:"blob"`
 }
@@ -39,7 +39,7 @@ func (cl *ACClMessage) validate() error {
 
 	} // end of switch..
 
-	acutl.DebugLog.Printf("RET [%p] Validate(%d) -> [Error: Invalid KX message]\n", cl, cl.Type)
+	acutl.DebugLog.Printf("RET [%p] Validate(%d) -> [Error: Invalid CL message]\n", cl, cl.Type)
 	return fmt.Errorf("Invalid CL[%d] message!\n", cl.Type)
 }
 

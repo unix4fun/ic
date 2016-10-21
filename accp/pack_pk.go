@@ -20,7 +20,7 @@ import (
 func packMessagePK(hdr uint32, blob []byte) (out []byte, err error) {
 
 	acOut := &ACPackedMessage{}
-	acOut.Header = &hdr
+	acOut.Header = hdr
 	//acOut.Nonce = proto.Uint32(*nonce)
 	//acOut.Dst = dst
 	acOut.Ciphertext = blob
@@ -49,7 +49,7 @@ func unpackMessagePK(in []byte) (ciphertext []byte, err error) {
 		return nil, err
 	}
 
-	_, err = CheckHeader([]byte(msgHdrPK), acIn.GetHeader())
+	_, err = CheckHeader([]byte(msgHdrPK), acIn.Header)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func unpackMessagePK(in []byte) (ciphertext []byte, err error) {
 	//XXX TODO more meaningful updates from here...
 	//fmt.Printf("Nonce: %d(%08x)\n", acIn.GetNonce(), acIn.GetNonce())
 	//return acIn.GetNonce(), myHdr, acIn.GetDst(), acIn.GetCiphertext(), nil
-	ciphertext = acIn.GetCiphertext()
+	ciphertext = acIn.Ciphertext
 	return ciphertext, nil
 }
 
