@@ -245,14 +245,3 @@ func HandleStdin() (err error) {
 	// XXX need to return Error.New() really...
 	return nil
 }
-
-/*
-func main() {
-	fmt.Printf("prout proutprout\n")
-	for k, v := range MsgType {
-		fmt.Printf("[%d]:%s\n", k, v)
-	}
-
-	HandleStdin()
-}
-*/

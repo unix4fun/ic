@@ -23,22 +23,35 @@ msgTypeEnum = Enum(['none', \
         'CLLOAD', 'R_CLLOAD', 'CLSAVE', 'R_CLSAVE', 'CLIAC', 'R_CLIAC', 'R_CLERR' \
         ])
 
-class AcJSCom(object):
+class acJSCom(object):
     # depending on the type of data  we might need more space
     BUF_SMALL   = 2048
     BUF_LARGE   = 65536
     BUF_XXL     = 1048576
 
+    # internal class variables
+    # the subprocess class.
+    acProc = None
+    acBinary = None
+    acDebugFile = None
+
     def __init__(self, acBin, acDbg):
         self.acBinary = [ acBin, "-debug=true" ]
-        self.acDebugFile = acDbg
-        self.acDebugFd = open(acDbg, 'w')
-
+        if self.acDebugFile is None:
+            self.acDebugFile = acDbg
+        if acDebugFd is None:
+            self.acDebugFd = open(acDbg, 'w')
+#        try:
+#            self.acDebugFd = open(acDbg, 'w')
+#        except Exception as e:
+#            print "cannot init IAC communication: %s." % str(e)
+#
     def acStartDaemon(self):
-        # XXX TODO: handle the debugging channel correctly
-        self.acProc = subprocess.Popen(self.acBinary, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=self.acDebugFd)
-        flags = fcntl.fcntl(self.acProc.stdout, fcntl.F_GETFL) # get current p.stdout flags
-        fcntl.fcntl(self.acProc.stdout, fcntl.F_SETFL, flags | os.O_NONBLOCK) # add non blocking
+        # XXX TODO: handle the debugging channel correctly, handle exceptions!
+        if self.acProc is None:
+            self.acProc = subprocess.Popen(self.acBinary, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=self.acDebugFd)
+            flags = fcntl.fcntl(self.acProc.stdout, fcntl.F_GETFL) # get current p.stdout flags
+            fcntl.fcntl(self.acProc.stdout, fcntl.F_SETFL, flags | os.O_NONBLOCK) # add non blocking
         return None
 
     def acStopDaemon(self):
@@ -48,13 +61,34 @@ class AcJSCom(object):
         #self.acProc.returncode
         # XXX TODO that or terminate, let's go with terminate first..
         #acblob = self.acMsg(ACMSG_TYPE_QUIT, 0, None)
-        #ac_pkr, err = self.acRequest(acblob, 0, BUF_LARGE)
         ac_quit, err = self.acRequest(self.ACMSG_TYPE_QUIT, 0, None, self.BUF_LARGE)
         if ac_quit and ac_quit.type == ac_pb2.ArseneCryptoMessage.AC_QUIT:
             print "QUIT BLOB: %s\n" % ac_quit.blob
         else:
             print "QUIT ERROR!"
         return None
+
+    # return [ Blob|None, Error|None ]
+    def acRequest(self, reqblob, actype, bufsize):
+        # XXX TODO retransmit mechanism..
+        self.acProc.stdin.write(reqblob)
+        # XXX TODO: this is a hack need a proper select loop here.. :)
+        # also let's poll stderr to get errors and display it in a status window..
+        #time.sleep(0.1)
+        rlist, wlist, xlist = select.select([self.acProc.stdout], [], [], 1)
+        if (rlist):
+            rcvBlob = self.acProc.stdout.read(bufsize)
+        else:
+            # XXX TODO: need to message the process back
+            print "PROCESS COMMUNICATION TIMEOUT!!!"
+            print "RLIST"
+            print rlist
+            print "WLIST"
+            print wlist
+            print "XLIST"
+            print xlist
+            return [ None, "No Read List Polled" ]
+
 
 class acMessage(object):
     msgtype = 0
@@ -152,7 +186,7 @@ class ctMessage(acMessage):
         return self.pack()
 
 
-class clMessage(acMessage):
+class clMessage(acMessage, acJSCom):
     serv = ""
     chan = ""
     clDict = {}
