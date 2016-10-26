@@ -1,6 +1,22 @@
 #!/usr/bin/env python
 import json
 import base64
+import subprocess
+import fcntl
+#import sys
+import os
+#import string
+#import ast
+#import datetime
+import select
+#import socket
+#import re
+import base64
+#import cgi
+#import time
+#import datetime
+#import binascii
+#import random
 
 class Enum(tuple): 
     __getattr__ = tuple.index
@@ -39,7 +55,6 @@ class acJSCom(object):
         self.acBinary = [ acBin, "-debug=true" ]
         if self.acDebugFile is None:
             self.acDebugFile = acDbg
-        if acDebugFd is None:
             self.acDebugFd = open(acDbg, 'w')
 #        try:
 #            self.acDebugFd = open(acDbg, 'w')
@@ -69,7 +84,7 @@ class acJSCom(object):
         return None
 
     # return [ Blob|None, Error|None ]
-    def acRequest(self, reqblob, actype, bufsize):
+    def acRequest(self, reqblob, bufsize):
         # XXX TODO retransmit mechanism..
         self.acProc.stdin.write(reqblob)
         # XXX TODO: this is a hack need a proper select loop here.. :)
@@ -88,12 +103,14 @@ class acJSCom(object):
             print "XLIST"
             print xlist
             return [ None, "No Read List Polled" ]
+        return [ rcvBlob, None ]
 
 
 class acMessage(object):
     msgtype = 0
     msgdata = ""
     acDict = {}
+    replyDict = {}
 
     # depending on the type of data  we might need more space
     BUF_SMALL   = 2048
@@ -101,15 +118,76 @@ class acMessage(object):
     BUF_XXL     = 1048576
 
     def __init__(self, msgtype):
+        self.acDict = {}
+        self.replyDict = {}
         if msgtype in msgTypeEnum:
             self.msgtype = getattr(msgTypeEnum, msgtype)
             self.acDict['type'] = self.msgtype
             self.acDict['payload'] = ""
+
     def pack(self, payload):
         self.acDict['payload'] = payload
         return json.dumps(self.acDict)
     # XXX TODO: add the send()/recv() function to the socket stdin/stdout etc...
-        
+
+    def unpack(self, blob):
+        self.replyDict = json.loads(blob)
+        if self.replyDict["type"] == self.msgtype or self.replyDict["type"] == getattr(msgTypeEnum, 'ERMSG'):
+            print "REPLY REPLY #0 (no base64):"
+            print self.replyDict["payload"]
+            return self.replyDict["payload"]
+#            print "REPLY REPLY #1 (no base64):"
+#            return base64.b64decode(replyDict["payload"])
+        return ""
+
+
+class pkMessage(acMessage):
+    serv = ""
+    blob = ""
+    pkDict = {}
+    def __init__(self, server):
+        acMessage.__init__(self, 'PKMSG')
+        self.serv = server
+        self.pkDict = {}
+
+    def pack(self):
+        # encode the payload before putting in the enveloppe
+        pkDictDump = base64.b64encode(json.dumps(self.pkDict))
+        # calling parent pack() to build the enveloppe
+        return super(pkMessage, self).pack(pkDictDump)
+
+    def pkgen(self, nick, host):
+        self.pkDict['type'] = getattr(msgTypeEnum, 'PKGEN')
+        self.pkDict['server'] = self.serv
+        self.pkDict['nick'] = nick
+        self.pkDict['host'] = host
+        return self.pack()
+
+    def pkadd(self, nick, host, blob):
+        self.pkDict['type'] = getattr(msgTypeEnum, 'PKADD')
+        self.pkDict['server'] = self.serv
+        self.pkDict['nick'] = nick
+        self.pkDict['host'] = host
+        self.pkDict['blob'] = base64.b64encode(blob)
+        return self.pack()
+
+    def pklist(self, nick):
+        self.pkDict['type'] = getattr(msgTypeEnum, 'PKLIST')
+        self.pkDict['server'] = self.serv
+        self.pkDict['nick'] = nick
+        return self.pack()
+
+    def pkdel(self, nick):
+        # if nick is empty don't do anything...
+        self.pkDict['type'] = getattr(msgTypeEnum, 'PKDEL')
+        self.pkDict['server'] = self.serv
+        self.pkDict['nick'] = nick
+        return self.pack()
+
+
+
+
+
 class kxMessage(acMessage):
     serv = ""
     chan = ""
@@ -118,6 +196,7 @@ class kxMessage(acMessage):
         acMessage.__init__(self, 'KXMSG')
         self.serv = server
         self.chan = channel
+        self.kxDict = {}
 
     def pack(self):
         # encode the payload before putting in the enveloppe
@@ -141,7 +220,6 @@ class kxMessage(acMessage):
         self.kxDict['peer'] = peernick
         self.kxDict['blob'] = blob
         return self.pack()
-
 
 class ctMessage(acMessage):
     serv = ""
@@ -186,21 +264,29 @@ class ctMessage(acMessage):
         return self.pack()
 
 
-class clMessage(acMessage, acJSCom):
+class clMessage(acMessage):
+    com = None
     serv = ""
     chan = ""
     clDict = {}
-    def __init__(self, server, channel):
+    def __init__(self, com, server, channel):
         acMessage.__init__(self, 'CLMSG')
         self.serv = server
         self.chan = channel
         self.clDict = {}
+        self.com = com
 
     def pack(self):
         # encode the payload before putting in the enveloppe
         clDictDump = base64.b64encode(json.dumps(self.clDict))
         # calling parent pack() to build the enveloppe
         return super(clMessage, self).pack(clDictDump)
+
+    def unpack(self, blob):
+        # decode the enveloppe first
+        payload = super(clMessage, self).unpack(blob)
+        clReplyDict = base64.b64decode(payload)
+        return clReplyDict
 
     def clload(self, p):
         self.clDict['type'] = getattr(msgTypeEnum, 'CLLOAD')
@@ -216,54 +302,34 @@ class clMessage(acMessage, acJSCom):
         self.clDict['blob'] = base64.b64encode(p)
         return self.pack()
 
-#    is AC?
+    #    is AC?
     def cliac(self):
         self.clDict['type'] = getattr(msgTypeEnum, 'CLIAC')
         self.clDict['server'] = self.serv
         self.clDict['channel'] = self.chan
-        return self.pack()
+        packed = self.pack()
+        envp = self.com.acRequest(packed, self.com.BUF_LARGE)
+        # XXX test ERROR first!!
+        return self.unpack(envp[0])
+#        return json.loads(envp[0])["payload"]
 
 
-class pkMessage(acMessage):
+
+class qtMessage(acMessage):
     serv = ""
-    blob = ""
-    pkDict = {}
-    def __init__(self, server):
-        acMessage.__init__(self, 'PKMSG')
-        self.serv = server
+    chan = ""
+    qtDict = {}
+    def __init__(self):
+        acMessage.__init__(self, 'QTMSG')
+        self.qtDict = {}
 
     def pack(self):
         # encode the payload before putting in the enveloppe
-        pkDictDump = base64.b64encode(json.dumps(self.pkDict))
+        qtDictDump = base64.b64encode(json.dumps(self.qtDict))
         # calling parent pack() to build the enveloppe
-        return super(pkMessage, self).pack(pkDictDump)
+        return super(qtMessage, self).pack(qtDictDump)
 
-    def pkgen(self, nick, host):
-        self.pkDict['type'] = getattr(msgTypeEnum, 'PKGEN')
-        self.pkDict['server'] = self.serv
-        self.pkDict['nick'] = nick
-        self.pkDict['host'] = host
-        return self.pack()
-
-    def pkadd(self, nick, host, blob):
-        self.pkDict['type'] = getattr(msgTypeEnum, 'PKADD')
-        self.pkDict['server'] = self.serv
-        self.pkDict['nick'] = nick
-        self.pkDict['host'] = host
-        self.pkDict['blob'] = base64.b64encode(blob)
-        return self.pack()
-
-    def pklist(self, nick):
-        self.pkDict['type'] = getattr(msgTypeEnum, 'PKLIST')
-        self.pkDict['server'] = self.serv
-        self.pkDict['nick'] = nick
-        return self.pack()
-
-    def pkdel(self, nick):
-        # if nick is empty don't do anything...
-        self.pkDict['type'] = getattr(msgTypeEnum, 'PKDEL')
-        self.pkDict['server'] = self.serv
-        self.pkDict['nick'] = nick
+    def quit(self):
         return self.pack()
 
 
@@ -327,9 +393,22 @@ if __name__ == "__main__":
     print ctu
 
     print "-----"
-    print "CLIAC Message:"
-    cl = clMessage("freenode", "#ermites").cliac()
-    print cl
+    print "QTMSG Message:"
+    qt = qtMessage().quit()
+    print qt
+#    print "-----"
+#    print "CLIAC Message:"
+#    cl = clMessage("freenode", "#ermites").cliac()
+#    print cl
+
+
+    #print "-----"
+    #jsCom = acJSCom("/Users/eau/dev/go/src/github.com/unix4fun/ac/ac", "./debuglocal")
+    #jsCom.acStartDaemon()
+#
+    #print "CLIAC Message:"
+    #cl = clMessage(jsCom, "freenode", "#ermites").cliac()
+    #print cl
 
 #    yu = json.dumps(msg.__dict__)
 #    print yu

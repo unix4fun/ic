@@ -20,10 +20,12 @@ type AcError struct {
 	Err   error  // called layer error
 }
 
-var DebugLog *log.Logger
+var DebugLog *log.Logger = nil
 
 func InitDebugLog(out io.Writer) {
-	DebugLog = log.New(out, "<acDebug>:", log.Lmicroseconds|log.Lshortfile|log.LstdFlags)
+	if DebugLog == nil {
+		DebugLog = log.New(out, "<acDebug>:", log.Lmicroseconds|log.Lshortfile|log.LstdFlags)
+	}
 }
 
 func (ae *AcError) Error() string {

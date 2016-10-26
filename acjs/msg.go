@@ -8,6 +8,7 @@ import (
 	//	"errors"
 	//	"github.com/golang/protobuf/proto" // protobuf is now here.
 	//	"github.com/unix4fun/ac/ackp"
+	"github.com/unix4fun/ac/ackp"
 )
 
 //var ACmap ackp.PSKMap = ackp.ACmap
@@ -206,6 +207,8 @@ func HandleACComMsg(msg []byte) (msgReply []byte, err error) {
 //
 func HandleQuitMsg(msg []byte) (msgReply []byte, err error) {
 	acutl.DebugLog.Printf("CALL HandleQTMsg(msg[%d]:[%s])\n", len(msg), msg)
+	ackp.ACrun = false
+	// TODO: send acknowledgment with the exact same message type.
 	acutl.DebugLog.Printf("RET HandleQTMsg(msg[%d]:[%s]) -> [reply[%d]: %s]\n", len(msg), msg, len(msgReply), msgReply)
 	return
 }
@@ -214,34 +217,33 @@ func HandleStdin() (err error) {
 	acutl.DebugLog.Printf("CALL HandleStdin()\n")
 
 	buf := make([]byte, 4096)
-	for {
-		n, err := os.Stdin.Read(buf[0:])
-		if err != nil {
-			acutl.DebugLog.Printf("RET HandleStdin(): [Error: %s]\n", err.Error())
-			return err
-		}
-		// TODO:
-		// NewACComMessage()
+	//	for {
+	n, err := os.Stdin.Read(buf[0:])
+	if err != nil {
+		acutl.DebugLog.Printf("RET HandleStdin(): [Error: %s]\n", err.Error())
+		return err
+	}
+	// TODO:
+	// NewACComMessage()
 
-		msgReply, acErr := HandleACComMsg(buf[:n])
-		// XXX seems like a useless condition here.. review and fix..
-		if acErr != nil {
-			//fmt.Println(acErr)
-			if msgReply != nil {
-				os.Stdout.Write(msgReply)
-				// TODO to remove...
-				fmt.Fprintf(os.Stderr, "\n")
-			}
-			acutl.DebugLog.Printf("RET HandleStdin(): [Error: %s]\n", acErr.Error())
-			return acErr
+	msgReply, acErr := HandleACComMsg(buf[:n])
+	// XXX seems like a useless condition here.. review and fix..
+	if acErr != nil {
+		//fmt.Println(acErr)
+		if msgReply != nil {
+			os.Stdout.Write(msgReply)
+			// TODO to remove...
+			fmt.Fprintf(os.Stderr, "\n")
 		}
+		acutl.DebugLog.Printf("RET HandleStdin(): [Error: %s]\n", acErr.Error())
+		return acErr
+	}
 
-		os.Stdout.Write(msgReply)
-		// TODO to remove...
-		fmt.Fprintf(os.Stderr, "\n")
-		//		acutl.DebugLog.Printf("2143241\n")
-		return nil
-	} /* end of for() */
+	os.Stdout.Write(msgReply)
+	// TODO to remove...
+	fmt.Fprintf(os.Stderr, "\n")
+	return nil
+	//	} /* end of for() */
 	// XXX need to return Error.New() really...
 	return nil
 }
