@@ -5,17 +5,16 @@ import subprocess
 import fcntl
 #import sys
 import os
+import binascii
 #import string
 #import ast
-#import datetime
+import datetime
 import select
 #import socket
 #import re
 import base64
 #import cgi
 #import time
-#import datetime
-#import binascii
 #import random
 
 class Enum(tuple): 
@@ -133,8 +132,8 @@ class acMessage(object):
     def unpack(self, blob):
         self.replyDict = json.loads(blob)
         if self.replyDict["type"] == self.msgtype or self.replyDict["type"] == getattr(msgTypeEnum, 'ERMSG'):
-            print "REPLY REPLY #0 (no base64):"
-            print self.replyDict["payload"]
+#            print "REPLY REPLY #0 (no base64):"
+#            print self.replyDict["payload"]
             return self.replyDict["payload"]
 #            print "REPLY REPLY #1 (no base64):"
 #            return base64.b64decode(replyDict["payload"])
@@ -142,13 +141,15 @@ class acMessage(object):
 
 
 class pkMessage(acMessage):
+    com = None
     serv = ""
     blob = ""
     pkDict = {}
-    def __init__(self, server):
+    def __init__(self, com, server):
         acMessage.__init__(self, 'PKMSG')
         self.serv = server
         self.pkDict = {}
+        self.com = com
 
     def pack(self):
         # encode the payload before putting in the enveloppe
@@ -156,12 +157,21 @@ class pkMessage(acMessage):
         # calling parent pack() to build the enveloppe
         return super(pkMessage, self).pack(pkDictDump)
 
+    def unpack(self, blob):
+        # decode the enveloppe first
+        payload = super(pkMessage, self).unpack(blob)
+        pkReplyDict = base64.b64decode(payload)
+        return json.loads(pkReplyDict)
+
     def pkgen(self, nick, host):
         self.pkDict['type'] = getattr(msgTypeEnum, 'PKGEN')
         self.pkDict['server'] = self.serv
         self.pkDict['nick'] = nick
         self.pkDict['host'] = host
-        return self.pack()
+        packed = self.pack()
+        envp = self.com.acRequest(packed, self.com.BUF_LARGE)
+        # XXX test ERROR first!!
+        return self.unpack(envp[0])
 
     def pkadd(self, nick, host, blob):
         self.pkDict['type'] = getattr(msgTypeEnum, 'PKADD')
@@ -169,34 +179,45 @@ class pkMessage(acMessage):
         self.pkDict['nick'] = nick
         self.pkDict['host'] = host
         self.pkDict['blob'] = base64.b64encode(blob)
-        return self.pack()
+        packed = self.pack()
+        envp = self.com.acRequest(packed, self.com.BUF_LARGE)
+        # XXX test ERROR first!!
+        return self.unpack(envp[0])
 
     def pklist(self, nick):
         self.pkDict['type'] = getattr(msgTypeEnum, 'PKLIST')
         self.pkDict['server'] = self.serv
         self.pkDict['nick'] = nick
-        return self.pack()
+        packed = self.pack()
+        envp = self.com.acRequest(packed, self.com.BUF_LARGE)
+        # XXX test ERROR first!!
+        rep =  self.unpack(envp[0])
+        rep['blob'] = base64.b64decode(rep['blob'])
+        rep['blob'] = json.loads(rep['blob'])
+        return rep
 
     def pkdel(self, nick):
         # if nick is empty don't do anything...
         self.pkDict['type'] = getattr(msgTypeEnum, 'PKDEL')
         self.pkDict['server'] = self.serv
         self.pkDict['nick'] = nick
-        return self.pack()
-
-
-
+        packed = self.pack()
+        envp = self.com.acRequest(packed, self.com.BUF_LARGE)
+        # XXX test ERROR first!!
+        return self.unpack(envp[0])
 
 
 class kxMessage(acMessage):
+    com = None
     serv = ""
     chan = ""
     kxDict = {}
-    def __init__(self, server, channel):
+    def __init__(self, com, server, channel):
         acMessage.__init__(self, 'KXMSG')
         self.serv = server
         self.chan = channel
         self.kxDict = {}
+        self.com = com
 
     def pack(self):
         # encode the payload before putting in the enveloppe
@@ -204,13 +225,22 @@ class kxMessage(acMessage):
         # calling parent pack() to build the enveloppe
         return super(kxMessage, self).pack(kxDictDump)
 
+    def unpack(self, blob):
+        # decode the enveloppe first
+        payload = super(kxMessage, self).unpack(blob)
+        kxReplyDict = base64.b64decode(payload)
+        return json.loads(kxReplyDict)
+
     def kxpack(self, me, peernick):
         self.kxDict['type'] = getattr(msgTypeEnum, 'KXPACK')
         self.kxDict['server'] = self.serv
         self.kxDict['channel'] = self.chan
         self.kxDict['me'] = me
         self.kxDict['peer'] = peernick
-        return self.pack()
+        packed = self.pack()
+        envp = self.com.acRequest(packed, self.com.BUF_LARGE)
+        # XXX test ERROR first!!
+        return self.unpack(envp[0])
 
     def kxunpack(self, me, peernick, blob):
         self.kxDict['type'] = getattr(msgTypeEnum, 'KXPACK')
@@ -219,23 +249,34 @@ class kxMessage(acMessage):
         self.kxDict['me'] = me
         self.kxDict['peer'] = peernick
         self.kxDict['blob'] = blob
-        return self.pack()
+        packed = self.pack()
+        envp = self.com.acRequest(packed, self.com.BUF_LARGE)
+        # XXX test ERROR first!!
+        return self.unpack(envp[0])
 
 class ctMessage(acMessage):
+    com = None
     serv = ""
     chan = ""
     ctDict = {}
-    def __init__(self, server, channel):
+    def __init__(self, com, server, channel):
         acMessage.__init__(self, 'CTMSG')
         self.serv = server
         self.chan = channel
         self.ctDict = {}
+        self.com = com
 
     def pack(self):
         # encode the payload before putting in the enveloppe
         ctDictDump = base64.b64encode(json.dumps(self.ctDict))
         # calling parent pack() to build the enveloppe
         return super(ctMessage, self).pack(ctDictDump)
+
+    def unpack(self, blob):
+        # decode the enveloppe first
+        payload = super(ctMessage, self).unpack(blob)
+        ctReplyDict = base64.b64decode(payload)
+        return ctReplyDict
 
     def ctseal(self, me, plain):
         self.ctDict['type'] = getattr(msgTypeEnum, 'CTSEAL')
@@ -244,7 +285,11 @@ class ctMessage(acMessage):
         self.ctDict['nick'] = me
         # remember when using []byte() in Go you need to base64 encode it..
         self.ctDict['blob'] = base64.b64encode(plain)
-        return self.pack()
+#        return self.pack()
+        packed = self.pack()
+        envp = self.com.acRequest(packed, self.com.BUF_LARGE)
+        # XXX test ERROR first!!
+        return self.unpack(envp[0])
 
     def ctopen(self, peer, ciphertext, opt):
         self.ctDict['type'] = getattr(msgTypeEnum, 'CTOPEN')
@@ -253,7 +298,11 @@ class ctMessage(acMessage):
         self.ctDict['nick'] = peer
         self.ctDict['blob'] = base64.b64encode(ciphertext)
         self.ctDict['opt'] = base64.b64encode(opt)
-        return self.pack()
+#        return self.pack()
+        packed = self.pack()
+        envp = self.com.acRequest(packed, self.com.BUF_LARGE)
+        # XXX test ERROR first!!
+        return self.unpack(envp[0])
 
     def ctadd(self, me, inputblob):
         self.ctDict['type'] = getattr(msgTypeEnum, 'CTADD')
@@ -261,7 +310,11 @@ class ctMessage(acMessage):
         self.ctDict['channel'] = self.chan
         self.ctDict['nick'] = me
         self.ctDict['blob'] = base64.b64encode(inputblob)
-        return self.pack()
+#        return self.pack()
+        packed = self.pack()
+        envp = self.com.acRequest(packed, self.com.BUF_LARGE)
+        # XXX test ERROR first!!
+        return self.unpack(envp[0])
 
 
 class clMessage(acMessage):
@@ -293,14 +346,20 @@ class clMessage(acMessage):
         self.clDict['server'] = self.serv
         self.clDict['channel'] = self.chan
         self.clDict['blob'] = base64.b64encode(p)
-        return self.pack()
+        packed = self.pack()
+        envp = self.com.acRequest(packed, self.com.BUF_LARGE)
+        # XXX test ERROR first!!
+        return self.unpack(envp[0])
 
     def clsave(self, p):
         self.clDict['type'] = getattr(msgTypeEnum, 'CLSAVE')
         self.clDict['server'] = self.serv
         self.clDict['channel'] = self.chan
         self.clDict['blob'] = base64.b64encode(p)
-        return self.pack()
+        packed = self.pack()
+        envp = self.com.acRequest(packed, self.com.BUF_LARGE)
+        # XXX test ERROR first!!
+        return self.unpack(envp[0])
 
     #    is AC?
     def cliac(self):
@@ -311,17 +370,18 @@ class clMessage(acMessage):
         envp = self.com.acRequest(packed, self.com.BUF_LARGE)
         # XXX test ERROR first!!
         return self.unpack(envp[0])
-#        return json.loads(envp[0])["payload"]
 
 
 
 class qtMessage(acMessage):
+    com = None
     serv = ""
     chan = ""
     qtDict = {}
-    def __init__(self):
+    def __init__(self, com):
         acMessage.__init__(self, 'QTMSG')
         self.qtDict = {}
+        self.com = com
 
     def pack(self):
         # encode the payload before putting in the enveloppe
@@ -329,86 +389,119 @@ class qtMessage(acMessage):
         # calling parent pack() to build the enveloppe
         return super(qtMessage, self).pack(qtDictDump)
 
+    def unpack(self, blob):
+        # decode the enveloppe first
+        payload = super(qtMessage, self).unpack(blob)
+        if payload is None:
+            qtReplyDict = {}
+        else:
+            qtReplyDict = base64.b64decode(payload)
+        return qtReplyDict
+
     def quit(self):
-        return self.pack()
+#        return self.pack()
+        packed = self.pack()
+        envp = self.com.acRequest(packed, self.com.BUF_LARGE)
+        # XXX test ERROR first!!
+        return self.unpack(envp[0])
 
 
 
 if __name__ == "__main__":
 #    print "MAIN CODE"
+    print "----- JSON Communication layer -----"
+    jsCom = acJSCom("/Users/eau/dev/go/src/github.com/unix4fun/ac/ac", "./debuglocal")
+    jsCom.acStartDaemon()
+
+
     # PK MESSAGES
     print "-----"
     print "PKGEN Message (spoty):"
-    pk = pkMessage("freenode").pkgen("spoty", "eau@prout.org")
+    pk = pkMessage(jsCom, "freenode").pkgen("spoty", "eau@prout.org")
+    print "TYPE: "
+    print type(pk)
+    print pk["bada"]
     print pk
+
     print "PKGEN Message (bleh):"
-    pk = pkMessage("freenode").pkgen("bleh", "eau@prout.org")
+    pk = pkMessage(jsCom, "freenode").pkgen("bleh", "eau@prout.org")
     print pk
 
     print "-----"
     print "PKADD Message:"
-    pk = pkMessage("freenode").pkadd("apeer", "eau@prout.org", "DaKT5RIaLnjaut+hZfqr07VZIkd+/zeTlLMcF0R/39i9+qVav6daPfsnS0AAAAD//wZmD7M=")
+    pk = pkMessage(jsCom, "freenode").pkadd("apeer", "eau@prout.org", "DaKT5RIaLnjaut+hZfqr07VZIkd+/zeTlLMcF0R/39i9+qVav6daPfsnS0AAAAD//wZmD7M=")
     print pk
 
     print "-----"
     print "PKLIST Message:"
     print "spoty:"
-    pk = pkMessage("freenode").pklist("spoty")
+    pk = pkMessage(jsCom, "freenode").pklist("spoty")
     print pk
     print "ALL:"
-    pk = pkMessage("freenode").pklist("")
+    pk = pkMessage(jsCom, "freenode").pklist("")
     print pk
+    print len(pk['blob'])
+    for i in pk['blob']:
+        print "bleh:"+i
+        print pk['blob'][i]
+        print pk['blob'][i]['PubFP']
+        pk['blob'][i]['PubFP'] = ''.join([chr(item) for item in pk['blob'][i]['PubFP']])
+        print binascii.hexlify(pk['blob'][i]['PubFP'])
+        print str(datetime.datetime.fromtimestamp(pk['blob'][i]['Timestamp']))
+        print type(pk['blob'][i]['PubFP'])
 
     print "-----"
     print "PKDEL Message:"
-    pk = pkMessage("freenode").pkdel("spoty")
+    pk = pkMessage(jsCom, "freenode").pkdel("spoty")
     print pk
 
     print "-----"
     # KX MESSAGES
     print "KXPACK Message:"
-    kx = kxMessage("freenode", "#ermites").kxpack("spoty", "nitro")
+    kx = kxMessage(jsCom, "freenode", "#ermites").kxpack("spoty", "nitro")
     print kx
 
     print "KXUNPACK Message:"
-    ukx = kxMessage("freenode", "#ermites").kxunpack("spoty", "nitro", "blobbleh")
+    ukx = kxMessage(jsCom, "freenode", "#ermites").kxunpack("spoty", "nitro", "blobbleh")
     print ukx
 
     print "-----"
     # ct MESSAGES
     print "CTSEAL Message (bleh):"
-    ct = ctMessage("freenode", "#ermites").ctseal("bleh", "plaintext")
+    ct = ctMessage(jsCom, "freenode", "#ermites").ctseal("bleh", "plaintext")
     print ct
 
     print "CTOPEN Message (spoty):"
-    ct = ctMessage("freenode", "#ermites").ctopen("spoty", "RFFrd2pSb1FBQm9sTS9qbTRGdWttR0xSZkxLNnNDWm9ORUNLMTZ6VGowUmQyeEszanp2T244NkVKb2toV0E9PQ==", "bleh")
+    ct = ctMessage(jsCom, "freenode", "#ermites").ctopen("spoty", "RFFrd2pSb1FBQm9sTS9qbTRGdWttR0xSZkxLNnNDWm9ORUNLMTZ6VGowUmQyeEszanp2T244NkVKb2toV0E9PQ==", "bleh")
     print ct
 
     print "CTOPEN Message (bleh):"
-    ct = ctMessage("freenode", "#ermites").ctopen("bleh", "DYswjzAaJUsCNDNSZxPraDcBG4x1kojTEZlvxbKyAaW4HLUb+UP7Ur6/nMU=", "")
+    ct = ctMessage(jsCom, "freenode", "#ermites").ctopen("bleh", "DYswjzAaJUsCNDNSZxPraDcBG4x1kojTEZlvxbKyAaW4HLUb+UP7Ur6/nMU=", "")
     print ct
 
     print "CTADD Message:"
-    ctu = ctMessage("freenode", "#ermites").ctadd("spoty", "someuuurandomkeygarbage")
+    ctu = ctMessage(jsCom, "freenode", "#ermites").ctadd("spoty", "someuuurandomkeygarbage")
     print ctu
 
-    print "-----"
-    print "QTMSG Message:"
-    qt = qtMessage().quit()
-    print qt
+    #print "-----"
+    #print "QTMSG Message:"
+    #qt = qtMessage().quit()
+    #print qt
 #    print "-----"
 #    print "CLIAC Message:"
 #    cl = clMessage("freenode", "#ermites").cliac()
 #    print cl
 
 
-    #print "-----"
-    #jsCom = acJSCom("/Users/eau/dev/go/src/github.com/unix4fun/ac/ac", "./debuglocal")
-    #jsCom.acStartDaemon()
 #
-    #print "CLIAC Message:"
-    #cl = clMessage(jsCom, "freenode", "#ermites").cliac()
-    #print cl
+    print "CLIAC Message:"
+    cl = clMessage(jsCom, "freenode", "#ermites").cliac()
+    print cl
+
+    print "QUIT Message:"
+    qt = qtMessage(jsCom).quit()
+    print qt
+
 
 #    yu = json.dumps(msg.__dict__)
 #    print yu

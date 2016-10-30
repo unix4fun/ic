@@ -16,16 +16,17 @@ import (
 // KexKey describe the internal structure stored in memory for public/private
 // key pairs owned or received from peers
 type KexKey struct {
-	Nickname string
-	Userhost string
-	Server   string
-	Pubkey   string
-	HasPriv  bool
+	Nickname  string
+	Userhost  string
+	Server    string
+	Pubkey    string
+	HasPriv   bool
 	//    Pubfp string // 32 bytes hex encoded string of the hash... XXX we will see if it's problematic later..
-	CreaTime time.Time
-	PubFP    [32]byte  // 32 bytes hash of the public key...
-	pubkey   *[32]byte // 32 bytes TODO: we need to box those info, and unbox them when necessary...
-	privkey  *[32]byte // 32 bytes TODO: we need to box those info, and unbox them when necessary...
+	Timestamp int64
+	PubFP     [32]byte  // 32 bytes hash of the public key...
+	CreaTime  time.Time
+	pubkey    *[32]byte // 32 bytes TODO: we need to box those info, and unbox them when necessary...
+	privkey   *[32]byte // 32 bytes TODO: we need to box those info, and unbox them when necessary...
 }
 
 // GetPubkey retrieve and return the public key component from the current KexKey structure.
@@ -109,6 +110,7 @@ func CreateKxKeys(nickname, userhost, server string) (mykeys *KexKey, err error)
 	mykeys.Server = server
 	mykeys.HasPriv = true
 	mykeys.CreaTime = time.Now()
+	mykeys.Timestamp = mykeys.CreaTime.Unix()
 
 	return mykeys, nil
 }

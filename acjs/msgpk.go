@@ -132,6 +132,7 @@ func (pk *ACPkMessage) HandlerPKADD() (msgReply []byte, err error) {
 	newkey.Pubkey = string(pk.Blob)
 	newkey.HasPriv = false
 	newkey.CreaTime = time.Now()
+	newkey.Timestamp = newkey.CreaTime.Unix()
 
 	pubk, err := accp.OpenPKMessageNACL([]byte(pk.Blob))
 	if err != nil {
