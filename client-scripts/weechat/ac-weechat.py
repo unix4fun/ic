@@ -431,16 +431,22 @@ def pkCmdList(data, dabuffer, args):
     gtype = weechat.buffer_get_string(dabuffer,"localvar_type")
     server = weechat.buffer_get_string(dabuffer,"localvar_server")
 
-    if args <> None and len(args) > 0:
+    pkReply = pkMessage(acwee, server).pklist("")
+
+#    if args <> None and len(args) > 0:
 #        myargs = { acwee.KEY_NICK:args, acwee.KEY_SERVER:server }
-        pkReply = pkMessage(acwee, server).pklist(args)
-    else: # XXX TODO: this is not clean...
+#        pkReply = pkMessage(acwee, server).pklist(args)
+#    else: # XXX TODO: this is not clean...
 #        myargs = { acwee.KEY_SERVER:server }
-        pkReply = pkMessage(acwee, server).pklist("")
+#        pkReply = pkMessage(acwee, server).pklist("")
 
     if len(pkReply['blob']) > 0:
-        for t in pkReply['blob']:
-            acwee.prtAcPk(dabuffer, pkReply['blob'][t])
+        if args <> None and len(args) > 0:
+            if pkReply['blob'].has_key(args) is True:
+                acwee.prtAcPk(dabuffer, pkReply['blob'][args])
+        else:
+            for t in pkReply['blob']:
+                acwee.prtAcPk(dabuffer, pkReply['blob'][t])
     else:
         acwee.pmbac(dabuffer, "NO KEYS FOUND :(")
 
@@ -1566,9 +1572,13 @@ class pkMessage(acMessage):
         envp = self.com.acRequest(packed, self.com.BUF_LARGE)
         # XXX test ERROR first!!
         rep = self.unpack(envp[0])
-        # stuff are in []byte in Go code.
-        rep['blob'] = base64.b64decode(rep['blob'])
-        rep['blob'] = json.loads(rep['blob'])
+        # stuff are in []byte in Go code, when no nicks, rep blob can be empy as the maps can be empty and is being serialized as such..
+        # i hate JSON $#@!$#!@$@
+        if rep['blob'] is not None and len(rep['blob']) > 0:
+            rep['blob'] = base64.b64decode(rep['blob'])
+            rep['blob'] = json.loads(rep['blob'])
+        else:
+            rep['blob'] = {}
         # fix the PubFP field being exported in JSON for each keys
         for key in rep['blob']:
             rep['blob'][key]['PubFP'] = ''.join([chr(item) for item in rep['blob'][key]['PubFP']])

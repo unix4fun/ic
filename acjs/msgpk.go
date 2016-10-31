@@ -186,31 +186,14 @@ func (pk *ACPkMessage) HandlerPKLIST() (msgReply []byte, err error) {
 	}
 
 	pkMap, okMap := ackp.ACmap.GetPKMap(pk.Server)
-	pkEntry, okEnt := ackp.ACmap.GetPKMapEntry(pk.Server, pk.Nick)
+	//pkEntry, okEnt := ackp.ACmap.GetPKMapEntry(pk.Server, pk.Nick)
 
 	// we have one entry for the request
-	acutl.DebugLog.Printf("ok_map: %t ok_ent: %t\n", okMap, okEnt)
-	switch {
-	case okMap == true && len(pk.Nick) == 0: // REPLY ALL KEYS
-		/*
-			for _, myKeys := range *pkMap {
-				// get the timestamp!!
-				timestamp := myKeys.CreaTime.Unix()
-				// acPublicKey
-				//fmt.Fprintf(os.Stderr, "[+] PKLIST %s!%s @ %s / priv: %t\n", myKeys.Nickname, myKeys.Userhost, myKeys.Server, myKeys.HasPriv)
-				acPubkey := &AcPublicKey{
-					Nick:      &myKeys.Nickname,
-					Pubkey:    &myKeys.Pubkey,
-					Host:      &myKeys.Userhost,
-					Server:    &myKeys.Server,
-					Haspriv:   &myKeys.HasPriv,
-					Fp:        myKeys.GetPubfp(),
-					Timestamp: &timestamp,
-				}
-				acPubkeyArray = append(acPubkeyArray, acPubkey)
-			}
-		*/
+	acutl.DebugLog.Printf("ok_map: %t\n", okMap)
+	if okMap == true {
+		acutl.DebugLog.Printf("ok_map len: %d\n", len(*pkMap))
 
+		// KISS: we always return all keys... the script will parse what it needs. :)
 		msgReplyBlob, rErr := json.Marshal(*pkMap)
 		if rErr != nil {
 			panic(rErr)
@@ -223,71 +206,8 @@ func (pk *ACPkMessage) HandlerPKLIST() (msgReply []byte, err error) {
 			Errno: 0,
 			Blob:  msgReplyBlob,
 		})
-		/*
-			acMsgResponse = &AcPublicKeyMessageResponse{
-				Type:       &responseType,
-				Bada:       proto.Bool(true),
-				PublicKeys: acPubkeyArray,
-				ErrorCode:  proto.Int32(0),
-			}
-		*/
-		acutl.DebugLog.Printf("(RET) PKLIST -> (0) ! n Keys\n")
 		return
-
-	case okMap == true && okEnt == true: // REPLY ONE KEY
-		/*
-			// get the timestamp!!
-			timestamp := pkEntry.CreaTime.Unix()
-			// acPublicKey object
-			//fmt.Fprintf(os.Stderr, "[+] PKLIST %s!%s @ %s / priv: %t\n", myKeys.Nickname, myKeys.Userhost, myKeys.Server, myKeys.HasPriv)
-			acPubkey := &AcPublicKey{
-				Nick:      &pkEntry.Nickname,
-				Pubkey:    &pkEntry.Pubkey,
-				Host:      &pkEntry.Userhost,
-				Server:    &pkEntry.Server,
-				Haspriv:   &pkEntry.HasPriv,
-				Fp:        pkEntry.GetPubfp(),
-				Timestamp: &timestamp,
-			}
-			// add that object to the array of public key..
-			acPubkeyArray = append(acPubkeyArray, acPubkey)
-			acMsgResponse = &AcPublicKeyMessageResponse{
-				Type:       &responseType,
-				Bada:       proto.Bool(true),
-				PublicKeys: acPubkeyArray,
-				ErrorCode:  proto.Int32(0),
-			}
-		*/
-
-		msgReplyBlob, rErr := json.Marshal(pkEntry)
-		if rErr != nil {
-			panic(rErr)
-		}
-
-		acutl.DebugLog.Printf("(INFO) PKLIST -> (Blob: %s) ! n Keys\n", msgReplyBlob)
-		msgReply, _ = json.Marshal(&ACPkReply{
-			Type:  R_PKLIST,
-			Bada:  true,
-			Errno: 0,
-			Blob:  msgReplyBlob,
-		})
-		acutl.DebugLog.Printf("(RET) PKLIST -> (0) ! one Key\n")
-		return //acMsgResponse, nil
-		/*
-			default: // NOTHING FOUND
-				retErr := &acutl.AcError{Value: -2, Msg: "PKLIST_Handler(): nothing found!", Err: nil}
-				msgReply, _ = json.Marshal(&ACPkReply{
-					Type:  R_PKLIST,
-					Bada:  false,
-					Errno: -2,
-					Blob:  []byte(err.Error()),
-				})
-				acutl.DebugLog.Printf("(RET[!]) PKLIST -> (-2) ! %s\n", retErr.Error())
-				return //acMsgResponse, retErr
-		*/
 	}
-
-	// all good we return the data
 	msgReply, _ = json.Marshal(&ACPkReply{
 		Type:  R_PKLIST,
 		Bada:  true,
@@ -300,6 +220,7 @@ func (pk *ACPkMessage) HandlerPKLIST() (msgReply []byte, err error) {
 
 func (pk *ACPkMessage) HandlerPKDEL() (msgReply []byte, err error) {
 	acutl.DebugLog.Printf("CALL [%p] HandlePKDEL(%d:%s/%s)\n", pk, pk.Type, pk.Server, pk.Nick)
+	delErr := 0
 
 	err = pk.validate()
 	if err != nil {
@@ -313,11 +234,17 @@ func (pk *ACPkMessage) HandlerPKDEL() (msgReply []byte, err error) {
 		return
 	}
 
+	// ahah we actually need to delete the key :)
+	delOk := ackp.ACmap.DelPKMapEntry(pk.Server, pk.Nick)
+	if delOk == false {
+		delErr = 1
+	}
+
 	// all good we return the data
 	msgReply, _ = json.Marshal(&ACPkReply{
 		Type:  R_PKDEL,
 		Bada:  true,
-		Errno: 0,
+		Errno: delErr, // return 0 if deleted successfully, return 1 if the nick was not present.
 	})
 	acutl.DebugLog.Printf("RET [%p] HandlePKDEL(%d:%s/%s) -> [reply: %s]\n", pk, pk.Type, pk.Server, pk.Nick)
 	return
