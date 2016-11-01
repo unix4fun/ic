@@ -496,20 +496,18 @@ def pkCmdDel(data, dabuffer, args):
 # we do NOTICE for public key broadcast and for kex
 #
 def pkCmdBroadcast(data, dabuffer, args):
-
     inf = ac_get_buflocalinfo(dabuffer)
     # XXX TODO: check if channel or private message and IRC
     if inf and inf.has_key(BI_TYPE) and inf.has_key(BI_NICK) and inf.has_key(BI_SERV) and inf.has_key(BI_CHAN):
 
-        # now request my key..
-        myargs = { acwee.KEY_NICK:inf[BI_NICK], acwee.KEY_SERVER:inf[BI_SERV] } 
-        ac_pkr, err = acwee.acRequest(acwee.ACMSG_TYPE_PK, acwee.ACMSG_SUBTYPE_PKLIST, myargs, acwee.BUF_LARGE)
-        if ac_pkr and ac_pkr.bada == True:
-            if len(ac_pkr.public_keys) == 1:
-                for t in ac_pkr.public_keys:
+        pkReply = pkMessage(acwee, inf[BI_SERV]).pklist("")
+        if pkReply['bada'] is True and pkReply['errno'] == 0 and len(pkReply['blob']) > 0:
+            if pkReply['blob'].has_key(inf[BI_NICK]) is True:
+                myKey = pkReply['blob'][inf[BI_NICK]]
+                if myKey['HasPriv'] is True:
                     acwee.pmbac(dabuffer, "broadcasting my key on %s", inf[BI_CHAN])
-                    weechat.command(dabuffer, "/notice %s %s %s" % (inf[BI_CHAN], acKeyPrefix, t.pubkey))
-                return weechat.WEECHAT_RC_OK
+                    weechat.command(dabuffer, "/notice %s %s %s" % (inf[BI_CHAN], acKeyPrefix, myKey['Pubkey']))
+            return weechat.WEECHAT_RC_OK
         acwee.pmbac(dabuffer, "NO KEY /pk gen first")
         return weechat.WEECHAT_RC_OK
     else:
