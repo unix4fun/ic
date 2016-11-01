@@ -402,23 +402,12 @@ def pkCmdGeneratePair(data, dabuffer, args):
 #
 
     if ( inf[BI_TYPE] == "channel" or inf[BI_TYPE] == "private" ) and len(inf[BI_NICK]) > 0:
-# using JSON
         pkReply = pkMessage(acwee, inf[BI_SERV]).pkgen(inf[BI_NICK], userhost)
         if pkReply['bada'] == True and pkReply['errno'] == 0: # XXX TODO test is it's None or error
             acwee.pmbac(dabuffer, "generated a new ECC 25519 public/private keypair ('/pk ls' to see it)")
         else:
             acwee.pmbac(dabuffer, "could not generate key (%d -> check daemon logs?)!", pkReply['errno'])
         return weechat.WEECHAT_RC_OK
-# using protobuf
-#        myargs = { acwee.KEY_NICK:inf[BI_NICK], acwee.KEY_HOST:userhost, acwee.KEY_SERVER:inf[BI_SERV], acwee.KEY_BLOB:"" }
-#        ac_pkr, err = acwee.acRequest(acwee.ACMSG_TYPE_PK, acwee.ACMSG_SUBTYPE_PKGEN, myargs, acwee.BUF_SMALL)
-#        if ac_pkr and ac_pkr.bada == True:
-#            acwee.pmbac(dabuffer, "generated a new ECC 25519 public/private keypair ('/pk ls' to see it)")
-##            acwee.pmb(dabuffer, "genkey rc: %s", str(ac_pkr.bada))
-##            acwee.pmb(dabuffer, "genkey error_code: %s",  str(ac_pkr.error_code))
-#        else:
-#            acwee.pmbac(dabuffer, "could not generate key (%d -> check daemon logs?)!", ac_pkr.error_code)
-#        return weechat.WEECHAT_RC_OK
     acwee.pmbac(dabuffer, "could not generate key you are NOT in a (connected) channel/query buffer!")
     return weechat.WEECHAT_RC_OK
 
@@ -432,14 +421,6 @@ def pkCmdList(data, dabuffer, args):
     server = weechat.buffer_get_string(dabuffer,"localvar_server")
 
     pkReply = pkMessage(acwee, server).pklist("")
-
-#    if args <> None and len(args) > 0:
-#        myargs = { acwee.KEY_NICK:args, acwee.KEY_SERVER:server }
-#        pkReply = pkMessage(acwee, server).pklist(args)
-#    else: # XXX TODO: this is not clean...
-#        myargs = { acwee.KEY_SERVER:server }
-#        pkReply = pkMessage(acwee, server).pklist("")
-
     if len(pkReply['blob']) > 0:
         if args <> None and len(args) > 0:
             if pkReply['blob'].has_key(args) is True:
@@ -452,17 +433,7 @@ def pkCmdList(data, dabuffer, args):
 
     return weechat.WEECHAT_RC_OK
 
-#    ac_pkr, err = acwee.acRequest(acwee.ACMSG_TYPE_PK, acwee.ACMSG_SUBTYPE_PKLIST, myargs, acwee.BUF_LARGE)
-#    if ac_pkr:
-#        if len(ac_pkr.public_keys) > 0:
-#            for t in ac_pkr.public_keys:
-#                acwee.prtAcPk(dabuffer, t, nick)
-#        else:
-#            acwee.pmbac(dabuffer, "NO KEYS FOUND :(")
-#        return weechat.WEECHAT_RC_OK
-#    return weechat.WEECHAT_RC_ERROR
-
-# 
+#
 # XXX TODO: we need to add the parsing of argument to allow one or several nicks!?
 #
 def pkCmdDel(data, dabuffer, args):
@@ -481,14 +452,6 @@ def pkCmdDel(data, dabuffer, args):
     else:
         acwee.pmbac(dabuffer, "NO KEY FOUND :(")
     return weechat.WEECHAT_RC_OK
-
-    #myargs = { acwee.KEY_NICK:args, acwee.KEY_SERVER:server }
-    #ac_pkr, err = acwee.acRequest(acwee.ACMSG_TYPE_PK, acwee.ACMSG_SUBTYPE_PKDEL, myargs, acwee.BUF_SMALL)
-    #if ac_pkr and ac_pkr.bada == True:
-        #acwee.pmbac(dabuffer, "'%s''s key removed", args)
-    #else:
-        #acwee.pmbac(dabuffer, "NO KEY FOUND :(")
-    #return weechat.WEECHAT_RC_OK
 
 #
 # broadcast key
@@ -622,19 +585,27 @@ def skCmdSendKey(data, dabuffer, args):
     if inf and inf.has_key(BI_NICK) and inf.has_key(BI_CHAN) and inf.has_key(BI_SERV) and inf.has_key(BI_TYPE) and inf[BI_PLUG] == "irc":
 #        acwee.pmb(dabuffer, "mynick:%s peer_nick:%s chan: %s serv:%s", inf[BI_NICK], peer, inf[BI_CHAN], inf[BI_SERV])
 #        weechat.prnt(dabuffer, "%sAC\tmynick:%s peer_nick:%s chan: %s serv:%s" % (SCRIPT_COLOR, inf[BI_NICK], peer, inf[BI_CHAN], inf[BI_SERV]))
+
+#       TODO KXPACK
+        kxReply = kxMessage(acwee, inf[BI_SERV], inf[BI_CHAN]).kxpack(inf[BI_NICK], peer)
+        if kxReply['bada'] is True and kxReply['errno'] == 0:
+            acwee.pmbac(dabuffer, "sendkey %s -> %s", args, kxReply['blob'])
+            weechat.command(dabuffer, "/notice %s %s%s> %s" % (inf[BI_CHAN], acKexPrefix, peer, kxReply['blob']))
+            return weechat.WEECHAT_RC_OK
+    return weechat.WEECHAT_RC_ERROR
 #
-        myargs = { acwee.KEY_MYNICK:inf[BI_NICK], acwee.KEY_PEERNICK:peer, acwee.KEY_CHANNEL:inf[BI_CHAN], acwee.KEY_SERVER:inf[BI_SERV] } 
+#        myargs = { acwee.KEY_MYNICK:inf[BI_NICK], acwee.KEY_PEERNICK:peer, acwee.KEY_CHANNEL:inf[BI_CHAN], acwee.KEY_SERVER:inf[BI_SERV] }
 #        acblob = ac_msg(ACMSG_TYPE_KEX, ACMSG_SUBTYPE_KXPACK, myargs)
 #        ac_kxr, err = ac_request(acblob, ACMSG_TYPE_KEX, BUF_LARGE)
-        ac_kxr, err = acwee.acRequest(acwee.ACMSG_TYPE_KEX, acwee.ACMSG_SUBTYPE_KXPACK, myargs, acwee.BUF_LARGE)
-        if ac_kxr:
-            if ac_kxr.bada == True:
-                acwee.pmbac(dabuffer, "sendkey %s -> %s", args, ac_kxr.blob)
-#                weechat.prnt(dabuffer, "%sAC\tsendkey %s -> %s" % ( SCRIPT_COLOR, args, ac_kxr.blob))
-                # patch to NOTICE in the buffer..
-                weechat.command(dabuffer, "/notice %s %s%s> %s" % (inf[BI_CHAN], acKexPrefix, peer, ac_kxr.blob))
-                return weechat.WEECHAT_RC_OK
-    return weechat.WEECHAT_RC_ERROR
+#        ac_kxr, err = acwee.acRequest(acwee.ACMSG_TYPE_KEX, acwee.ACMSG_SUBTYPE_KXPACK, myargs, acwee.BUF_LARGE)
+#        if ac_kxr:
+#            if ac_kxr.bada == True:
+#                acwee.pmbac(dabuffer, "sendkey %s -> %s", args, ac_kxr.blob)
+##                weechat.prnt(dabuffer, "%sAC\tsendkey %s -> %s" % ( SCRIPT_COLOR, args, ac_kxr.blob))
+#                # patch to NOTICE in the buffer..
+#                weechat.command(dabuffer, "/notice %s %s%s> %s" % (inf[BI_CHAN], acKexPrefix, peer, ac_kxr.blob))
+#                return weechat.WEECHAT_RC_OK
+#    return weechat.WEECHAT_RC_ERROR
 
 
 # XXX TODO: more sanity checks...
@@ -647,12 +618,11 @@ def skCmdAddKey(data, dabuffer, args):
     inf = ac_get_buflocalinfo(dabuffer)
     if inf and inf.has_key(BUF_INFO_NICK) and inf.has_key(BUF_INFO_CHAN) and inf.has_key(BUF_INFO_SERV) and inf.has_key(BI_TYPE):
         if inf[BI_TYPE] == "channel" or inf[BI_TYPE] == "private":
-            myargs = { acwee.KEY_NICK:inf[BI_NICK], acwee.KEY_BLOB:args, acwee.KEY_CHANNEL:inf[BI_CHAN], acwee.KEY_SERVER:inf[BI_SERV] } 
-            ac_ctr, err = acwee.acRequest(acwee.ACMSG_TYPE_CRYPTO, acwee.ACMSG_SUBTYPE_CTADD, myargs, acwee.BUF_LARGE)
-            if ac_ctr:
-                if ac_ctr.bada == True:
-#                return acwee.acEnable(dabuffer, inf[BI_SERV], inf[BI_CHAN])
-                    return acCmdToggle(data, dabuffer, "")
+
+            ctReply = ctMessage(acwee, inf[BI_SERV], inf[BI_CHAN]).ctadd(inf[BI_NICK], args)
+            if ctReply['bada'] is True:
+                return acCmdToggle(data, dabuffer, "")
+
     acwee.pmbac(dabuffer, "make sure the buffer you want to add a key to is either a query or a channel buffer, here is : '%s'", inf[BI_TYPE])
     return weechat.WEECHAT_RC_ERROR
 
@@ -664,24 +634,39 @@ def skCmdUseKey(data, dabuffer, args):
         kexinfo = acwee.rcvKexPop(inf[BI_SERV], inf[BI_CHAN]);
         # TODO: better sanity checks..
         if kexinfo:
-            myargs = { acwee.KEY_MYNICK:kexinfo[0], acwee.KEY_PEERNICK:kexinfo[1], acwee.KEY_CHANNEL:kexinfo[2], acwee.KEY_SERVER:kexinfo[3], acwee.KEY_BLOB:kexinfo[4] } 
-            ac_kxr, err = acwee.acRequest(acwee.ACMSG_TYPE_KEX, acwee.ACMSG_SUBTYPE_KXUNPACK, myargs, acwee.BUF_LARGE)
-            if ac_kxr and err is None:
-                if ac_kxr.bada == True:
-                    acwee.pmbac(dabuffer, "using key received from %s @ [%s/%s]", kexinfo[1], kexinfo[2], kexinfo[3])
-                    acwee.acEnable(dabuffer, inf[BI_SERV], inf[BI_CHAN])
-                    # nonce display/update..
-                    acwee.acUpdNonce(inf[BI_SERV], inf[BI_CHAN], ac_kxr.nonce)
-                else:
-                    acwee.pmbac(dabuffer, "invalid key exchange received from %s @ [%s/%s]", kexinfo[1], kexinfo[2], kexinfo[3])
+            kxReply = kxMessage(acwee, kexinfo[3], kexinfo[2]).kxunpack(kexinfo[0], kexinfo[1], kexinfo[4])
+            if kxReply['bada'] is True and kxReply['errno'] == 0:
+                acwee.pmbac(dabuffer, "using key received from %s @ [%s/%s]", kexinfo[1], kexinfo[2], kexinfo[3])
+                acwee.acEnable(dabuffer, inf[BI_SERV], inf[BI_CHAN])
+                # nonce display/update..
+                acwee.acUpdNonce(inf[BI_SERV], inf[BI_CHAN], ac_kxr.nonce)
             else:
-                acwee.pmbac(dabuffer, "AC proto communication error err:  %s", str(err))
+                acwee.pmbac(dabuffer, "invalid key exchange received from %s @ [%s/%s]", kexinfo[1], kexinfo[2], kexinfo[3])
             return weechat.WEECHAT_RC_OK
         else:
             acwee.pmbac(dabuffer, "no KeX payload to process")
     else:
         acwee.pmbac(dabuffer, "you're willing to use a key, but may be in the wrong place! (hint: the buffer where you received the key)")
     return weechat.WEECHAT_RC_OK
+
+#            myargs = { acwee.KEY_MYNICK:kexinfo[0], acwee.KEY_PEERNICK:kexinfo[1], acwee.KEY_CHANNEL:kexinfo[2], acwee.KEY_SERVER:kexinfo[3], acwee.KEY_BLOB:kexinfo[4] }
+#            ac_kxr, err = acwee.acRequest(acwee.ACMSG_TYPE_KEX, acwee.ACMSG_SUBTYPE_KXUNPACK, myargs, acwee.BUF_LARGE)
+#            if ac_kxr and err is None:
+#                if ac_kxr.bada == True:
+#                    acwee.pmbac(dabuffer, "using key received from %s @ [%s/%s]", kexinfo[1], kexinfo[2], kexinfo[3])
+#                    acwee.acEnable(dabuffer, inf[BI_SERV], inf[BI_CHAN])
+#                    # nonce display/update..
+#                    acwee.acUpdNonce(inf[BI_SERV], inf[BI_CHAN], ac_kxr.nonce)
+#                else:
+#                    acwee.pmbac(dabuffer, "invalid key exchange received from %s @ [%s/%s]", kexinfo[1], kexinfo[2], kexinfo[3])
+#            else:
+#                acwee.pmbac(dabuffer, "AC proto communication error err:  %s", str(err))
+#            return weechat.WEECHAT_RC_OK
+#        else:
+#            acwee.pmbac(dabuffer, "no KeX payload to process")
+#    else:
+#        acwee.pmbac(dabuffer, "you're willing to use a key, but may be in the wrong place! (hint: the buffer where you received the key)")
+#    return weechat.WEECHAT_RC_OK
 
 
 
@@ -735,13 +720,19 @@ def acCmdSave(data, dabuffer, args):
         acwee.pmbac(dabuffer, "maps password is way TOO SHORT! /ac save or /ac help for more information")
     else:
         acwee.pmbac(dabuffer, "NOW SAVING!!")
-        myargs = { acwee.KEY_MAPSPASS:cb_passwd }
-        ac_ctlr, err = acwee.acRequest(acwee.ACMSG_TYPE_CTL, acwee.ACMSG_SUBTYPE_CTLSAVE, myargs, acwee.BUF_LARGE)
-        if ac_ctlr:
-            if ac_ctlr.bada == True:
-                acwee.pmbac(dabuffer, "saved in [~/.ac/acmaps]")
-
+        clReply = clMessage(acwee).clsave(cb_passwd)
+        if clReply['bada'] is True:
+            acwee.pmbac(dabuffer, "saved in [~/.ac/acmaps]")
     return weechat.WEECHAT_RC_OK
+
+
+#        myargs = { acwee.KEY_MAPSPASS:cb_passwd }
+#        ac_ctlr, err = acwee.acRequest(acwee.ACMSG_TYPE_CTL, acwee.ACMSG_SUBTYPE_CTLSAVE, myargs, acwee.BUF_LARGE)
+#        if ac_ctlr:
+#            if ac_ctlr.bada == True:
+#                acwee.pmbac(dabuffer, "saved in [~/.ac/acmaps]")
+#
+#    return weechat.WEECHAT_RC_OK
 
 def acCmdLoad(data, dabuffer, args):
     cb_argv = args.split()
@@ -753,11 +744,15 @@ def acCmdLoad(data, dabuffer, args):
         acwee.pmbac(dabuffer, "no password set to protect your map file! /ac save or /ac help for more information")
     else:
         acwee.pmbac(dabuffer, "NOW LOADING from %s!!", cb_argv[0])
-        myargs = { acwee.KEY_MAPSPASS:cb_passwd }
-        ac_ctlr, err = acwee.acRequest(acwee.ACMSG_TYPE_CTL, acwee.ACMSG_SUBTYPE_CTLLOAD, myargs, acwee.BUF_LARGE)
-        if ac_ctlr:
-            if ac_ctlr.bada == True:
-                acwee.pmbac(dabuffer, "loaded successfully")
+
+        clReply = clMessage(acwee).clload(cb_passwd)
+        if clReply['bada'] is True:
+            acwee.pmbac(dabuffer, "loaded from [~/.ac/acmaps]")
+#        myargs = { acwee.KEY_MAPSPASS:cb_passwd }
+#        ac_ctlr, err = acwee.acRequest(acwee.ACMSG_TYPE_CTL, acwee.ACMSG_SUBTYPE_CTLLOAD, myargs, acwee.BUF_LARGE)
+#        if ac_ctlr:
+#            if ac_ctlr.bada == True:
+#                acwee.pmbac(dabuffer, "loaded successfully")
     return weechat.WEECHAT_RC_OK
 
 def acCmdToggle(data, dabuffer, args):
@@ -1452,12 +1447,8 @@ class AcJSCom(object):
         #self.acProc.returncode
         # XXX TODO that or terminate, let's go with terminate first..
         #acblob = self.acMsg(ACMSG_TYPE_QUIT, 0, None)
-        qt = qtMessage(self).quit()
-#        ac_quit, err = self.acRequest(self.ACMSG_TYPE_QUIT, 0, None, self.BUF_LARGE)
-#        if ac_quit and ac_quit.type == ac_pb2.ArseneCryptoMessage.AC_QUIT:
-#            print "QUIT BLOB: %s\n" % ac_quit.blob
-#        else:
-#            print "QUIT ERROR!"
+        qtReply = qtMessage(self).quit()
+        self.acProc = None
         return None
 
     # return [ Blob|None, Error|None ]
@@ -1708,10 +1699,10 @@ class clMessage(acMessage):
     serv = ""
     chan = ""
     clDict = {}
-    def __init__(self, com, server, channel):
+    def __init__(self, com):
         acMessage.__init__(self, 'CLMSG')
-        self.serv = server
-        self.chan = channel
+#        self.serv = server
+#        self.chan = channel
         self.clDict = {}
         self.com = com
 
@@ -1748,10 +1739,10 @@ class clMessage(acMessage):
         return self.unpack(envp[0])
 
     #    is AC?
-    def cliac(self):
+    def cliac(self, server, channel):
         self.clDict['type'] = getattr(msgTypeEnum, 'CLIAC')
-        self.clDict['server'] = self.serv
-        self.clDict['channel'] = self.chan
+        self.clDict['server'] = server
+        self.clDict['channel'] = channel
         packed = self.pack()
         envp = self.com.acRequest(packed, self.com.BUF_LARGE)
         # XXX test ERROR first!!

@@ -322,10 +322,10 @@ class clMessage(acMessage):
     serv = ""
     chan = ""
     clDict = {}
-    def __init__(self, com, server, channel):
+    def __init__(self, com):
         acMessage.__init__(self, 'CLMSG')
-        self.serv = server
-        self.chan = channel
+#        self.serv = server
+#        self.chan = channel
         self.clDict = {}
         self.com = com
 
@@ -362,10 +362,10 @@ class clMessage(acMessage):
         return self.unpack(envp[0])
 
     #    is AC?
-    def cliac(self):
+    def cliac(self, server, channel):
         self.clDict['type'] = getattr(msgTypeEnum, 'CLIAC')
-        self.clDict['server'] = self.serv
-        self.clDict['channel'] = self.chan
+        self.clDict['server'] = server
+        self.clDict['channel'] = channel
         packed = self.pack()
         envp = self.com.acRequest(packed, self.com.BUF_LARGE)
         # XXX test ERROR first!!
@@ -495,7 +495,7 @@ if __name__ == "__main__":
 
 #
     print "CLIAC Message:"
-    cl = clMessage(jsCom, "freenode", "#ermites").cliac()
+    cl = clMessage(jsCom).cliac("freenode", "#ermites")
     print cl
 
     print "QUIT Message:"
