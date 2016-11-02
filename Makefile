@@ -16,8 +16,8 @@ LSBIN=/bin/ls
 RMBIN=/bin/rm
 MKDIR=/bin/mkdir
 
-ACBIN=$(GOPATH)/bin/ac
-ACROOT=$(GOPATH)/src/github.com/unix4fun/ac
+ACBIN=$(GOPATH)/bin/ic
+ACROOT=$(GOPATH)/src/github.com/unix4fun/ic
 ACWSCRIPT=${ACROOT}/client-scripts/weechat
 
 ACW_ROOT=$(HOME)/.weechat
@@ -42,11 +42,11 @@ CURRENT=$(shell date +%Y%m%d)
 
 
 all: update
-	@echo "you can test/use AC && commit!"
+	@echo "you can test/use IC && commit!"
 
 clean:
 	@echo "cleaning"
-	rm -rf ac ac.debug.txt
+	rm -rf ic ic.debug.txt
 
 update: version
 	@echo "updating proto & version"
@@ -57,13 +57,13 @@ update: version
 version:
 	@echo "Generating ${CURRENT}"
 	@echo "package main\nconst acVersion string = \"`date +%Y%m%d`\"\n" > version.go
-	@sed s/SCRIPT_VERSION\ =\ '.*'/SCRIPT_VERSION\ =\ \'${CURRENT}\'/g  ${ACWSCRIPT}/ac-weechat.py > ${ACWSCRIPT}/ac-weechat.py.${CURRENT}
-	@diff -sru ${ACWSCRIPT}/ac-weechat.py ${ACWSCRIPT}/ac-weechat.py.${CURRENT} || if [ $$? -eq 1 ]; then echo "Ok/Ctrl+C" && read t; else exit 0; fi
+	@sed s/SCRIPT_VERSION\ =\ '.*'/SCRIPT_VERSION\ =\ \'${CURRENT}\'/g  ${ACWSCRIPT}/ic-weechat.py > ${ACWSCRIPT}/ic-weechat.py.${CURRENT}
+	@diff -sru ${ACWSCRIPT}/ic-weechat.py ${ACWSCRIPT}/ic-weechat.py.${CURRENT} || if [ $$? -eq 1 ]; then echo "Ok/Ctrl+C" && read t; else exit 0; fi
 	#|| [ $$? -eq 1 ]; then echo "$(?) Ok/Ctrl+C?" && read t
 #	@echo "OK Ctrl-C to stop"
 #	@read t
-	@cat ${ACWSCRIPT}/ac-weechat.py.${CURRENT} > ${ACWSCRIPT}/ac-weechat.py
-	@rm -i ${ACWSCRIPT}/ac-weechat.py.${CURRENT}
+	@cat ${ACWSCRIPT}/ic-weechat.py.${CURRENT} > ${ACWSCRIPT}/ic-weechat.py
+	@rm -i ${ACWSCRIPT}/ic-weechat.py.${CURRENT}
 
 #ac:
 #	@echo "generate AC Go Protobuf"
@@ -80,7 +80,6 @@ install:
 	@echo "AC Weechat Autoload: ${ACW_AUTOLOAD}"
 	@echo "AC Home: ${AC_HOME}"
 	${MKDIR} -p ${AC_HOME}
-	${RMBIN} -f ${ACW_PYTHON}/ac_pb2.py ${ACW_AUTOLOAD}/ac-weechat.py
-	${LNBIN} -s ${ACWSCRIPT}/ac_pb2.py ${ACW_PYTHON}/ac_pb2.py
-	${LNBIN} -s ${ACWSCRIPT}/ac-weechat.py ${ACW_AUTOLOAD}/ac-weechat.py
-	@${LSBIN} -la ${ACW_AUTOLOAD}/ac-weechat.py ${ACW_PYTHON}/ac_pb2.py
+	${RMBIN} -f ${ACW_AUTOLOAD}/ic-weechat.py
+	${LNBIN} -s ${ACWSCRIPT}/ic-weechat.py ${ACW_AUTOLOAD}/ic-weechat.py
+	@${LSBIN} -la ${ACW_AUTOLOAD}/ic-weechat.py
