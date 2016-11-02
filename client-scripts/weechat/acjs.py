@@ -276,7 +276,7 @@ class ctMessage(acMessage):
         # decode the enveloppe first
         payload = super(ctMessage, self).unpack(blob)
         ctReplyDict = base64.b64decode(payload)
-        return ctReplyDict
+        return json.loads(ctReplyDict)
 
     def ctseal(self, me, plain):
         self.ctDict['type'] = getattr(msgTypeEnum, 'CTSEAL')
@@ -466,10 +466,16 @@ if __name__ == "__main__":
     print ukx
 
     print "-----"
+
+    print "CTADD Message:"
+    ctu = ctMessage(jsCom, "freenode", "#ermites").ctadd("spoty", "someuuurandomkeygarbage")
+    print ctu
+
     # ct MESSAGES
     print "CTSEAL Message (bleh):"
-    ct = ctMessage(jsCom, "freenode", "#ermites").ctseal("bleh", "plaintext")
+    ct = ctMessage(jsCom, "freenode", "#ermites").ctseal("bleh", "pkdsjkadjldakjdlakjdlakjdlaksjdlkasdlkasjldkajlkdajslkdjalskdakjsdlkasjdlkasjdlkajdlkajdklajdlkasjlkdasjlkdjaslkdjaslkdjaskljdaslkjdalksjdlaksjdlkasjdlkasjdlkajsdlkajdlkajslkdajslkdjaslkdjaslkdjaslkdjaslkjdalksjdalksjdlkasjdlkajsdlkasjdlkasjdlkajdlkasjdlkasjdklasjdlkasjdlkasjdlkasjdlkasjdlkasjdlkasjdlkasjdlkasjldkjaslkdjaslkdjaslkdjaslkdjaslkdjaslkadjldksajdlkasjdlkasjdalkdjakjdaskjdlksajldkjlkjdlakjlakdjlkdjlkajsdlkajlkdjakljdalkjdlkajkldjalkdjalkjakljdklajdklajdlkajlkdjalkjdakljsdlkajlkajslkdjdalkjdlkajdklajdklajdkljalkjdalkjdlkdjsalkjsdlkjdskldjlkdsjlkdajlkdsjldkasjadlskjdslkjdkladjdlkajdalkjdalksdlkaskjlaintextdkadlkdjlakjdalsjdlkasjdlkajslkdjaskjdsalkjdsalkjdajdlkajdklajkljdalkjdlkasjdlkasjdlkasjlkasjlksjdklajdlkajlkasjldkajslkdjaslkdjaslkdjaslkjdaklsjdaklsjdlkasjdlkajskldajskldjaslkdjaskldjsakljdaslkjdslakjdklsajdlkasjdlkajdlkasjlkasjlkdajlkdjaslkjslkajdlksajdlsakjdalskjdaslkj")
     print ct
+    print type(ct['blobarray'])
 
     print "CTOPEN Message (spoty):"
     ct = ctMessage(jsCom, "freenode", "#ermites").ctopen("spoty", "RFFrd2pSb1FBQm9sTS9qbTRGdWttR0xSZkxLNnNDWm9ORUNLMTZ6VGowUmQyeEszanp2T244NkVKb2toV0E9PQ==", "bleh")
@@ -479,9 +485,6 @@ if __name__ == "__main__":
     ct = ctMessage(jsCom, "freenode", "#ermites").ctopen("bleh", "DYswjzAaJUsCNDNSZxPraDcBG4x1kojTEZlvxbKyAaW4HLUb+UP7Ur6/nMU=", "")
     print ct
 
-    print "CTADD Message:"
-    ctu = ctMessage(jsCom, "freenode", "#ermites").ctadd("spoty", "someuuurandomkeygarbage")
-    print ctu
 
     #print "-----"
     #print "QTMSG Message:"

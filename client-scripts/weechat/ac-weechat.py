@@ -951,25 +951,27 @@ def privmsg_out_modifier_cb(data, modifier, modifier_data, msg_string):
 #XXX TODO: use isAcEnabled ?
 #        if acCipherReady.has_key(keyBlobHash) and acCipherReady[keyBlobHash] is True:
         if acwee.isAcEnabled(server, channel):
-            myargs = { acwee.KEY_MYNICK:my_nick, acwee.KEY_CHANNEL:channel, acwee.KEY_SERVER:server, acwee.KEY_BLOB:out_msg }
+#            myargs = { acwee.KEY_MYNICK:my_nick, acwee.KEY_CHANNEL:channel, acwee.KEY_SERVER:server, acwee.KEY_BLOB:out_msg }
             try:
-                ac_ctr, err = acwee.acRequest(acwee.ACMSG_TYPE_CRYPTO, acwee.ACMSG_SUBTYPE_CTSEAL, myargs, acwee.BUF_LARGE)
+                ctReply = ctMessage(acwee, server, channel).ctseal(my_nick, out_msg)
+#                ac_ctr, err = acwee.acRequest(acwee.ACMSG_TYPE_CRYPTO, acwee.ACMSG_SUBTYPE_CTSEAL, myargs, acwee.BUF_LARGE)
             except Exception as e:
                 acwee.pmbac(buffer, "!WARNING!\tMESSAGE NOT SENT: '%s' [NO ENCRYPTOR]", out_msg)
                 acwee.pmbac(buffer, "!WARNING!\tERROR: %s", str(e))
                 return ""
-            if ac_ctr and ac_ctr.bada == True:
+#            if ac_ctr and ac_ctr.bada == True:
+            if ctReply['bada'] is True:
                 # XXX multiple message if the message is too long to fit in one
                 # reply when it's packed.
-                for tmp_msg in ac_ctr.blob:
-                    acwee.acUpdNonce(server, channel, ac_ctr.nonce)
+                for tmp_msg in ctReply['blobarray']:
+                    acwee.acUpdNonce(server, channel, ctReply['nonce'])
 #                    tmp_msg = blobs.pop()
                     weechat.command(buffer, "/quote PRIVMSG %s :%s %s" % (channel, acCipherPrefix, tmp_msg))
 #                "PRIVMSG "+channel+" :"+"<ac> "+ac_ctr.blob
 #                return "PRIVMSG "+channel+" :"+"<ac> "+blobs[0]
                 return ""
             else:
-                acwee.pmbac(buffer, "!WARNING!\tMESSAGE NOT SENT: '%s' [CANNOT ENCRYPT:%d]", out_msg, ac_ctr.error_code)
+                acwee.pmbac(buffer, "!WARNING!\tMESSAGE NOT SENT: '%s' [CANNOT ENCRYPT:%d]", out_msg, ctReply['errno'])
                 return ""
 #        acwee.pmbac(buffer, "BLEH BLEH BLEH")
         return msg_string
@@ -1040,12 +1042,14 @@ def notice_in_modifier_cb(data, modifier, modifier_data, msg_string):
             if ac_isb64(msg_blob) is False:
                 acwee.pmbac(buffer, "%s invalid public key (b64) payload broadcasted [%s/%s]!", peer_nick, peer_nick, channel) 
                 return ret_string
-            myargs = { acwee.KEY_NICK:peer_nick, acwee.KEY_HOST:peer_host, acwee.KEY_SERVER:server, acwee.KEY_BLOB:msg_blob }
+#            myargs = { acwee.KEY_NICK:peer_nick, acwee.KEY_HOST:peer_host, acwee.KEY_SERVER:server, acwee.KEY_BLOB:msg_blob }
             try:
-                ac_pkr, err = acwee.acRequest(acwee.ACMSG_TYPE_PK, acwee.ACMSG_SUBTYPE_PKADD, myargs, acwee.BUF_SMALL)
+                pkReply = pkMessage(acwee, server).pkadd(peer_nick, peer_host, msg_blob)
+#                ac_pkr, err = acwee.acRequest(acwee.ACMSG_TYPE_PK, acwee.ACMSG_SUBTYPE_PKADD, myargs, acwee.BUF_SMALL)
             except Exception as e:
                 acwee.pmbac(buffer, "!WARNING!\tMESSAGE NOT SENT: '%s' [NO ENCRYPTOR:%s]", out_msg, str(e))
-            if ac_pkr and ac_pkr.bada == True:
+#            if ac_pkr and ac_pkr.bada == True:
+            if pkReply['bada'] is True:
                 acwee.pmbac(buffer, "%s broadcasted his public key [%s/%s] ", peer_nick, peer_nick, channel)
                 ret_string = ""
             else:
@@ -1140,6 +1144,7 @@ def notice_in_modifier_cb(data, modifier, modifier_data, msg_string):
 def privmsg_in_modifier_cb(data, modifier, modifier_data, msg_string):
     ret_string = msg_string
     myargs = {}
+    my_nick = ""
 #    print "privmsg_in_modifier_cb():"
 #    print "data: %s" % data
 #    print "modifier: %s" % str(modifier)
@@ -1188,18 +1193,20 @@ def privmsg_in_modifier_cb(data, modifier, modifier_data, msg_string):
                 return msg_string
             myargs.update({ acwee.KEY_PEERNICK:peer_nick, acwee.KEY_CHANNEL:channel, acwee.KEY_SERVER:server, acwee.KEY_BLOB:msg_blob })
             try:
-                ac_ctr, err = acwee.acRequest(acwee.ACMSG_TYPE_CRYPTO, acwee.ACMSG_SUBTYPE_CTOPEN, myargs, acwee.BUF_LARGE)
+                ctReply = ctMessage(acwee, server, channel).ctopen(peer_nick, msg_blob, my_nick)
+#                ac_ctr, err = acwee.acRequest(acwee.ACMSG_TYPE_CRYPTO, acwee.ACMSG_SUBTYPE_CTOPEN, myargs, acwee.BUF_LARGE)
             except Exception as e:
                 acwee.pmbac(buffer, "!WARNING!\tMESSAGE NOT SENT: '%s' [NO ENCRYPTOR:%s]", out_msg, str(e))
-            if ac_ctr and ac_ctr.bada == True:
+#            if ac_ctr and ac_ctr.bada == True:
+            if ctReply['bada'] is True:
                 acwee.prtAcPrivMsg(buffer, peer_nick, ac_ctr.blob[0], "irc_privmsg,,notify_message,prefix_nick_default,nick_"+peer_nick+',host_'+peer_host)
 #                weechat.prnt(buffer, "%s(%s%s%s)%s\t%s" % (weechat.color("white"), weechat.color("lightcyan"),peer_nick, weechat.color("white"), weechat.color("default"), ac_ctr.blob ))
                 # SET NONCE / UPDATE happen in the callback, i hope it's not too slow...
-                acwee.acUpdNonce(server, channel, ac_ctr.nonce)
+                acwee.acUpdNonce(server, channel, ctReply['nonce'])
                 return ""
             else:
                 #XXX TODO: check BUGS.txt... key check is not strong...
-                acwee.pmb(buffer, "Invalid message from %s [%s/%s] %d (%s)!", peer_nick, peer_nick, channel, ac_ctr.error_code, err)
+                acwee.pmb(buffer, "Invalid message from %s [%s/%s] %d (%s)!", peer_nick, peer_nick, channel, ctReply['errno'], ctReply['blob'])
 
         # HOW TO DISPLAY PLAINTEXT
         if acwee.isAcEnabled(server, channel):
