@@ -1,5 +1,5 @@
 // +build go1.4
-//go:generate protoc --go_out=accp -Iaccp accp/accp.proto
+//go:generate protoc --go_out=iccp -Iiccp iccp/iccp.proto
 //make version
 //echo "package main\nvar Version string '`date +%Y%m%d`'\n" > version.go
 
