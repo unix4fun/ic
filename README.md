@@ -1,11 +1,10 @@
-# **A**(nother) **C**(rypto) = AC
+# **I**(rc) **C**(rypto) 4 Fun= IC4F
 
 [![Build Status](https://travis-ci.org/unix4fun/ac.svg?branch=master)](https://travis-ci.org/unix4fun/ac)
 
 # WORK IN PROGRESS 
-# CURRENTLY BROKEN AS IT'S TRANSITING TO JS INSTEAD OF PROTOBUF
 
-[![Join the chat at https://gitter.im/unix4fun/ac](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/unix4fun/ac?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Join the chat at https://gitter.im/unix4fun/ic](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/unix4fun/ic?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 An attempt to provide a rather simple (to use and maintain) IRC encryption mechanism, but hopefully better than plaintext and current used ones..
 with (hopefully) no "false" sense of security.
@@ -15,7 +14,7 @@ It is inspired from previous/known/alternative projects that has been done by "p
 It's my first project in an inspiring and pragmatic new language : Go
 
 ## This Package
-* the AC pipe binary: 'ac'
+* the IC pipe/tool: 'ic'
 * client scripts (weechat)
 
 ## Goals
@@ -34,7 +33,7 @@ I needed something like this *up-to-date* so I tried to do/build it.
 
 So far the design is fairly straight forward, the IRC client itself should/does not have any cryptographic knowledge.
 
-the client script [ac-weechat](https://github.com/unix4fun/ac-weechat) just *request* services to a little *daemon* running and
+the client script [ic-weechat](https://github.com/unix4fun/ic/client-scripts/weechat/ic-weechat) just *request* services to a little *daemon* running and
 communicating on *stdin/stdout/stderr* using [Google Protobuf](https://code.google.com/p/protobuf/) serialization.
 
 IRC script running on the client *request* one of the following:
@@ -54,7 +53,7 @@ However we are not yet making sure the page are not swapped to disk.
 
 ## Design/Format
 
-(IRC network) <=> IRC Client <--stdin/stdout--> AC --> [infamous crypto keys]
+(IRC network) <=> IRC Client <--stdin/stdout--> IC --> [infamous crypto keys]
 
 ### IRC Message Format:
 ```
@@ -182,23 +181,22 @@ The daemon is implemented in Go langage and will produce a binary.
 Building is done with the `go` tool. If you have setup your GOPATH
 correctly, the following should work:
 
-    go get github.com/unix4fun/ac
+    go get github.com/unix4fun/ic
 
 if any issues occurs, just :
 
-    cd $GOPATH/src/github.com/unix4fun/ac
+    cd $GOPATH/src/github.com/unix4fun/ic
     go generate
     go build
     go install
 
 Binary `ac` should then be in `$GOPATH/bin`
 
-    cd $GOPATH/src/github.com/unix4fun/ac && make install
+    cd $GOPATH/src/github.com/unix4fun/ic && make install
 
 It will copy the following files into :
 
-    ~/.weechat/python/ac_pb2.py
-    ~/.weechat/python/autoload/ac-weechat.py
+    ~/.weechat/python/autoload/ic-weechat.py
 
 ## Usage
 
