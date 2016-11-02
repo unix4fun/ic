@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package iccp;
+
+//option optimize_for = LITE_RUNTIME;
+//option cc_generic_services = false;
+//option java_generic_services = false;
+//option py_generic_services = false;
+
+//
+// PROTOBUF WOULD NOW OUTPUT THE MESSAGE 
+// WE PROTECT THE MESSAGE FORMAT DIRECT BY FORCING ITS TYPING OUTPUTING PROTOBUF MESSAGES
+// THE OVERHEAD DO NOT SEEMS BIGGER THAN A FEW BYTES...
+//
+// AC Message OLD Format:
+// BASE64( 'AC' || 'NONCE_VALUE' || SECRETBOX( KEY, NONCE_AUTH, ZLIB( MSG ) )
+//
+// AC Message NEW Format:
+// BASE64( 'AC' || 'OPTIONS' || 'NONCE_VALUE' || SECRETBOX( KEY, NONCE_AUTH, ZLIB( MSG ) )
+//
+// Nonce AUTH OLD Format:
+// SHA3( Hash('CHANNEL') || ':' || Hash('SRC_NICK') || ':' || Hash('NONCE_VALUE') || ':' || Hash('HDR_RAW') )
+//
+// Nonce AUTH NEW Format:
+// SHA3( SHA3('CHANNEL') || ':' || SHA3('SRC_NICK') || ':' || SHA3('NONCE_VALUE') || ':' || 'HDR_RAW=AC||OPTIONS||NONCE_VALUE' )
+//
+// KX (Key eXchange) Message Format:
+// BASE64( 'KX' || 'NONCE_VALUE' || BOX( PEER_PUBKEY, ME_PRIVKEY, NONCE_AUTH, ZLIB( SECRET ) )
+//
+// Nonce AUTH Format:
+// SHA3( 'CHANNEL' || ':' || 'MY_NICK' || ':' || 'PEER_NICK' || ':' || 'NONCE_VALUE' || ':' || 'HDR_RAW' )
+//
+//
+
+// Default Values as described in:
+// https://developers.google.com/protocol-buffers/docs/proto3#default
+// numeric -> 0
+// string -> ""
+// bytes -> [] (empty bytes array)
+message ACPackedMessage {
+    fixed32 header = 1;    // obfuscate('AC', 'PK', 'KX')
+    uint32 nonce = 2;      // OPTIONAL 32 bits unsigned integer counter starting at 0
+    bytes ciphertext = 3;  // the resulting blob
+    uint32 options = 4;    // OPTIONAL options: proto version (1st nibble), proto options (2nd nibble: AES-GCM / NaCL)
+    bytes sigwho = 5;      // OPTIONAL signature identity (to match in authorized_key file) we limit this to 8 bytes max.
+    bytes sig = 6;         // OPTIONAL sig: ECDSA / RSA / ED52219 signature.
+};

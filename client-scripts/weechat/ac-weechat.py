@@ -8,14 +8,14 @@
 # 
 #
 
-SCRIPT_NAME    = 'ac-weechat'
-SCRIPT_AUTHOR  = 'eau <eau-code@unix4fun.net>'
-SCRIPT_VERSION = '20161018'
+SCRIPT_NAME    = 'ic-weechat'
+SCRIPT_AUTHOR  = 'eau <eau+ic4f@unix4fun.net>'
+SCRIPT_VERSION = '20161102'
 SCRIPT_LICENSE = 'BSD'
-SCRIPT_DESC    = 'AC script'
+SCRIPT_DESC    = 'ic4f - Irc Crypto 4 Fun'
 
-SCRIPT_COMMAND = 'ac'
-SCRIPT_BUFFER  = 'ac'
+SCRIPT_COMMAND = 'ic'
+SCRIPT_BUFFER  = 'ic'
 
 import_ok = True
 
@@ -27,7 +27,7 @@ except ImportError:
     import_ok = False
 
 try:
-    import sys, os, string, ast, datetime, select, socket, re, base64, cgi, time, datetime, binascii, hashlib, subprocess, fcntl, time, random, json, ac_pb2
+    import sys, os, string, ast, datetime, select, socket, re, base64, cgi, time, datetime, binascii, hashlib, subprocess, fcntl, time, random, json
 except ImportError as message:
     print('Missing package(s) for %s: %s' % (SCRIPT_NAME, message))
     import_ok = False
@@ -37,7 +37,7 @@ except ImportError as message:
 #AC_BINARY = "~/dev/go/bin/ac"
 # we need to test if the binary is here and fail to load if it is NOT
 AC_BINARY = os.environ["GOPATH"]+"/bin/ac"
-AC_DEBUGFILE = "./ac.debug.txt"
+AC_DEBUGFILE = "./ic.debug.txt"
 
 
 
@@ -45,21 +45,21 @@ AC_DEBUGFILE = "./ac.debug.txt"
 #acCipherReady = {} # sha1 hash 'channel:server'
 #acCipherBar = {} # sha1 hash 'channel:server' store the bar display pointer.
 #acRecvKeyBlobs = {} # sha1 hash 'channel:server'
-acCipherPrefix = "<ac>"
-acKexPrefix = "<ackx:"
+acCipherPrefix = "<ic>"
+acKexPrefix = "<kx:"
 acProcess = None
 # XXX TODO
 acChannelRE = r'^(((![A-Z0-9]{5})|([#+&][^\x00\x07\r\n ,:]+))(:[^\x00\x07\r\n ,:]+)?)$'
 acNicknameRE = r'^([a-zA-Z\[\]\\\`\_\^\{\|\}]{1}[[a-zA-Z0-9\[\]\\\`\_\^\{\|\}\-]{0,15})$'
-acKexRE = r'^<ackx:([a-zA-Z\[\]\\\`\_\^\{\|\}]{1}[[a-zA-Z0-9\[\]\\\`\_\^\{\|\}\-]{0,15})> (.*)$'
+acKexRE = r'^<kx:([a-zA-Z\[\]\\\`\_\^\{\|\}]{1}[[a-zA-Z0-9\[\]\\\`\_\^\{\|\}\-]{0,15})> (.*)$'
 acB64RE = r'([a-zA-Z0-9\\\+]+[=]{0,2})+$'
-acKeyPrefix = "<acpk>"
+acKeyPrefix = "<pk>"
 
 # socket recv buffer size, lets keep simple for now, use BIG only on public key list requests..
 #BUF_SMALL = 2048
 #BUF_LARGE = 65536
 
-SCRIPT_HDR = 'AC\t'
+SCRIPT_HDR = 'IC4F\t'
 SCRIPT_COLOR = weechat.color("yellow,blue")
 
 #
@@ -586,26 +586,12 @@ def skCmdSendKey(data, dabuffer, args):
 #        acwee.pmb(dabuffer, "mynick:%s peer_nick:%s chan: %s serv:%s", inf[BI_NICK], peer, inf[BI_CHAN], inf[BI_SERV])
 #        weechat.prnt(dabuffer, "%sAC\tmynick:%s peer_nick:%s chan: %s serv:%s" % (SCRIPT_COLOR, inf[BI_NICK], peer, inf[BI_CHAN], inf[BI_SERV]))
 
-#       TODO KXPACK
         kxReply = kxMessage(acwee, inf[BI_SERV], inf[BI_CHAN]).kxpack(inf[BI_NICK], peer)
         if kxReply['bada'] is True and kxReply['errno'] == 0:
             acwee.pmbac(dabuffer, "sendkey %s -> %s", args, kxReply['blob'])
             weechat.command(dabuffer, "/notice %s %s%s> %s" % (inf[BI_CHAN], acKexPrefix, peer, kxReply['blob']))
             return weechat.WEECHAT_RC_OK
     return weechat.WEECHAT_RC_ERROR
-#
-#        myargs = { acwee.KEY_MYNICK:inf[BI_NICK], acwee.KEY_PEERNICK:peer, acwee.KEY_CHANNEL:inf[BI_CHAN], acwee.KEY_SERVER:inf[BI_SERV] }
-#        acblob = ac_msg(ACMSG_TYPE_KEX, ACMSG_SUBTYPE_KXPACK, myargs)
-#        ac_kxr, err = ac_request(acblob, ACMSG_TYPE_KEX, BUF_LARGE)
-#        ac_kxr, err = acwee.acRequest(acwee.ACMSG_TYPE_KEX, acwee.ACMSG_SUBTYPE_KXPACK, myargs, acwee.BUF_LARGE)
-#        if ac_kxr:
-#            if ac_kxr.bada == True:
-#                acwee.pmbac(dabuffer, "sendkey %s -> %s", args, ac_kxr.blob)
-##                weechat.prnt(dabuffer, "%sAC\tsendkey %s -> %s" % ( SCRIPT_COLOR, args, ac_kxr.blob))
-#                # patch to NOTICE in the buffer..
-#                weechat.command(dabuffer, "/notice %s %s%s> %s" % (inf[BI_CHAN], acKexPrefix, peer, ac_kxr.blob))
-#                return weechat.WEECHAT_RC_OK
-#    return weechat.WEECHAT_RC_ERROR
 
 
 # XXX TODO: more sanity checks...
@@ -648,26 +634,6 @@ def skCmdUseKey(data, dabuffer, args):
     else:
         acwee.pmbac(dabuffer, "you're willing to use a key, but may be in the wrong place! (hint: the buffer where you received the key)")
     return weechat.WEECHAT_RC_OK
-
-#            myargs = { acwee.KEY_MYNICK:kexinfo[0], acwee.KEY_PEERNICK:kexinfo[1], acwee.KEY_CHANNEL:kexinfo[2], acwee.KEY_SERVER:kexinfo[3], acwee.KEY_BLOB:kexinfo[4] }
-#            ac_kxr, err = acwee.acRequest(acwee.ACMSG_TYPE_KEX, acwee.ACMSG_SUBTYPE_KXUNPACK, myargs, acwee.BUF_LARGE)
-#            if ac_kxr and err is None:
-#                if ac_kxr.bada == True:
-#                    acwee.pmbac(dabuffer, "using key received from %s @ [%s/%s]", kexinfo[1], kexinfo[2], kexinfo[3])
-#                    acwee.acEnable(dabuffer, inf[BI_SERV], inf[BI_CHAN])
-#                    # nonce display/update..
-#                    acwee.acUpdNonce(inf[BI_SERV], inf[BI_CHAN], ac_kxr.nonce)
-#                else:
-#                    acwee.pmbac(dabuffer, "invalid key exchange received from %s @ [%s/%s]", kexinfo[1], kexinfo[2], kexinfo[3])
-#            else:
-#                acwee.pmbac(dabuffer, "AC proto communication error err:  %s", str(err))
-#            return weechat.WEECHAT_RC_OK
-#        else:
-#            acwee.pmbac(dabuffer, "no KeX payload to process")
-#    else:
-#        acwee.pmbac(dabuffer, "you're willing to use a key, but may be in the wrong place! (hint: the buffer where you received the key)")
-#    return weechat.WEECHAT_RC_OK
-
 
 
 # XXX TODO this is a debug command so to remove anyway...
@@ -726,14 +692,6 @@ def acCmdSave(data, dabuffer, args):
     return weechat.WEECHAT_RC_OK
 
 
-#        myargs = { acwee.KEY_MAPSPASS:cb_passwd }
-#        ac_ctlr, err = acwee.acRequest(acwee.ACMSG_TYPE_CTL, acwee.ACMSG_SUBTYPE_CTLSAVE, myargs, acwee.BUF_LARGE)
-#        if ac_ctlr:
-#            if ac_ctlr.bada == True:
-#                acwee.pmbac(dabuffer, "saved in [~/.ac/acmaps]")
-#
-#    return weechat.WEECHAT_RC_OK
-
 def acCmdLoad(data, dabuffer, args):
     cb_argv = args.split()
     cb_argc = len(cb_argv)
@@ -748,11 +706,6 @@ def acCmdLoad(data, dabuffer, args):
         clReply = clMessage(acwee).clload(cb_passwd)
         if clReply['bada'] is True:
             acwee.pmbac(dabuffer, "loaded from [~/.ac/acmaps]")
-#        myargs = { acwee.KEY_MAPSPASS:cb_passwd }
-#        ac_ctlr, err = acwee.acRequest(acwee.ACMSG_TYPE_CTL, acwee.ACMSG_SUBTYPE_CTLLOAD, myargs, acwee.BUF_LARGE)
-#        if ac_ctlr:
-#            if ac_ctlr.bada == True:
-#                acwee.pmbac(dabuffer, "loaded successfully")
     return weechat.WEECHAT_RC_OK
 
 def acCmdToggle(data, dabuffer, args):
@@ -773,7 +726,7 @@ def acCmdToggle(data, dabuffer, args):
 
 def acCmdHelp(data, dabuffer, args):
     #acwee = data
-    acwee.pmb(dabuffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$ /ac help %%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
+    acwee.pmb(dabuffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$ /ic help %%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
     acwee.pmb(dabuffer, "args: %s", args)
     acwee.pmb(dabuffer, "/pk [<cmd>]\tpublic key commands")
     acwee.pmb(dabuffer, "where <cmd> is")
@@ -790,8 +743,8 @@ def acCmdHelp(data, dabuffer, args):
     acwee.pmb(dabuffer, "\t\trm <nick>           :\tremove associated secret key")
     acwee.pmb(dabuffer, "\t\tuse                 :\tuse Key Exchange secret key received on this buffer (u need sender's public key)")
     acwee.pmb(dabuffer, "\t\tgive <nick>         :\tsend Key Exchange secret key with <nick> (u need <nick>'s public key)")
-    acwee.pmb(dabuffer, "/ac [<cmd>]\tencryption control")
-    acwee.pmb(dabuffer, "\t\thelp                :\thelp about ac (this help)")
+    acwee.pmb(dabuffer, "/ic [<cmd>]\tencryption control")
+    acwee.pmb(dabuffer, "\t\thelp                :\thelp about ic (this help)")
     acwee.pmb(dabuffer, "\t\t<empty>   :\tenable/disable encryption in the current buffer (channel/query)")
     # /ac           : enable/disable buffer (chan/query) encryption
     # /ac help      : help on ac
@@ -951,15 +904,13 @@ def privmsg_out_modifier_cb(data, modifier, modifier_data, msg_string):
 #XXX TODO: use isAcEnabled ?
 #        if acCipherReady.has_key(keyBlobHash) and acCipherReady[keyBlobHash] is True:
         if acwee.isAcEnabled(server, channel):
-#            myargs = { acwee.KEY_MYNICK:my_nick, acwee.KEY_CHANNEL:channel, acwee.KEY_SERVER:server, acwee.KEY_BLOB:out_msg }
             try:
                 ctReply = ctMessage(acwee, server, channel).ctseal(my_nick, out_msg)
-#                ac_ctr, err = acwee.acRequest(acwee.ACMSG_TYPE_CRYPTO, acwee.ACMSG_SUBTYPE_CTSEAL, myargs, acwee.BUF_LARGE)
             except Exception as e:
                 acwee.pmbac(buffer, "!WARNING!\tMESSAGE NOT SENT: '%s' [NO ENCRYPTOR]", out_msg)
                 acwee.pmbac(buffer, "!WARNING!\tERROR: %s", str(e))
                 return ""
-#            if ac_ctr and ac_ctr.bada == True:
+
             if ctReply['bada'] is True:
                 # XXX multiple message if the message is too long to fit in one
                 # reply when it's packed.
@@ -973,7 +924,6 @@ def privmsg_out_modifier_cb(data, modifier, modifier_data, msg_string):
             else:
                 acwee.pmbac(buffer, "!WARNING!\tMESSAGE NOT SENT: '%s' [CANNOT ENCRYPT:%d]", out_msg, ctReply['errno'])
                 return ""
-#        acwee.pmbac(buffer, "BLEH BLEH BLEH")
         return msg_string
 
 
@@ -1042,13 +992,10 @@ def notice_in_modifier_cb(data, modifier, modifier_data, msg_string):
             if ac_isb64(msg_blob) is False:
                 acwee.pmbac(buffer, "%s invalid public key (b64) payload broadcasted [%s/%s]!", peer_nick, peer_nick, channel) 
                 return ret_string
-#            myargs = { acwee.KEY_NICK:peer_nick, acwee.KEY_HOST:peer_host, acwee.KEY_SERVER:server, acwee.KEY_BLOB:msg_blob }
             try:
                 pkReply = pkMessage(acwee, server).pkadd(peer_nick, peer_host, msg_blob)
-#                ac_pkr, err = acwee.acRequest(acwee.ACMSG_TYPE_PK, acwee.ACMSG_SUBTYPE_PKADD, myargs, acwee.BUF_SMALL)
             except Exception as e:
                 acwee.pmbac(buffer, "!WARNING!\tMESSAGE NOT SENT: '%s' [NO ENCRYPTOR:%s]", out_msg, str(e))
-#            if ac_pkr and ac_pkr.bada == True:
             if pkReply['bada'] is True:
                 acwee.pmbac(buffer, "%s broadcasted his public key [%s/%s] ", peer_nick, peer_nick, channel)
                 ret_string = ""
@@ -1194,10 +1141,8 @@ def privmsg_in_modifier_cb(data, modifier, modifier_data, msg_string):
             myargs.update({ acwee.KEY_PEERNICK:peer_nick, acwee.KEY_CHANNEL:channel, acwee.KEY_SERVER:server, acwee.KEY_BLOB:msg_blob })
             try:
                 ctReply = ctMessage(acwee, server, channel).ctopen(peer_nick, msg_blob, my_nick)
-#                ac_ctr, err = acwee.acRequest(acwee.ACMSG_TYPE_CRYPTO, acwee.ACMSG_SUBTYPE_CTOPEN, myargs, acwee.BUF_LARGE)
             except Exception as e:
                 acwee.pmbac(buffer, "!WARNING!\tMESSAGE NOT SENT: '%s' [NO ENCRYPTOR:%s]", out_msg, str(e))
-#            if ac_ctr and ac_ctr.bada == True:
             if ctReply['bada'] is True:
                 acwee.prtAcPrivMsg(buffer, peer_nick, ac_ctr.blob[0], "irc_privmsg,,notify_message,prefix_nick_default,nick_"+peer_nick+',host_'+peer_host)
 #                weechat.prnt(buffer, "%s(%s%s%s)%s\t%s" % (weechat.color("white"), weechat.color("lightcyan"),peer_nick, weechat.color("white"), weechat.color("default"), ac_ctr.blob ))
@@ -1338,7 +1283,7 @@ class AcExceptions(Exception):
 
 
 class AcDisplay(object):
-    AC_HDR = "AC"
+    AC_HDR = "IC"
     AC_COLOR = "yellow, blue"
 
     coreBuffer = None
@@ -1788,359 +1733,6 @@ class qtMessage(acMessage):
         envp = self.com.acRequest(packed, self.com.BUF_LARGE)
         # XXX test ERROR first!!
         return self.unpack(envp[0])
-#
-# XXX Will Disappear NOW
-#
-class AcPbCom(object):
-    # static defined variables
-
-    # FOR PK Messages
-    KEY_NICK    = 'nick'
-    KEY_HOST    = 'host'
-    KEY_SERVER  = 'serv'
-    KEY_BLOB    = 'blob'
-
-    # for KX Messages
-    KEY_MYNICK      = 'mynick'
-    KEY_PEERNICK    = 'peernick'
-    KEY_CHANNEL     = 'chan'
-
-    # for CT mMessages
-    KEY_OPT = 'opt'
-
-    # for CTL messages
-    KEY_MAPSPASS = "mapspass"
-
-    # the subtypes of public key msg generation
-    ACMSG_SUBTYPE_PKGEN     = 0
-    ACMSG_SUBTYPE_PKGET     = 1
-    ACMSG_SUBTYPE_PKADD     = 2
-    ACMSG_SUBTYPE_PKLIST    = 3
-    ACMSG_SUBTYPE_PKDEL     = 4
-    ACMSG_SUBTYPE_KXPACK    = 5
-    ACMSG_SUBTYPE_KXUNPACK  = 6
-    ACMSG_SUBTYPE_CTSEAL    = 7
-    ACMSG_SUBTYPE_CTOPEN    = 8
-    ACMSG_SUBTYPE_CTADD     = 9
-    ACMSG_SUBTYPE_CTLPING   = 10
-    ACMSG_SUBTYPE_CTLLOAD   = 11
-    ACMSG_SUBTYPE_CTLSAVE   = 12
-
-    # the message types / used for ac_msg() 
-    ACMSG_TYPE_PK       = 0
-    ACMSG_TYPE_KEX      = 1
-    ACMSG_TYPE_CRYPTO   = 2
-    ACMSG_TYPE_CTL      = 3
-    ACMSG_TYPE_QUIT     = 4
-
-    # depending on the type of data  we might need more space
-    BUF_SMALL   = 2048
-    BUF_LARGE   = 65536
-    BUF_XXL     = 1048576
-
-    # internal class variables
-    # the subprocess class.
-    acProc = None
-    acBinary = None
-    acDebugFile = None
-
-    def __init__(self, acBin, acDbg):
-        self.acBinary = [ acBin, "-debug=true" ]
-        self.acDebugFile = acDbg
-        self.acDebugFd = open(acDbg, 'w')
-
-    def acStartDaemon(self):
-# XXX TODO: handle the debugging channel correctly
-        self.acProc = subprocess.Popen(self.acBinary, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=self.acDebugFd)
-        flags = fcntl.fcntl(self.acProc.stdout, fcntl.F_GETFL) # get current p.stdout flags
-        fcntl.fcntl(self.acProc.stdout, fcntl.F_SETFL, flags | os.O_NONBLOCK) # add non blocking 
-        return None
-
-    def acStopDaemon(self):
-        # XXX daemon should stop properly and not with a terminate
-        #self.acProc.terminate()
-        # XXX TODO check return code to see if it's out.
-        #self.acProc.returncode
-        # XXX TODO that or terminate, let's go with terminate first..
-        #acblob = self.acMsg(ACMSG_TYPE_QUIT, 0, None)
-        #ac_pkr, err = self.acRequest(acblob, 0, BUF_LARGE)
-
-
-        ac_quit, err = self.acRequest(self.ACMSG_TYPE_QUIT, 0, None, self.BUF_LARGE)
-        if ac_quit and ac_quit.type == ac_pb2.ArseneCryptoMessage.AC_QUIT:
-            print "QUIT BLOB: %s\n" % ac_quit.blob
-        else:
-            print "QUIT ERROR!"
-        return None
-
-    def msgPkGen(self, args):
-#        weechat.prnt("", "%sAC\tpkGEN args: " % ( weechat.color("yellow,blue") ) )
-    #    print args
-        acpkreq = ac_pb2.acPublicKeyMessageRequest()
-        acpkreq.type = ac_pb2.acPublicKeyMessageRequest.PK_GEN
-        acpkreq.nick = args[self.KEY_NICK] # mandatory
-        acpkreq.server = args[self.KEY_SERVER] # mandatory
-        acpkreq.host = args[self.KEY_HOST] # optional
-        acpkreq.blob = args[self.KEY_BLOB] # optional
-        return acpkreq.SerializeToString()
-
-    def msgPkAdd(self, args):
-#        print "pkADD args: "
-#        print args
-        acpkreq = ac_pb2.acPublicKeyMessageRequest()
-        acpkreq.type = ac_pb2.acPublicKeyMessageRequest.PK_ADD
-        acpkreq.nick = args[self.KEY_NICK] 
-        acpkreq.server = args[self.KEY_SERVER] 
-        acpkreq.host = args[self.KEY_HOST] 
-        acpkreq.blob = args[self.KEY_BLOB] 
-        return acpkreq.SerializeToString()
-
-    def msgPkList(self, args):
-    #    print "pkLIST args: "
-    #    print args
-        acpkreq = ac_pb2.acPublicKeyMessageRequest()
-        acpkreq.type = ac_pb2.acPublicKeyMessageRequest.PK_LIST
-        if args:
-            if args.has_key(self.KEY_NICK):
-#                print " I M HERE!!!"
-                acpkreq.nick = args[self.KEY_NICK] 
-            if args.has_key(self.KEY_SERVER):
-                acpkreq.server = args[self.KEY_SERVER]
-            else:
-                print "NO SERVER GIVEN SO ERROR!"
-        else:
-            print "NO SERVER ARGS cascade error!"
-        return acpkreq.SerializeToString()
-
-    def msgPkDel(self, args):
-#        print "pkDEL args: "
-#        print args
-        acpkreq = ac_pb2.acPublicKeyMessageRequest()
-        acpkreq.type = ac_pb2.acPublicKeyMessageRequest.PK_DEL
-        if args and args.has_key(self.KEY_NICK):
-            acpkreq.nick = args[self.KEY_NICK] 
-        if args.has_key(self.KEY_SERVER):
-            acpkreq.server = args[self.KEY_SERVER] 
-        return acpkreq.SerializeToString()
-
-
-    def msgKxPack(self, args):
-#        print "KXPACK args: "
-#        print args
-        ackxreq = ac_pb2.acKeyExchangeMessageRequest()
-        ackxreq.type = ac_pb2.acKeyExchangeMessageRequest.KX_PACK
-        if args and args.has_key(self.KEY_MYNICK):
-            ackxreq.mynick = args[self.KEY_MYNICK]
-        if args.has_key(self.KEY_PEERNICK):
-            ackxreq.peernick = args[self.KEY_PEERNICK]
-        if args.has_key(self.KEY_CHANNEL):
-            ackxreq.channel = args[self.KEY_CHANNEL]
-        if args.has_key(self.KEY_SERVER):
-            ackxreq.server = args[self.KEY_SERVER]
-        return ackxreq.SerializeToString()
-
-
-    def msgKxUnpack(self, args):
-#        print "KXUNPACK args: "
-#        print args
-        ackxreq = ac_pb2.acKeyExchangeMessageRequest()
-        ackxreq.type = ac_pb2.acKeyExchangeMessageRequest.KX_UNPACK
-        if args and args.has_key(self.KEY_MYNICK):
-            ackxreq.mynick = args[self.KEY_MYNICK]
-        if args.has_key(self.KEY_PEERNICK):
-            ackxreq.peernick = args[self.KEY_PEERNICK]
-        if args.has_key(self.KEY_CHANNEL):
-            ackxreq.channel = args[self.KEY_CHANNEL]
-        if args.has_key(self.KEY_SERVER):
-            ackxreq.server = args[self.KEY_SERVER]
-#        print "KEY_BLOB: "
-#        print args[self.KEY_BLOB]
-        if args[self.KEY_BLOB]:
-            ackxreq.blob = args[self.KEY_BLOB]
-    
-        return ackxreq.SerializeToString()
-
-    def msgCtSeal(self, args):
-#        print "CTSEAL args: "
-#        print args
-    
-        acctreq = ac_pb2.acCipherTextMessageRequest()
-        acctreq.type = ac_pb2.acCipherTextMessageRequest.CT_SEAL
-        if args and args.has_key(self.KEY_MYNICK):
-            acctreq.nick = args[self.KEY_MYNICK]
-        if args.has_key(self.KEY_BLOB):
-            acctreq.blob = args[self.KEY_BLOB]
-        if args.has_key(self.KEY_CHANNEL):
-            acctreq.channel = args[self.KEY_CHANNEL]
-        if args.has_key(self.KEY_SERVER):
-            acctreq.server = args[self.KEY_SERVER]
-        return acctreq.SerializeToString()
-
-    def msgCtOpen(self, args):
-#        print "CTOPEN args: "
-#        print args
-        acctreq = ac_pb2.acCipherTextMessageRequest()
-        acctreq.type = ac_pb2.acCipherTextMessageRequest.CT_OPEN
-        if args and args.has_key(self.KEY_PEERNICK):
-            acctreq.nick = args[self.KEY_PEERNICK]
-        if args.has_key(self.KEY_BLOB):
-            acctreq.blob = args[self.KEY_BLOB]
-        if args.has_key(self.KEY_CHANNEL):
-            acctreq.channel = args[self.KEY_CHANNEL]
-        if args.has_key(self.KEY_SERVER):
-            acctreq.server = args[self.KEY_SERVER]
-        if args.has_key(self.KEY_OPT):
-            acctreq.opt = args[self.KEY_OPT]
-        return acctreq.SerializeToString()
-
-    def msgCtAdd(self, args):
-        acctreq = ac_pb2.acCipherTextMessageRequest()
-        acctreq.type = ac_pb2.acCipherTextMessageRequest.CT_ADD
-        if args and args.has_key(self.KEY_NICK):
-            acctreq.nick = args[self.KEY_NICK]
-        if args.has_key(self.KEY_BLOB):
-            acctreq.blob = args[self.KEY_BLOB]
-        if args.has_key(self.KEY_CHANNEL):
-            acctreq.channel = args[self.KEY_CHANNEL]
-        if args.has_key(self.KEY_SERVER):
-            acctreq.server = args[self.KEY_SERVER]
-        return acctreq.SerializeToString()
-
-    def msgCtlPing(self, args):
-        acctreq = ac_pb2.acControlMessageRequest()
-        acctreq.type = ac_pb2.acControlMessageRequest.CTL_PING
-        # bleh
-        return acctreq.SerializeToString()
-
-    def msgCtlLoad(self, args):
-        acctreq = ac_pb2.acControlMessageRequest()
-        acctreq.password = args[self.KEY_MAPSPASS]
-        acctreq.type = ac_pb2.acControlMessageRequest.CTL_LOADCTX
-        # bleh
-        return acctreq.SerializeToString()
-
-    def msgCtlSave(self, args):
-        acctreq = ac_pb2.acControlMessageRequest()
-        acctreq.password = args[self.KEY_MAPSPASS]
-        acctreq.type = ac_pb2.acControlMessageRequest.CTL_SAVECTX
-        # bleh
-        return acctreq.SerializeToString()
-
-    def acPkMsg(self, subtype, args):
-        if subtype == self.ACMSG_SUBTYPE_PKGEN:
-            return self.msgPkGen(args)
-        if subtype == self.ACMSG_SUBTYPE_PKADD:
-            return self.msgPkAdd(args)
-        if subtype == self.ACMSG_SUBTYPE_PKLIST:
-            return self.msgPkList(args)
-        if subtype == self.ACMSG_SUBTYPE_PKDEL:
-            return self.msgPkDel(args)
-
-
-    def acKexMsg(self, subtype, args):
-        if subtype == self.ACMSG_SUBTYPE_KXPACK:
-            return self.msgKxPack(args)
-        if subtype == self.ACMSG_SUBTYPE_KXUNPACK:
-            return self.msgKxUnpack(args)
-
-    def acCryptoMsg(self, subtype, args):
-        if subtype == self.ACMSG_SUBTYPE_CTSEAL:
-            return self.msgCtSeal(args)
-        if subtype == self.ACMSG_SUBTYPE_CTOPEN:
-            return self.msgCtOpen(args)
-        if subtype == self.ACMSG_SUBTYPE_CTADD:
-            return self.msgCtAdd(args)
-
-    def acControlMsg(self, subtype, args):
-        if subtype == self.ACMSG_SUBTYPE_CTLPING:
-            return self.msgCtlPing(args)
-        if subtype == self.ACMSG_SUBTYPE_CTLLOAD:
-            return self.msgCtlLoad(args)
-        if subtype == self.ACMSG_SUBTYPE_CTLSAVE:
-            return self.msgCtlSave(args)
-
-
-    def acQuitMsg(self, subtype, args):
-        print "QUIT subtype message builder."
-
-    # build up the enveloppe 
-    # XXX TODO: need error handling from the ac_pk_msg() and msg_pk* and similar functions...
-    def _acMsg(self, type, subtype, args):
-        acMsgObj = ac_pb2.ArseneCryptoMessage()
-
-        if type == self.ACMSG_TYPE_PK:
-            acMsgObj.type = ac_pb2.ArseneCryptoMessage.AC_PK
-            acMsgObj.blob = self.acPkMsg(subtype, args)
-        elif type == self.ACMSG_TYPE_KEX:
-            acMsgObj.type = ac_pb2.ArseneCryptoMessage.AC_KEX
-            acMsgObj.blob = self.acKexMsg(subtype, args)
-        elif type == self.ACMSG_TYPE_CRYPTO:
-            acMsgObj.type = ac_pb2.ArseneCryptoMessage.AC_CRYPTO
-            acMsgObj.blob = self.acCryptoMsg(subtype, args)
-        elif type == self.ACMSG_TYPE_CTL:
-            acMsgObj.type = ac_pb2.ArseneCryptoMessage.AC_CTL
-            acMsgObj.blob = self.acControlMsg(subtype, args)
-        elif type == self.ACMSG_TYPE_QUIT:
-            acMsgObj.type = ac_pb2.ArseneCryptoMessage.AC_QUIT
-            acMsgObj.blob = "" #ac_quit_msg(subtype, args)
-        else:
-            print "invalid message build"
-
-        ret_blob = acMsgObj.SerializeToString()
-        return ret_blob
-
-
-    # return [ Blob|None, Error|None ]
-    def _acRequest(self, reqblob, actype, bufsize):
-        # XXX TODO retransmit mechanism..
-        self.acProc.stdin.write(reqblob)
-        # XXX TODO: this is a hack need a proper select loop here.. :)
-        # also let's poll stderr to get errors and display it in a status window..
-        #time.sleep(0.1)
-        rlist, wlist, xlist = select.select([self.acProc.stdout], [], [], 1)
-        if (rlist):
-            rcvBlob = self.acProc.stdout.read(bufsize)
-        else:
-            # XXX TODO: need to message the process back
-            print "PROCESS COMMUNICATION TIMEOUT!!!"
-            print "RLIST"
-            print rlist
-            print "WLIST"
-            print wlist
-            print "XLIST"
-            print xlist
-            return [ None, "No Read List Polled" ]
-    
-        # XXX TODO: surround with try/except
-        acRcvEnvp = ac_pb2.ArseneCryptoMessage()
-        acRcvEnvp.ParseFromString(rcvBlob)
-    
-# ac_quit, err = self.acRequest(self.ACMSG_TYPE_QUIT, 0, None, self.BUF_LARGE)
-# ac_pkr, err = acwee.acRequest(acwee.ACMSG_TYPE_PK, acwee.ACMSG_SUBTYPE_PKLIST, myargs, acwee.BUF_LARGE)
-        if acRcvEnvp.type == ac_pb2.ArseneCryptoMessage.AC_PK and actype == self.ACMSG_TYPE_PK:
-            acResponse = ac_pb2.acPublicKeyMessageResponse()
-        elif acRcvEnvp.type == ac_pb2.ArseneCryptoMessage.AC_KEX and actype == self.ACMSG_TYPE_KEX:
-            acResponse = ac_pb2.acKeyExchangeMessageResponse()
-        elif acRcvEnvp.type == ac_pb2.ArseneCryptoMessage.AC_CRYPTO and actype == self.ACMSG_TYPE_CRYPTO:
-            acResponse = ac_pb2.acCipherTextMessageResponse()
-        elif acRcvEnvp.type == ac_pb2.ArseneCryptoMessage.AC_QUIT and actype == self.ACMSG_TYPE_QUIT:
-            return [ acRcvEnvp, None ]
-        # XXX TODO: error to should be handled..
-        elif acRcvEnvp.type == ac_pb2.ArseneCryptoMessage.AC_ERROR:
-            return [ None, acRcvEnvp.blob ] # AC_ERROR, I should have the message, don't know if it's nice this way..
-        else:
-            return [ None, "Unknown Error" ] # Unknown error
-
-        # XXX TODO: surround in try/except
-        acResponse.ParseFromString(acRcvEnvp.blob)
-        return [ acResponse, None ]
-
-    def acRequest(self, type, subtype, args, bufsize = BUF_SMALL): 
-        acblob = self._acMsg(type, subtype, args)
-#        ac_pkr, err = self._acRequest(acblob, type=type, bufsize=bufsize)
-        return self._acRequest(acblob, type, bufsize)
-
-
 
 
 # XXX TODO: now the main class the AcCore class which will embed all that is
@@ -2172,10 +1764,11 @@ class AcCore(AcDisplay, AcJSCom):
     def acBanner(self, buffer):
 #        buffer = weechat.current_buffer();
         self.pmb(buffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$%%@#$%%@#$%%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
-        self.pmb(buffer, "%s Crypto %s %s (c) 2013-2015 Security Gigolos ", random.choice(self.A_title), random.choice(self.S_title), SCRIPT_VERSION)
+#        self.pmb(buffer, "%s Crypto %s %s (c) 2013-2016 unix4fun", random.choice(self.A_title), random.choice(self.S_title), SCRIPT_VERSION)
+        self.pmb(buffer, "IRC Crypto 4 Fun %s (c) 2013-2016 unix4fun", SCRIPT_VERSION)
         self.pmb(buffer, "by %s", SCRIPT_AUTHOR)
         self.pmb(buffer, "Implements AEAD: NaCL/ECC Curve 25519 w/ Salsa20/Poly1305 (more later)")
-        self.pmb(buffer, "type: /ac help to get HELP!")
+        self.pmb(buffer, "type: /ic help to get HELP!")
         self.pmb(buffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$%%@#$%%@#$%%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
 
     def _buildHash(self, serv, chan):
@@ -2293,7 +1886,7 @@ class AcWeechat(AcCore):
 
     CMD_PUBKEY  = { CMD_HKEY_NAME:"pk",     CMD_HKEY_CB: "pkCmd_CB" }
     CMD_SNDKEY  = { CMD_HKEY_NAME:"sk",     CMD_HKEY_CB: "skCmd_CB" }
-    CMD_ACCMD   = { CMD_HKEY_NAME:"ac",     CMD_HKEY_CB: "acCmd_CB" }
+    CMD_ACCMD   = { CMD_HKEY_NAME:"ic",     CMD_HKEY_CB: "acCmd_CB" }
 
     def __init__(self, acBin, acDbg):
         AcCore.__init__(self, "", acBin, acDbg)
