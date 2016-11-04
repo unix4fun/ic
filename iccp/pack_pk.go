@@ -17,10 +17,18 @@ import (
 //
 // We need to encrypt/build encryption
 //
-func packMessagePK(hdr uint32, blob []byte) (out []byte, err error) {
+//func packMessagePK(hdr uint32, blob []byte) (out []byte, err error) {
+func packMessagePK(blob []byte) (out []byte, err error) {
 
 	acOut := &ACPackedMessage{}
-	acOut.Header = hdr
+
+	_, intHdr, err := BuildHeader([]byte(msgHdrPK))
+	if err != nil {
+		return nil, err ///&icutl.AcError{Value: -1, Msg: "CreatePKMessageNACL().BuildHeader(): ", Err: err}
+	}
+
+	//acOut.Header = hdr
+	acOut.Header = intHdr
 	//acOut.Nonce = proto.Uint32(*nonce)
 	//acOut.Dst = dst
 	acOut.Ciphertext = blob
@@ -44,7 +52,12 @@ func unpackMessagePK(in []byte) (ciphertext []byte, err error) {
 
 	acIn := &ACPackedMessage{}
 
-	err = proto.Unmarshal(in, acIn)
+	b64, err := icutl.B64DecodeData(in)
+	if err != nil {
+		return nil, err //&icutl.AcError{Value: -1, Msg: "OpenPKMessageNACL(): ", Err: err}
+	}
+
+	err = proto.Unmarshal(b64, acIn)
 	if err != nil {
 		return nil, err
 	}
@@ -67,10 +80,12 @@ func unpackMessagePK(in []byte) (ciphertext []byte, err error) {
 
 func CreatePKMessageNACL(pubkey []byte) (out []byte, err error) {
 	/* lets build our header */
-	_, intHdr, err := BuildHeader([]byte(msgHdrPK))
-	if err != nil {
-		return nil, &icutl.AcError{Value: -1, Msg: "CreatePKMessageNACL().BuildHeader(): ", Err: err}
-	}
+	/*
+		_, intHdr, err := BuildHeader([]byte(msgHdrPK))
+		if err != nil {
+			return nil, &icutl.AcError{Value: -1, Msg: "CreatePKMessageNACL().BuildHeader(): ", Err: err}
+		}
+	*/
 
 	// first let's compress
 	myBody, err := icutl.CompressData(pubkey)
@@ -78,7 +93,8 @@ func CreatePKMessageNACL(pubkey []byte) (out []byte, err error) {
 		return nil, &icutl.AcError{Value: -2, Msg: "CreatePKMessageNACL().CompressData(): ", Err: err}
 	}
 
-	out, err = packMessagePK(intHdr, myBody)
+	//out, err = packMessagePK(intHdr, myBody)
+	out, err = packMessagePK(myBody)
 	if err != nil {
 		return nil, &icutl.AcError{Value: -3, Msg: "CreatePKMessageNACL().PackMsg(): ", Err: err}
 	}
@@ -89,12 +105,15 @@ func CreatePKMessageNACL(pubkey []byte) (out []byte, err error) {
 
 func OpenPKMessageNACL(ircmsg []byte) (out []byte, err error) {
 
-	b64, err := icutl.B64DecodeData(ircmsg)
-	if err != nil {
-		return nil, &icutl.AcError{Value: -1, Msg: "OpenPKMessageNACL(): ", Err: err}
-	}
+	/*
+		b64, err := icutl.B64DecodeData(ircmsg)
+		if err != nil {
+			return nil, &icutl.AcError{Value: -1, Msg: "OpenPKMessageNACL(): ", Err: err}
+		}
+	*/
 
-	ciphertext, err := unpackMessagePK(b64)
+	//ciphertext, err := unpackMessagePK(b64)
+	ciphertext, err := unpackMessagePK(ircmsg)
 	if err != nil {
 		return nil, &icutl.AcError{Value: -2, Msg: "OpenPKMessageNACL(): ", Err: err}
 	}

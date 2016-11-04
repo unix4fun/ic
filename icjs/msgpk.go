@@ -14,14 +14,16 @@ type ACPkMessage struct {
 	Nick   string `json:"nick"`
 	Host   string `json:"host"`
 	Server string `json:"server"`
-	Blob   []byte `json:"blob"`
+	Blob   string `json:"blob"` // do we really need to []byte that... it's base64 string anyway..
+	//Blob   []byte `json:"blob"`
 }
 
 type ACPkReply struct {
 	Type  int    `json:"type"`
 	Bada  bool   `json:"bada"`
 	Errno int    `json:"errno"`
-	Blob  []byte `json:"blob"`
+	Blob  string `json:"blob"`
+	//Blob  []byte `json:"blob"`
 }
 
 func (pk *ACPkMessage) validate() error {
@@ -63,7 +65,8 @@ func (pk *ACPkMessage) HandlerPKGEN() (msgReply []byte, err error) {
 			Type:  R_PKGEN,
 			Bada:  false,
 			Errno: -1,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
+			//Blob:  []byte(err.Error()),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandlePKGEN(%d:%s/%s) -> [Error: %s]\n", pk, pk.Type, pk.Server, pk.Nick, err.Error())
 		return
@@ -75,7 +78,8 @@ func (pk *ACPkMessage) HandlerPKGEN() (msgReply []byte, err error) {
 			Type:  R_PKGEN,
 			Bada:  false,
 			Errno: -2,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
+			//Blob:  []byte(err.Error()),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandlePKGEN(%d:%s/%s) -> [Error: %s]\n", pk, pk.Type, pk.Server, pk.Nick, err.Error())
 		return
@@ -87,7 +91,7 @@ func (pk *ACPkMessage) HandlerPKGEN() (msgReply []byte, err error) {
 			Type:  R_PKGEN,
 			Bada:  false,
 			Errno: -3,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandlePKGEN(%d:%s/%s) -> [Error: %s]\n", pk, pk.Type, pk.Server, pk.Nick, err.Error())
 		return
@@ -118,7 +122,8 @@ func (pk *ACPkMessage) HandlerPKADD() (msgReply []byte, err error) {
 			Type:  R_PKADD,
 			Bada:  false,
 			Errno: -1,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
+			//Blob:  []byte(err.Error()),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandlePKADD(%d:%s/%s) -> [Error: %s]\n", pk, pk.Type, pk.Server, pk.Nick, err.Error())
 		return
@@ -129,7 +134,8 @@ func (pk *ACPkMessage) HandlerPKADD() (msgReply []byte, err error) {
 	newkey.Nickname = pk.Nick
 	newkey.Userhost = pk.Host
 	newkey.Server = pk.Server
-	newkey.Pubkey = string(pk.Blob)
+	newkey.Pubkey = pk.Blob
+	//newkey.Pubkey = string(pk.Blob)
 	newkey.HasPriv = false
 	newkey.CreaTime = time.Now()
 	newkey.Timestamp = newkey.CreaTime.Unix()
@@ -140,7 +146,8 @@ func (pk *ACPkMessage) HandlerPKADD() (msgReply []byte, err error) {
 			Type:  R_PKADD,
 			Bada:  false,
 			Errno: -2,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
+			//Blob:  []byte(err.Error()),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandlePKADD(%d:%s/%s) -> [Error: %s]\n", pk, pk.Type, pk.Server, pk.Nick, err.Error())
 		return
@@ -152,7 +159,8 @@ func (pk *ACPkMessage) HandlerPKADD() (msgReply []byte, err error) {
 			Type:  R_PKADD,
 			Bada:  false,
 			Errno: -3,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
+			//Blob:  []byte(err.Error()),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandlePKADD(%d:%s/%s) -> [Error: %s]\n", pk, pk.Type, pk.Server, pk.Nick, err.Error())
 		return
@@ -179,7 +187,8 @@ func (pk *ACPkMessage) HandlerPKLIST() (msgReply []byte, err error) {
 			Type:  R_PKLIST,
 			Bada:  false,
 			Errno: -1,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
+			//Blob:  []byte(err.Error()),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandlePKADD(%d:%s/%s) -> [Error: %s]\n", pk, pk.Type, pk.Server, pk.Nick, err.Error())
 		return
@@ -194,9 +203,18 @@ func (pk *ACPkMessage) HandlerPKLIST() (msgReply []byte, err error) {
 		icutl.DebugLog.Printf("ok_map len: %d\n", len(*pkMap))
 
 		// KISS: we always return all keys... the script will parse what it needs. :)
-		msgReplyBlob, rErr := json.Marshal(*pkMap)
-		if rErr != nil {
-			panic(rErr)
+		msgReplyBlob, rerr := json.Marshal(*pkMap)
+		if err != nil {
+			msgReply, _ = json.Marshal(&ACPkReply{
+				Type:  R_PKLIST,
+				Bada:  false,
+				Errno: -2,
+				Blob:  rerr.Error(),
+				//Blob:  []byte(err.Error()),
+			})
+			icutl.DebugLog.Printf("RET [%p] HandlePKADD(%d:%s/%s) -> [Error: %s]\n", pk, pk.Type, pk.Server, pk.Nick, err.Error())
+			return
+			//panic(rErr)
 		}
 
 		icutl.DebugLog.Printf("(INFO) PKLIST -> (Blob: %s) ! n Keys\n", msgReplyBlob)
@@ -204,7 +222,7 @@ func (pk *ACPkMessage) HandlerPKLIST() (msgReply []byte, err error) {
 			Type:  R_PKLIST,
 			Bada:  true,
 			Errno: 0,
-			Blob:  msgReplyBlob,
+			Blob:  string(msgReplyBlob),
 		})
 		return
 	}
@@ -212,7 +230,7 @@ func (pk *ACPkMessage) HandlerPKLIST() (msgReply []byte, err error) {
 		Type:  R_PKLIST,
 		Bada:  true,
 		Errno: 0,
-		Blob:  nil,
+		Blob:  "",
 	})
 	icutl.DebugLog.Printf("RET [%p] HandlePKLIST(%d:%s/%s) -> [reply: %s]\n", pk, pk.Type, pk.Server, pk.Nick)
 	return
@@ -228,7 +246,8 @@ func (pk *ACPkMessage) HandlerPKDEL() (msgReply []byte, err error) {
 			Type:  R_PKDEL,
 			Bada:  false,
 			Errno: -1,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
+			//Blob:  []byte(err.Error()),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandlePKDEL(%d:%s/%s) -> [Error: %s]\n", pk, pk.Type, pk.Server, pk.Nick, err.Error())
 		return
@@ -266,7 +285,8 @@ func HandlePKMsg(msg []byte) (msgReply []byte, err error) {
 			Type:  R_PKERR,
 			Bada:  false,
 			Errno: -1,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
+			//Blob:  []byte(err.Error()),
 		})
 		icutl.DebugLog.Printf("RET HandlerPKMsg(%s) -> [Error: %s]\n", msg, msgReply)
 		return
@@ -287,7 +307,8 @@ func HandlePKMsg(msg []byte) (msgReply []byte, err error) {
 			Type:  R_PKERR,
 			Bada:  false,
 			Errno: -2,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
+			//Blob:  []byte(err.Error()),
 		})
 	}
 

@@ -14,14 +14,16 @@ type ACKxMessage struct {
 	PeerNick string `json:"peer"`
 	Server   string `json:"server"`
 	Channel  string `json:"channel"`
-	Blob     []byte `json:"blob"`
+	Blob     string `json:"blob"`
+	//Blob     []byte `json:"blob"`
 }
 
 type ACKxReply struct {
 	Type  int    `json:"type"`
 	Bada  bool   `json:"bada"`
 	Errno int    `json:"errno"`
-	Blob  []byte `json:"blob"`
+	//Blob  []byte `json:"blob"`
+	Blob  string `json:"blob"`
 	Nonce uint32 `json:"nonce"`
 }
 
@@ -57,7 +59,7 @@ func (kx *ACKxMessage) HandlerKXPACK() (msgReply []byte, err error) {
 			Type:  R_KXPACK,
 			Bada:  false,
 			Errno: -1,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandleKXPACK(%d:%s -> %s (%s/%s)) -> [Error: %s]\n",
 			kx,
@@ -79,7 +81,7 @@ func (kx *ACKxMessage) HandlerKXPACK() (msgReply []byte, err error) {
 			Type:  R_KXPACK,
 			Bada:  false,
 			Errno: -2,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandleKXPACK(%d:%s -> %s (%s/%s)) -> [Error: %s]\n",
 			kx,
@@ -98,7 +100,7 @@ func (kx *ACKxMessage) HandlerKXPACK() (msgReply []byte, err error) {
 			Type:  R_KXPACK,
 			Bada:  false,
 			Errno: -3,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandleKXPACK(%d:%s -> %s (%s/%s)) -> [Error: %s]\n",
 			kx,
@@ -114,7 +116,7 @@ func (kx *ACKxMessage) HandlerKXPACK() (msgReply []byte, err error) {
 		Type:  R_KXPACK,
 		Bada:  true,
 		Errno: 0,
-		Blob:  kxMsg,
+		Blob:  string(kxMsg),
 		Nonce: acctx.GetNonce(),
 	})
 	icutl.DebugLog.Printf("RET [%p] HandleKXPACK(%d:%s -> %s (%s/%s)) -> [OK]\n",
@@ -166,7 +168,7 @@ func (kx *ACKxMessage) HandlerKXUNPACK() (msgReply []byte, err error) {
 			Type:  R_KXUNPACK,
 			Bada:  false,
 			Errno: -1,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandleKXUNPACK(%d:%s -> %s[%s] (%s/%s)) -> [Error: %s]\n",
 			kx,
@@ -198,7 +200,7 @@ func (kx *ACKxMessage) HandlerKXUNPACK() (msgReply []byte, err error) {
 			Type:  R_KXUNPACK,
 			Bada:  false,
 			Errno: -2,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		//return acMsgResponse, retErr
 		return
@@ -223,7 +225,7 @@ func (kx *ACKxMessage) HandlerKXUNPACK() (msgReply []byte, err error) {
 	//        fmt.Printf("[+] KXUNPACK: not a channel, private conversation let's use this: %s\n", kx_channel)
 	//    }
 
-	acctx, acrnd, err := iccp.OpenKXMessageNACL(peer.GetPubkey(), me.GetPrivkey(), kx.Blob, []byte(kx.Channel), []byte(kx.MyNick), []byte(kx.PeerNick))
+	acctx, acrnd, err := iccp.OpenKXMessageNACL(peer.GetPubkey(), me.GetPrivkey(), []byte(kx.Blob), []byte(kx.Channel), []byte(kx.MyNick), []byte(kx.PeerNick))
 	//    acctx, err := iccp.OpenKXMessage(peer.GetPubkey(), me.GetPrivkey(), blobMsg, kx_channel, []byte(mynick), []byte(peernick))
 	if err != nil {
 		/*
@@ -240,7 +242,7 @@ func (kx *ACKxMessage) HandlerKXUNPACK() (msgReply []byte, err error) {
 			Type:  R_KXUNPACK,
 			Bada:  false,
 			Errno: -3,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		return
 	}
@@ -293,7 +295,7 @@ func HandleKXMsg(msg []byte) (msgReply []byte, err error) {
 			Type:  R_KXERR,
 			Bada:  false,
 			Errno: -1,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		return
 	}
@@ -309,7 +311,7 @@ func HandleKXMsg(msg []byte) (msgReply []byte, err error) {
 			Type:  R_KXERR,
 			Bada:  false,
 			Errno: -2,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 	}
 

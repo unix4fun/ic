@@ -178,7 +178,8 @@ class pkMessage(acMessage):
         self.pkDict['server'] = self.serv
         self.pkDict['nick'] = nick
         self.pkDict['host'] = host
-        self.pkDict['blob'] = base64.b64encode(blob)
+#        self.pkDict['blob'] = base64.b64encode(blob)
+        self.pkDict['blob'] = blob
         packed = self.pack()
         envp = self.com.acRequest(packed, self.com.BUF_LARGE)
         # XXX test ERROR first!!
@@ -192,7 +193,7 @@ class pkMessage(acMessage):
         envp = self.com.acRequest(packed, self.com.BUF_LARGE)
         # XXX test ERROR first!!
         rep =  self.unpack(envp[0])
-        rep['blob'] = base64.b64decode(rep['blob'])
+        #rep['blob'] = base64.b64decode(rep['blob'])
         rep['blob'] = json.loads(rep['blob'])
         return rep
 
@@ -243,7 +244,7 @@ class kxMessage(acMessage):
         return self.unpack(envp[0])
 
     def kxunpack(self, me, peernick, blob):
-        self.kxDict['type'] = getattr(msgTypeEnum, 'KXPACK')
+        self.kxDict['type'] = getattr(msgTypeEnum, 'KXUNPACK')
         self.kxDict['server'] = self.serv
         self.kxDict['channel'] = self.chan
         self.kxDict['me'] = me
@@ -284,7 +285,8 @@ class ctMessage(acMessage):
         self.ctDict['channel'] = self.chan
         self.ctDict['nick'] = me
         # remember when using []byte() in Go you need to base64 encode it..
-        self.ctDict['blob'] = base64.b64encode(plain)
+        #self.ctDict['blob'] = base64.b64encode(plain)
+        self.ctDict['blob'] = plain
 #        return self.pack()
         packed = self.pack()
         envp = self.com.acRequest(packed, self.com.BUF_LARGE)
@@ -296,8 +298,9 @@ class ctMessage(acMessage):
         self.ctDict['server'] = self.serv
         self.ctDict['channel'] = self.chan
         self.ctDict['nick'] = peer
-        self.ctDict['blob'] = base64.b64encode(ciphertext)
-        self.ctDict['opt'] = base64.b64encode(opt)
+        #self.ctDict['blob'] = base64.b64encode(ciphertext)
+        self.ctDict['blob'] = ciphertext
+        self.ctDict['opt'] = opt
 #        return self.pack()
         packed = self.pack()
         envp = self.com.acRequest(packed, self.com.BUF_LARGE)
@@ -309,7 +312,8 @@ class ctMessage(acMessage):
         self.ctDict['server'] = self.serv
         self.ctDict['channel'] = self.chan
         self.ctDict['nick'] = me
-        self.ctDict['blob'] = base64.b64encode(inputblob)
+        #self.ctDict['blob'] = base64.b64encode(inputblob)
+        self.ctDict['blob'] = inputblob
 #        return self.pack()
         packed = self.pack()
         envp = self.com.acRequest(packed, self.com.BUF_LARGE)
@@ -410,7 +414,7 @@ class qtMessage(acMessage):
 if __name__ == "__main__":
 #    print "MAIN CODE"
     print "----- JSON Communication layer -----"
-    jsCom = acJSCom("/Users/eau/dev/go/src/github.com/unix4fun/ac/ac", "./debuglocal")
+    jsCom = acJSCom("/Users/eau/dev/go/src/github.com/unix4fun/ic/ic", "./debuglocal")
     jsCom.acStartDaemon()
 
 
@@ -472,17 +476,24 @@ if __name__ == "__main__":
     print ctu
 
     # ct MESSAGES
-    print "CTSEAL Message (bleh):"
-    ct = ctMessage(jsCom, "freenode", "#ermites").ctseal("bleh", "pkdsjkadjldakjdlakjdlakjdlaksjdlkasdlkasjldkajlkdajslkdjalskdakjsdlkasjdlkasjdlkajdlkajdklajdlkasjlkdasjlkdjaslkdjaslkdjaskljdaslkjdalksjdlaksjdlkasjdlkasjdlkajsdlkajdlkajslkdajslkdjaslkdjaslkdjaslkdjaslkjdalksjdalksjdlkasjdlkajsdlkasjdlkasjdlkajdlkasjdlkasjdklasjdlkasjdlkasjdlkasjdlkasjdlkasjdlkasjdlkasjdlkasjldkjaslkdjaslkdjaslkdjaslkdjaslkdjaslkadjldksajdlkasjdlkasjdalkdjakjdaskjdlksajldkjlkjdlakjlakdjlkdjlkajsdlkajlkdjakljdalkjdlkajkldjalkdjalkjakljdklajdklajdlkajlkdjalkjdakljsdlkajlkajslkdjdalkjdlkajdklajdklajdkljalkjdalkjdlkdjsalkjsdlkjdskldjlkdsjlkdajlkdsjldkasjadlskjdslkjdkladjdlkajdalkjdalksdlkaskjlaintextdkadlkdjlakjdalsjdlkasjdlkajslkdjaskjdsalkjdsalkjdajdlkajdklajkljdalkjdlkasjdlkasjdlkasjlkasjlksjdklajdlkajlkasjldkajslkdjaslkdjaslkdjaslkjdaklsjdaklsjdlkasjdlkajskldajskldjaslkdjaskldjsakljdaslkjdslakjdklsajdlkasjdlkajdlkasjlkasjlkdajlkdjaslkjslkajdlksajdlsakjdalskjdaslkj")
-    print ct
-    print type(ct['blobarray'])
+#    print "CTSEAL Message (bleh):"
+#    ct = ctMessage(jsCom, "freenode", "#ermites").ctseal("bleh", "pkdsjkadjldakjdlakjdlakjdlaksjdlkasdlkasjldkajlkdajslkdjalskdakjsdlkasjdlkasjdlkajdlkajdklajdlkasjlkdasjlkdjaslkdjaslkdjaskljdaslkjdalksjdlaksjdlkasjdlkasjdlkajsdlkajdlkajslkdajslkdjaslkdjaslkdjaslkdjaslkjdalksjdalksjdlkasjdlkajsdlkasjdlkasjdlkajdlkasjdlkasjdklasjdlkasjdlkasjdlkasjdlkasjdlkasjdlkasjdlkasjdlkasjldkjaslkdjaslkdjaslkdjaslkdjaslkdjaslkadjldksajdlkasjdlkasjdalkdjakjdaskjdlksajldkjlkjdlakjlakdjlkdjlkajsdlkajlkdjakljdalkjdlkajkldjalkdjalkjakljdklajdklajdlkajlkdjalkjdakljsdlkajlkajslkdjdalkjdlkajdklajdklajdkljalkjdalkjdlkdjsalkjsdlkjdskldjlkdsjlkdajlkdsjldkasjadlskjdslkjdkladjdlkajdalkjdalksdlkaskjlaintextdkadlkdjlakjdalsjdlkasjdlkajslkdjaskjdsalkjdsalkjdajdlkajdklajkljdalkjdlkasjdlkasjdlkasjlkasjlksjdklajdlkajlkasjldkajslkdjaslkdjaslkdjaslkjdaklsjdaklsjdlkasjdlkajskldajskldjaslkdjaskldjsakljdaslkjdslakjdklsajdlkasjdlkajdlkasjlkasjlkdajlkdjaslkjslkajdlksajdlsakjdalskjdaslkj")
+#    print ct
+#    print type(ct['blobarray'])
+#    ciphertext2 = base64.b64decode(ct['blobarray'][0])
 
-    print "CTOPEN Message (spoty):"
-    ct = ctMessage(jsCom, "freenode", "#ermites").ctopen("spoty", "RFFrd2pSb1FBQm9sTS9qbTRGdWttR0xSZkxLNnNDWm9ORUNLMTZ6VGowUmQyeEszanp2T244NkVKb2toV0E9PQ==", "bleh")
+    # ct MESSAGES
+    print "CTSEAL Message (bleh):"
+    ct = ctMessage(jsCom, "freenode", "#ermites").ctseal("bleh", "proutprout")
     print ct
+    ciphertext = ct['blobarray'][0]
+#    print "CTOPEN Message (spoty):"
+#    ct = ctMessage(jsCom, "freenode", "#ermites").ctopen("spoty", "RFFrd2pSb1FBQm9sTS9qbTRGdWttR0xSZkxLNnNDWm9ORUNLMTZ6VGowUmQyeEszanp2T244NkVKb2toV0E9PQ==", "bleh")
+#    print ct
 
     print "CTOPEN Message (bleh):"
-    ct = ctMessage(jsCom, "freenode", "#ermites").ctopen("bleh", "DYswjzAaJUsCNDNSZxPraDcBG4x1kojTEZlvxbKyAaW4HLUb+UP7Ur6/nMU=", "")
+#    ct = ctMessage(jsCom, "freenode", "#ermites").ctopen("bleh", "DYswjzAaJUsCNDNSZxPraDcBG4x1kojTEZlvxbKyAaW4HLUb+UP7Ur6/nMU=", "")
+    ct = ctMessage(jsCom, "freenode", "#ermites").ctopen("bleh", ciphertext, "spoty")
     print ct
 
 

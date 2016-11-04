@@ -11,14 +11,14 @@ type ACClMessage struct {
 	Type    int    `json:"type"`
 	Channel string `json:"channel"`
 	Server  string `json:"server"`
-	Blob    []byte `json:"blob"`
+	Blob    string `json:"blob"`
 }
 
 type ACClReply struct {
 	Type  int    `json:"type"`
 	Bada  bool   `json:"bada"`
 	Errno int    `json:"errno"`
-	Blob  []byte `json:"blob,omitempty"`
+	Blob  string `json:"blob,omitempty"`
 }
 
 func (cl *ACClMessage) validate() error {
@@ -57,7 +57,7 @@ func (cl *ACClMessage) HandlerCLLOAD() (msgReply []byte, err error) {
 			Type:  R_CLLOAD,
 			Bada:  false,
 			Errno: -1,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandlerCLLOAD([%d/%s/%s]: p:%02s) -> [Error: %s]\n",
 			cl,
@@ -74,7 +74,7 @@ func (cl *ACClMessage) HandlerCLLOAD() (msgReply []byte, err error) {
 			Type:  R_CLLOAD,
 			Bada:  false,
 			Errno: -2,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandlerCLLOAD([%d/%s/%s]: p:%02s) -> [Error: %s]\n",
 			cl,
@@ -113,7 +113,7 @@ func (cl *ACClMessage) HandlerCLSAVE() (msgReply []byte, err error) {
 			Type:  R_CLSAVE,
 			Bada:  false,
 			Errno: -1,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandlerCLSAVE([%d/%s/%s]: p:%02s) -> [Error: %s]\n",
 			cl,
@@ -132,7 +132,7 @@ func (cl *ACClMessage) HandlerCLSAVE() (msgReply []byte, err error) {
 			Type:  R_CLSAVE,
 			Bada:  false,
 			Errno: -1,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandlerCLSAVE([%d/%s/%s]: p:%02s) -> [Error: %s]\n",
 			cl,
@@ -171,7 +171,7 @@ func (cl *ACClMessage) HandlerCLIAC() (msgReply []byte, err error) {
 			Type:  R_CLIAC,
 			Bada:  false,
 			Errno: -1,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandlerCLIAC([%d/%s/%s]: p:%02s) -> [Error: %s]\n",
 			cl,
@@ -190,7 +190,7 @@ func (cl *ACClMessage) HandlerCLIAC() (msgReply []byte, err error) {
 			Type:  R_CLIAC,
 			Bada:  false,
 			Errno: -2,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandlerCLIAC([%d/%s/%s]: p:%02s) -> [Error: %s]\n",
 			cl,
@@ -232,7 +232,7 @@ func HandleCLMsg(msg []byte) (msgReply []byte, err error) {
 			Type:  R_CLERR,
 			Bada:  false,
 			Errno: -1,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		return
 	}
@@ -250,7 +250,7 @@ func HandleCLMsg(msg []byte) (msgReply []byte, err error) {
 			Type:  R_CLERR,
 			Bada:  false,
 			Errno: -2,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 	}
 

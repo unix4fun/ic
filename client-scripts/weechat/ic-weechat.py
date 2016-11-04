@@ -4,7 +4,7 @@
 # you can send an email can you?
 #
 # feedback and constructive comments:
-# eau <eau-code@unix4fun.net>
+# eau <eau+ic4f@unix4fun.net>
 # 
 #
 
@@ -36,7 +36,7 @@ except ImportError as message:
 #AC_BINARY = "/Users/eau/dev/git/ac/ac"
 #AC_BINARY = "~/dev/go/bin/ac"
 # we need to test if the binary is here and fail to load if it is NOT
-AC_BINARY = os.environ["GOPATH"]+"/bin/ac"
+AC_BINARY = os.environ["GOPATH"]+"/bin/ic"
 AC_DEBUGFILE = "./ic.debug.txt"
 
 
@@ -621,11 +621,12 @@ def skCmdUseKey(data, dabuffer, args):
         # TODO: better sanity checks..
         if kexinfo:
             kxReply = kxMessage(acwee, kexinfo[3], kexinfo[2]).kxunpack(kexinfo[0], kexinfo[1], kexinfo[4])
+            #print kxReply
             if kxReply['bada'] is True and kxReply['errno'] == 0:
                 acwee.pmbac(dabuffer, "using key received from %s @ [%s/%s]", kexinfo[1], kexinfo[2], kexinfo[3])
                 acwee.acEnable(dabuffer, inf[BI_SERV], inf[BI_CHAN])
                 # nonce display/update..
-                acwee.acUpdNonce(inf[BI_SERV], inf[BI_CHAN], ac_kxr.nonce)
+                acwee.acUpdNonce(inf[BI_SERV], inf[BI_CHAN], kxReply['nonce'])
             else:
                 acwee.pmbac(dabuffer, "invalid key exchange received from %s @ [%s/%s]", kexinfo[1], kexinfo[2], kexinfo[3])
             return weechat.WEECHAT_RC_OK
@@ -1121,7 +1122,7 @@ def privmsg_in_modifier_cb(data, modifier, modifier_data, msg_string):
 #            print channel
 #            print "PEER PEER NICK :"
 #            print peer_nick
-            myargs.update( { acwee.KEY_OPT:my_nick } )
+#            myargs.update( { acwee.KEY_OPT:my_nick } )
 
         # XXX TODO: force to create buffer when there is none for a pk message received.. and display in that buffer..
         # XXX TODO: sanity checks!! error handling!!
@@ -1138,13 +1139,13 @@ def privmsg_in_modifier_cb(data, modifier, modifier_data, msg_string):
             if ac_isb64(msg_blob) is False:
                 acwee.pmbac(buffer, "Invalid message (b64) from %s [%s/%s]!", peer_nick, peer_nick, channel)
                 return msg_string
-            myargs.update({ acwee.KEY_PEERNICK:peer_nick, acwee.KEY_CHANNEL:channel, acwee.KEY_SERVER:server, acwee.KEY_BLOB:msg_blob })
+#            myargs.update({ acwee.KEY_PEERNICK:peer_nick, acwee.KEY_CHANNEL:channel, acwee.KEY_SERVER:server, acwee.KEY_BLOB:msg_blob })
             try:
                 ctReply = ctMessage(acwee, server, channel).ctopen(peer_nick, msg_blob, my_nick)
             except Exception as e:
                 acwee.pmbac(buffer, "!WARNING!\tMESSAGE NOT SENT: '%s' [NO ENCRYPTOR:%s]", out_msg, str(e))
             if ctReply['bada'] is True:
-                acwee.prtAcPrivMsg(buffer, peer_nick, ac_ctr.blob[0], "irc_privmsg,,notify_message,prefix_nick_default,nick_"+peer_nick+',host_'+peer_host)
+                acwee.prtAcPrivMsg(buffer, peer_nick, ctReply['blob'], "irc_privmsg,,notify_message,prefix_nick_default,nick_"+peer_nick+',host_'+peer_host)
 #                weechat.prnt(buffer, "%s(%s%s%s)%s\t%s" % (weechat.color("white"), weechat.color("lightcyan"),peer_nick, weechat.color("white"), weechat.color("default"), ac_ctr.blob ))
                 # SET NONCE / UPDATE happen in the callback, i hope it's not too slow...
                 acwee.acUpdNonce(server, channel, ctReply['nonce'])
@@ -1356,7 +1357,7 @@ class AcDisplay(object):
 
     def prtAcPrivMsg(self, buffer, nick, message, tags):
 #	weechat.print_date_tags(buffer)
-	newtags = tags+',ACMSG'
+    	newtags = tags+',ACMSG'
 	#weechat.prnt_date_tags(buffer, 0, newtags, message)
         #weechat.prnt(buffer, "%s(%s%s%s)%s\t%s" % (weechat.color("white"), weechat.color("lightcyan"), nick, weechat.color("white"), weechat.color("default"), message ))
         weechat.prnt_date_tags(buffer, 0, newtags, "%s(%s%s%s)%s\t%s" % (weechat.color("white"), weechat.color("lightcyan"), nick, weechat.color("white"), weechat.color("default"), message ))
@@ -1499,7 +1500,7 @@ class pkMessage(acMessage):
         self.pkDict['server'] = self.serv
         self.pkDict['nick'] = nick
         self.pkDict['host'] = host
-        self.pkDict['blob'] = base64.b64encode(blob)
+        self.pkDict['blob'] = blob
         packed = self.pack()
         envp = self.com.acRequest(packed, self.com.BUF_LARGE)
         # XXX test ERROR first!!
@@ -1516,7 +1517,7 @@ class pkMessage(acMessage):
         # stuff are in []byte in Go code, when no nicks, rep blob can be empy as the maps can be empty and is being serialized as such..
         # i hate JSON $#@!$#!@$@
         if rep['blob'] is not None and len(rep['blob']) > 0:
-            rep['blob'] = base64.b64decode(rep['blob'])
+#            rep['blob'] = base64.b64decode(rep['blob'])
             rep['blob'] = json.loads(rep['blob'])
         else:
             rep['blob'] = {}
@@ -1572,7 +1573,7 @@ class kxMessage(acMessage):
         return self.unpack(envp[0])
 
     def kxunpack(self, me, peernick, blob):
-        self.kxDict['type'] = getattr(msgTypeEnum, 'KXPACK')
+        self.kxDict['type'] = getattr(msgTypeEnum, 'KXUNPACK')
         self.kxDict['server'] = self.serv
         self.kxDict['channel'] = self.chan
         self.kxDict['me'] = me
@@ -1613,7 +1614,7 @@ class ctMessage(acMessage):
         self.ctDict['channel'] = self.chan
         self.ctDict['nick'] = me
         # remember when using []byte() in Go you need to base64 encode it..
-        self.ctDict['blob'] = base64.b64encode(plain)
+        self.ctDict['blob'] = plain
         #        return self.pack()
         packed = self.pack()
         envp = self.com.acRequest(packed, self.com.BUF_LARGE)
@@ -1625,8 +1626,8 @@ class ctMessage(acMessage):
         self.ctDict['server'] = self.serv
         self.ctDict['channel'] = self.chan
         self.ctDict['nick'] = peer
-        self.ctDict['blob'] = base64.b64encode(ciphertext)
-        self.ctDict['opt'] = base64.b64encode(opt)
+        self.ctDict['blob'] = ciphertext
+        self.ctDict['opt'] = opt
         #        return self.pack()
         packed = self.pack()
         envp = self.com.acRequest(packed, self.com.BUF_LARGE)
@@ -1638,7 +1639,7 @@ class ctMessage(acMessage):
         self.ctDict['server'] = self.serv
         self.ctDict['channel'] = self.chan
         self.ctDict['nick'] = me
-        self.ctDict['blob'] = base64.b64encode(inputblob)
+        self.ctDict['blob'] = inputblob
         #        return self.pack()
         packed = self.pack()
         envp = self.com.acRequest(packed, self.com.BUF_LARGE)
@@ -1674,7 +1675,7 @@ class clMessage(acMessage):
         self.clDict['type'] = getattr(msgTypeEnum, 'CLLOAD')
         self.clDict['server'] = self.serv
         self.clDict['channel'] = self.chan
-        self.clDict['blob'] = base64.b64encode(p)
+        self.clDict['blob'] = p
         packed = self.pack()
         envp = self.com.acRequest(packed, self.com.BUF_LARGE)
         # XXX test ERROR first!!
@@ -1684,7 +1685,7 @@ class clMessage(acMessage):
         self.clDict['type'] = getattr(msgTypeEnum, 'CLSAVE')
         self.clDict['server'] = self.serv
         self.clDict['channel'] = self.chan
-        self.clDict['blob'] = base64.b64encode(p)
+        self.clDict['blob'] = p
         packed = self.pack()
         envp = self.com.acRequest(packed, self.com.BUF_LARGE)
         # XXX test ERROR first!!

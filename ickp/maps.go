@@ -4,13 +4,13 @@ package ickp
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"github.com/unix4fun/ic/icutl"
-	"os"
-	"crypto/rand"
-	"encoding/pem"
 	"io/ioutil"
+	"os"
 	"os/user"
 )
 

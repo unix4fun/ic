@@ -15,16 +15,20 @@ type ACCtMessage struct {
 	Nick    string `json:"nick"`
 	Server  string `json:"server"`
 	Channel string `json:"channel"`
-	Blob    []byte `json:"blob"`
-	Opt     []byte `json:"opt"`
+	//Blob    []byte `json:"blob"`
+	Blob    string `json:"blob"`
+	//Opt     []byte `json:"opt"`
+	Opt     string `json:"opt"`
 }
 
 type ACCtReply struct {
-	Type   int      `json:"type"`
-	Bada   bool     `json:"bada"`
-	Errno  int      `json:"errno"`
-	Blob   []byte   `json:"blob"`
-	Barray [][]byte `json:"blobarray,omitempty"`
+	Type  int    `json:"type"`
+	Bada  bool   `json:"bada"`
+	Errno int    `json:"errno"`
+	//Blob  []byte `json:"blob"`
+	Blob  string `json:"blob"`
+	//	Barray [][]byte `json:"blobarray,omitempty"`
+	Barray []string `json:"blobarray,omitempty"`
 	Nonce  uint32   `json:"nonce"`
 }
 
@@ -52,7 +56,8 @@ func (ct *ACCtMessage) validate() error {
 
 func (ct *ACCtMessage) HandlerCTSEAL() (msgReply []byte, err error) {
 	//var acctx *ickp.SecretKey
-	var acBlobArray [][]byte
+	//var acBlobArray [][]byte
+	var acBlobArray []string
 	var out []byte
 	var reqBlobTmp []byte
 
@@ -70,7 +75,7 @@ func (ct *ACCtMessage) HandlerCTSEAL() (msgReply []byte, err error) {
 			Type:  R_CTSEAL,
 			Bada:  false,
 			Errno: -1,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandlerCTSEAL([%d/%s/%s] <%s> %04s) -> [Error: %s]\n",
 			ct,
@@ -91,7 +96,7 @@ func (ct *ACCtMessage) HandlerCTSEAL() (msgReply []byte, err error) {
 			Type:  R_CTSEAL,
 			Bada:  false,
 			Errno: -2,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		return
 	}
@@ -106,18 +111,18 @@ func (ct *ACCtMessage) HandlerCTSEAL() (msgReply []byte, err error) {
 	*/
 	//tmpBlobLen := len(reqBlob)
 	//:nick!user@host PRIVMSG target :<usable bytes><CRLF>
-	msgLen := iccp.PredictLenNACL(ct.Blob) + len(ct.Channel) + 14
+	msgLen := iccp.PredictLenNACL([]byte(ct.Blob)) + len(ct.Channel) + 14
 	nBlock := msgLen/410 + 1
 
 	// BUG HERE with offsets...
 	for j, bSize, bAll, bPtr := 0, len(ct.Blob)/nBlock, len(ct.Blob), 0; j < nBlock; j, bPtr = j+1, bPtr+bSize {
 		if bPtr+bSize+1 >= bAll {
-			reqBlobTmp = ct.Blob[bPtr:]
+			reqBlobTmp = []byte(ct.Blob)[bPtr:]
 			//fmt.Fprintf(os.Stderr, "** %d block[%d:%d]: %s \n", j, bPtr, bAll, reqBlobTmp)
 			//fmt.Fprintf(os.Stderr, ">> %d => %c || %d => %c\n", bAll, reqBlob[bAll-1], bAll+1, reqBlob[bAll+1])
 			//reqBlob[bPtr:bAll]
 		} else {
-			reqBlobTmp = ct.Blob[bPtr : bPtr+bSize]
+			reqBlobTmp = []byte(ct.Blob)[bPtr : bPtr+bSize]
 			//fmt.Fprintf(os.Stderr, ">>#%d block[%d:%d]: %s \n", j, bPtr, bPtr+bSize, reqBlobTmp)
 			//reqBlob[bPtr : bPtr+bSize]
 		} // END OF ELSE
@@ -129,11 +134,11 @@ func (ct *ACCtMessage) HandlerCTSEAL() (msgReply []byte, err error) {
 				Type:  R_CTSEAL,
 				Bada:  false,
 				Errno: -3,
-				Blob:  []byte(err.Error()),
+				Blob:  err.Error(),
 			})
 			return
 		}
-		acBlobArray = append(acBlobArray, out)
+		acBlobArray = append(acBlobArray, string(out))
 	} // END OF FOR
 
 	msgReply, _ = json.Marshal(&ACCtReply{
@@ -151,6 +156,7 @@ func (ct *ACCtMessage) HandlerCTSEAL() (msgReply []byte, err error) {
 		ct.Nick,
 		ct.Blob,
 		acBlobArray)
+	icutl.DebugLog.Printf("RET [%p] HandlerCTSEAL msgReply DEBUG: [%s]\n", ct, msgReply)
 	return
 }
 
@@ -169,7 +175,7 @@ func (ct *ACCtMessage) HandlerCTOPEN() (msgReply []byte, err error) {
 			Type:  R_CTOPEN,
 			Bada:  false,
 			Errno: -1,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandlerCTOPEN([%d/%s/%s] <%s> %04s) -> [Error: %s]\n",
 			ct,
@@ -191,21 +197,21 @@ func (ct *ACCtMessage) HandlerCTOPEN() (msgReply []byte, err error) {
 			Type:  R_CTOPEN,
 			Bada:  false,
 			Errno: -2,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		return
 	}
 
 	//func OpenACMessage(context * SecKey, cmsg, peerNick []byte) (out []byte, err error) {
 	// XXX TODO: use reqOpt accordingly
-	out, err := iccp.OpenACMessageNACL(acctx, acrnd, ct.Blob, []byte(ct.Nick), []byte(ct.Opt))
+	out, err := iccp.OpenACMessageNACL(acctx, acrnd, []byte(ct.Blob), []byte(ct.Nick), []byte(ct.Opt))
 	if err != nil {
 		//err = fmt.Errorf("CTOPEN_Handler(): OpenACMessageNACL() error")
 		msgReply, _ = json.Marshal(&ACCtReply{
 			Type:  R_CTOPEN,
 			Bada:  false,
 			Errno: -3,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		return
 	}
@@ -215,7 +221,7 @@ func (ct *ACCtMessage) HandlerCTOPEN() (msgReply []byte, err error) {
 		Bada:  true,
 		Errno: 0,
 		Nonce: acctx.GetNonce(),
-		Blob:  []byte(out),
+		Blob:  string(out),
 	})
 
 	icutl.DebugLog.Printf("RET [%p] HandlerCTOPEN([%d/%s/%s] <%s> %08s) -> [OK]\n",
@@ -243,7 +249,7 @@ func (ct *ACCtMessage) HandlerCTADD() (msgReply []byte, err error) {
 			Type:  R_CTADD,
 			Bada:  false,
 			Errno: -1,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandlerCTADD([%d/%s/%s] <%s> %04s) -> [Error: %s]\n",
 			ct,
@@ -265,7 +271,7 @@ func (ct *ACCtMessage) HandlerCTADD() (msgReply []byte, err error) {
 			Type:  R_CTADD,
 			Bada:  false,
 			Errno: -2,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandlerCTADD([%d/%s/%s] <%s> %04s) -> [Error: %s]\n",
 			ct,
@@ -290,7 +296,7 @@ func (ct *ACCtMessage) HandlerCTADD() (msgReply []byte, err error) {
 			Type:  R_CTADD,
 			Bada:  false,
 			Errno: -3,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		icutl.DebugLog.Printf("RET [%p] HandlerCTADD([%d/%s/%s] <%s> %04s) -> [Error: %s]\n",
 			ct,
@@ -313,7 +319,7 @@ func (ct *ACCtMessage) HandlerCTADD() (msgReply []byte, err error) {
 		Type:  R_CTADD,
 		Bada:  true,
 		Errno: 0,
-		Blob:  []byte("OK"),
+		Blob:  "OK",
 	})
 	icutl.DebugLog.Printf("RET [%p] HandlerCTADD([%d/%s/%s] <%s> %04s) -> [OK]\n",
 		ct,
@@ -342,7 +348,7 @@ func HandleCTMsg(msg []byte) (msgReply []byte, err error) {
 			Type:  R_CTERR,
 			Bada:  false,
 			Errno: -1,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 		return
 	}
@@ -360,7 +366,7 @@ func HandleCTMsg(msg []byte) (msgReply []byte, err error) {
 			Type:  R_CTERR,
 			Bada:  false,
 			Errno: -2,
-			Blob:  []byte(err.Error()),
+			Blob:  err.Error(),
 		})
 	}
 
