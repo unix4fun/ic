@@ -10,7 +10,7 @@
 
 SCRIPT_NAME    = 'ic-weechat'
 SCRIPT_AUTHOR  = 'eau <eau+ic4f@unix4fun.net>'
-SCRIPT_VERSION = '20161102'
+SCRIPT_VERSION = '20161105'
 SCRIPT_LICENSE = 'BSD'
 SCRIPT_DESC    = 'ic4f - Irc Crypto 4 Fun'
 
