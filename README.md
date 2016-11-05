@@ -4,8 +4,6 @@
 
 # WORK IN PROGRESS 
 
-[![Join the chat at https://gitter.im/unix4fun/ic](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/unix4fun/ic?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
 An attempt to provide a rather simple (to use and maintain) IRC encryption mechanism, but hopefully better than plaintext and current used ones..
 with (hopefully) no "false" sense of security.
 
@@ -49,7 +47,128 @@ IRC script running on the client *request* one of the following:
 This way the IRC client does not store any secret, nor deal with encryption mechanisms, it work *in-memory* only and do NOT store anything on disk.
 However we are not yet making sure the page are not swapped to disk. 
 
+## Requirements:
 
+* protobuf-2.6.1+ (if you need to regenerate the go part)
+* go-1.5+ (svn, mercurial, git along with go in fact.. / it works compile with go1.2+ but I want to be able to use go generate which is present since 1.4 release, so let's use it...)
+* weechat 1.3+
+
+(go get should do the rest of the magic...)
+
+## Building/Installing
+
+Building is done with the `go` tool. If you have setup your GOPATH
+correctly, the following should work:
+
+    go get github.com/unix4fun/ic
+
+if any issues occurs, just :
+
+    cd $GOPATH/src/github.com/unix4fun/ic
+    go generate
+    go build
+    go install
+
+or fill up an issue so we can investigate and fix.
+
+Binary `ic` should then be in `$GOPATH/bin`
+
+    cd $GOPATH/src/github.com/unix4fun/ic && make install
+
+It will copy the following files into :
+
+    ~/.weechat/python/autoload/ic-weechat.py
+
+## Usage
+
+
+### Let's start
+
+3 main commands:
+
+    /pk
+    '/pk' is used to manage Public Keys (ECC key exchange)
+
+    /sk
+    '/sk' is used to manage Secret Keys (channel/query keys)
+
+    /ac
+    '/ac' is used to enable disable crypto on a specific (weechat) buffer
+
+the flow is simple, when you join the channel, you **GENERATE** and then **BROADCAST** you public key, so that other channel members are aware of your public key,
+other channel members should also **BROADCAST** their own key, someone on the channel **GENERATE A SECRET**  Key for the current channel and then **EXCHANGE** the newly created secret key with other members.
+
+
+_GENERATE Public Key_|_BROADCAST Public Key_|_GENERATE Symmetric Key_|_EXCHANGE_|_Public Key Help_|_Secret Key Help_
+----------|-----------|-------------------|----------|-----------------|----------------
+/pk gen   | /pk       | /sk gen <someinput> | /sk give <nickname>|/pk help | /sk help
+
+
+
+Use /pk help, /sk help or /achelp to access the help.
+## Usage
+
+3 main commands:
+
+    /pk
+    '/pk' is used to manage Public Keys (ECC key exchange)
+
+    /sk
+    '/sk' is used to manage Secret Keys (channel/query keys)
+
+    /ac
+    '/ac' is used to enable disable crypto on a specific (weechat) buffer
+
+the flow is simple, when you join the channel, you **GENERATE** and then **BROADCAST** you public key, so that other channel members are aware of your public key,
+other channel members should also **BROADCAST** their own key, someone on the channel **GENERATE A SECRET**  Key for the current channel and then **EXCHANGE** the newly created secret key with other members.
+
+
+_GENERATE Public Key_|_BROADCAST Public Key_|_GENERATE Symmetric Key_|_EXCHANGE_|_Public Key Help_|_Secret Key Help_
+----------|-----------|-------------------|----------|-----------------|----------------
+/pk gen   | /pk       | /sk gen <someinput> | /sk give <nickname>|/pk help | /sk help
+
+
+
+Use /pk help, /sk help or /achelp to access the help.
+
+## Featuring (because there is always a star in your production..)
+
+* [NaCL ECC 25519] (http://nacl.cr.yp.to/install.html) box/secretbox [Go implementation](https://godoc.org/code.google.com/p/go.crypto/nacl) with AEAD (using Salsa20 w/ Poly1305 MAC)
+* [PBKDF2] (http://en.wikipedia.org/wiki/PBKDF2) for key generation using input entropy (/sk gen|CT_ADD script command)
+* [HMAC KDF] (http://en.wikipedia.org/wiki/Key_derivation_function) using SHA-3 (w/ a salt for key based on crypto/rand Go implementation)
+* [SHA-3] (http://en.wikipedia.org/wiki/SHA-3) in various area, including NONCE generation (low probability of collision property)
+* [Go] (http://golang.org) because I like trying something new and promising.
+* [Weechat] (http://weechat.org/) because I like trying something new and promising.
+
+## Known Weaknesses
+
+* no [PFS] (http://en.wikipedia.org/wiki/Perfect_Forward_Secrecy)
+* Evil IRC server MITM wins. (will be fixed with identity keys)
+* [Go crypto implementation] (https://godoc.org/code.google.com/p/go.crypto): is it safe?
+* [EC Curve 25519] (http://cr.yp.to/ecdh.html): is it really safe? 
+* memory is swappable to disk and not encrypted (**yet**).
+
+## Ordered TODO:
+
+* unit/regression testing in Go (bleh_test.go).
+* benchmark and code cleanup, huge code cleanup.
+* identity RSA/Ed25519 keys (currently in study/dev) with ala SSH authorized_nicks (for trusted KEX/messages).
+* rename a SKMap key (for queries automagically on nick change)
+* rename a PKMap key (on nick change)
+* evaluate feasibility of socialist milionnaire probleme implementation (like OTR).
+* try to avoid page to disk memory
+* scrub memory before deleting the objects
+* check/audit/fuzz source code
+* daemon protobuf ping heartbeat
+* irssi plugin/script.
+* xchat plugin/script.
+
+## Done
+* encrypted runtime memory key storage (done but not clean)
+* load/save channel/query keys on disk (using AES-GCM 256 in "adapted" PEM format)
+* fix IRC truncated encrypted messages (done but not clean)
+
+The daemon is implemented in Go langage and will produce a binary.
 
 ## Design/Format
 
@@ -128,97 +247,5 @@ TODO
 
 keys should never appear in clear and should be "randomly" (as far as my crypto user knowledge goes) generated.
 
-## Featuring (because there is always a star in your production..)
-
-* [NaCL ECC 25519] (http://nacl.cr.yp.to/install.html) box/secretbox [Go implementation](https://godoc.org/code.google.com/p/go.crypto/nacl) with AEAD (using Salsa20 w/ Poly1305 MAC)
-* [PBKDF2] (http://en.wikipedia.org/wiki/PBKDF2) for key generation using input entropy (/sk gen|CT_ADD script command)
-* [HMAC KDF] (http://en.wikipedia.org/wiki/Key_derivation_function) using SHA-3 (w/ a salt for key based on crypto/rand Go implementation)
-* [SHA-3] (http://en.wikipedia.org/wiki/SHA-3) in various area, including NONCE generation (low probability of collision property)
-* [Go] (http://golang.org) because I like trying something new and promising.
-* [Weechat] (http://weechat.org/) because I like trying something new and promising.
-
-## Known Weaknesses
-
-* no [PFS] (http://en.wikipedia.org/wiki/Perfect_Forward_Secrecy)
-* Evil IRC server MITM wins.
-* [Go crypto implementation] (https://godoc.org/code.google.com/p/go.crypto): is it safe?
-* [EC Curve 25519] (http://cr.yp.to/ecdh.html): is it really safe? 
-* memory is swappable to disk and not encrypted (**yet**).
-
-## Todo
-
-in no particular order..
-* identity RSA keys (currently in study/dev) with ala SSH authorized_nicks (for trusted KEX/messages)
-* evaluate feasibility of socialist milionnaire probleme implementation (like OTR).
-* rename a SKMap key (for queries automagically on nick change)
-* rename a PKMap key (on nick change)
-* irssi plugin/script.
-* xchat plugin/script.
-* try to avoid page to disk memory
-* scrub memory before deleting the objects
-* unit/regression testing in Go (bleh_test.go).
-* huge code cleanup
-* check/audit source code
-* load/save channel/query keys on disk
-* daemon protobuf ping heartbeat
-* fix IRC truncated encrypted messages
-
-## Done
-* encrypted runtime memory key storage (to some extent..)
-
-The daemon is implemented in Go langage and will produce a binary.
 
 
-## Requirements:
-
-* protobuf-2.4.1+ (if you need to regenerate the go part)
-* go-1.4+ (svn, mercurial, git along with go in fact.. / it works compile with go1.2+ but I want to be able to use go generate which is present since 1.4 release, so let's use it...)
-
-(go get should do the rest of the magic...)
-
-## Building/Installing
-
-Building is done with the `go` tool. If you have setup your GOPATH
-correctly, the following should work:
-
-    go get github.com/unix4fun/ic
-
-if any issues occurs, just :
-
-    cd $GOPATH/src/github.com/unix4fun/ic
-    go generate
-    go build
-    go install
-
-Binary `ac` should then be in `$GOPATH/bin`
-
-    cd $GOPATH/src/github.com/unix4fun/ic && make install
-
-It will copy the following files into :
-
-    ~/.weechat/python/autoload/ic-weechat.py
-
-## Usage
-
-3 main commands:
-
-    /pk
-    '/pk' is used to manage Public Keys (ECC key exchange)
-
-    /sk
-    '/sk' is used to manage Secret Keys (channel/query keys)
-
-    /ac
-    '/ac' is used to enable disable crypto on a specific (weechat) buffer
-
-the flow is simple, when you join the channel, you **GENERATE** and then **BROADCAST** you public key, so that other channel members are aware of your public key,
-other channel members should also **BROADCAST** their own key, someone on the channel **GENERATE A SECRET**  Key for the current channel and then **EXCHANGE** the newly created secret key with other members.
-
-
-_GENERATE Public Key_|_BROADCAST Public Key_|_GENERATE Symmetric Key_|_EXCHANGE_|_Public Key Help_|_Secret Key Help_
-----------|-----------|-------------------|----------|-----------------|----------------
-/pk gen   | /pk       | /sk gen <someinput> | /sk give <nickname>|/pk help | /sk help
-
-
-
-Use /pk help, /sk help or /achelp to access the help.
