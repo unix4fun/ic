@@ -33,8 +33,6 @@ except ImportError as message:
     import_ok = False
 
 
-#AC_BINARY = "/Users/eau/dev/git/ac/ac"
-#AC_BINARY = "~/dev/go/bin/ac"
 # we need to test if the binary is here and fail to load if it is NOT
 AC_BINARY = os.environ["GOPATH"]+"/bin/ic"
 AC_DEBUGFILE = "./ic.debug.txt"
@@ -679,34 +677,33 @@ def acCmd_CB(data, dabuffer, args):
 def acCmdSave(data, dabuffer, args):
     cb_argv = args.split()
     cb_argc = len(cb_argv)
-    cb_passwd = weechat.string_eval_expression("${sec.data.acmaps}", {}, {}, {})
+    cb_passwd = weechat.string_eval_expression("${sec.data.icmaps}", {}, {}, {})
 
     if len(cb_passwd) == 0:
-        acwee.pmbac(dabuffer, "no password set to protect your map file! /ac save or /ac help for more information")
+        acwee.pmbac(dabuffer, "no password set to protect your map file! /ic save or /ic help for more information")
     elif len(cb_passwd) < 4:
-        acwee.pmbac(dabuffer, "maps password is way TOO SHORT! /ac save or /ac help for more information")
+        acwee.pmbac(dabuffer, "maps password is way TOO SHORT! /ic save or /ic help for more information")
     else:
-        acwee.pmbac(dabuffer, "NOW SAVING!!")
+#        acwee.pmbac(dabuffer, "NOW SAVING!!")
         clReply = clMessage(acwee).clsave(cb_passwd)
         if clReply['bada'] is True:
-            acwee.pmbac(dabuffer, "saved in [~/.ac/acmaps]")
+            acwee.pmbac(dabuffer, "saved in [~/.ic/maps]")
     return weechat.WEECHAT_RC_OK
 
 
 def acCmdLoad(data, dabuffer, args):
     cb_argv = args.split()
     cb_argc = len(cb_argv)
-    cb_passwd = weechat.string_eval_expression("${sec.data.acmaps}", {}, {}, {})
+    cb_passwd = weechat.string_eval_expression("${sec.data.icmaps}", {}, {}, {})
 
     
     if len(cb_passwd) == 0:
-        acwee.pmbac(dabuffer, "no password set to protect your map file! /ac save or /ac help for more information")
+        acwee.pmbac(dabuffer, "no password set to protect your map file! /ic save or /ic help for more information")
     else:
-        acwee.pmbac(dabuffer, "NOW LOADING from %s!!", cb_argv[0])
-
+#        acwee.pmbac(dabuffer, "NOW LOADING from %s!!", cb_argv[0])
         clReply = clMessage(acwee).clload(cb_passwd)
         if clReply['bada'] is True:
-            acwee.pmbac(dabuffer, "loaded from [~/.ac/acmaps]")
+            acwee.pmbac(dabuffer, "loaded from [~/.ic/maps]")
     return weechat.WEECHAT_RC_OK
 
 def acCmdToggle(data, dabuffer, args):
@@ -746,6 +743,8 @@ def acCmdHelp(data, dabuffer, args):
     acwee.pmb(dabuffer, "\t\tgive <nick>         :\tsend Key Exchange secret key with <nick> (u need <nick>'s public key)")
     acwee.pmb(dabuffer, "/ic [<cmd>]\tencryption control")
     acwee.pmb(dabuffer, "\t\thelp                :\thelp about ic (this help)")
+    acwee.pmb(dabuffer, "\t\tsave                :\tsave current secret keys (~/.ic/maps)")
+    acwee.pmb(dabuffer, "\t\tload                :\tload current secret keys (~/.ic/maps)")
     acwee.pmb(dabuffer, "\t\t<empty>   :\tenable/disable encryption in the current buffer (channel/query)")
     # /ac           : enable/disable buffer (chan/query) encryption
     # /ac help      : help on ac
@@ -1748,9 +1747,6 @@ class AcCore(AcDisplay, AcJSCom):
     acNonces = {} # sha1 hash 'channel:server' store bar items value for now.
     acBarItems = []
 
-    A_title = [ "Arrivist", "Afghan", "Alternate", "Achille", "Archivist", "Aborted", "Applied", "Armani", "Asynchronous", "Armenian", "American", "Advanced", "Acrobatic", "Agile", "Audible", "Angular" ]
-    S_title = [ "System", "Sodomist", "Sudoku", "Subculture", "Slider", "Sledge", "Shit", "Shoarma", "Shuriken", "Sheeva", "Sonia", "Sucker", "Script", "Skater" ]
-
     def __init__(self, coreBuffer, acBinFile, acDbgFile):
         AcDisplay.__init__(self, "")
 #        AcPbCom.__init__(self, acBinFile, acDbgFile)
@@ -1765,7 +1761,6 @@ class AcCore(AcDisplay, AcJSCom):
     def acBanner(self, buffer):
 #        buffer = weechat.current_buffer();
         self.pmb(buffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$%%@#$%%@#$%%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
-#        self.pmb(buffer, "%s Crypto %s %s (c) 2013-2016 unix4fun", random.choice(self.A_title), random.choice(self.S_title), SCRIPT_VERSION)
         self.pmb(buffer, "IRC Crypto 4 Fun %s (c) 2013-2016 unix4fun", SCRIPT_VERSION)
         self.pmb(buffer, "by %s", SCRIPT_AUTHOR)
         self.pmb(buffer, "Implements AEAD: NaCL/ECC Curve 25519 w/ Salsa20/Poly1305 (more later)")
