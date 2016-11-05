@@ -1,5 +1,6 @@
 # **I**(rc) **C**(rypto) 4 Fun= IC4F
 
+[![Join the chat at https://gitter.im/ic4f/Lobby](https://badges.gitter.im/ic4f/Lobby.svg)](https://gitter.im/ic4f/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/unix4fun/ac.svg?branch=master)](https://travis-ci.org/unix4fun/ac)
 
 # WORK IN PROGRESS 
