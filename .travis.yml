@@ -2,7 +2,7 @@ language: go
 
 go:
   - tip
-  - 1.5.3
+  - 1.6.3
   - 1.4.3
 
 env:
@@ -21,7 +21,7 @@ matrix:
       env: GIMME_OS=darwin GIMME_ARCH=amd64
 
 install:
-  - go get -d -v ./...
+  - go get -d -u -v ./...
 
 script:
   - go build -v

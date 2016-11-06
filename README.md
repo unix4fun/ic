@@ -1,7 +1,8 @@
 # **I**(rc) **C**(rypto) 4 Fun= IC4F
 
 [![Join the chat at https://gitter.im/ic4f/Lobby](https://badges.gitter.im/ic4f/Lobby.svg)](https://gitter.im/ic4f/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build Status](https://travis-ci.org/unix4fun/ac.svg?branch=master)](https://travis-ci.org/unix4fun/ac)
+
+[![Build Status](https://travis-ci.org/unix4fun/ic.svg?branch=master)](https://travis-ci.org/unix4fun/ic)
 
 # WORK IN PROGRESS 
 
@@ -106,31 +107,7 @@ _GENERATE Public Key_|_BROADCAST Public Key_|_GENERATE Symmetric Key_|_EXCHANGE_
 
 
 
-Use /pk help, /sk help or /achelp to access the help.
-## Usage
-
-3 main commands:
-
-    /pk
-    '/pk' is used to manage Public Keys (ECC key exchange)
-
-    /sk
-    '/sk' is used to manage Secret Keys (channel/query keys)
-
-    /ac
-    '/ac' is used to enable disable crypto on a specific (weechat) buffer
-
-the flow is simple, when you join the channel, you **GENERATE** and then **BROADCAST** you public key, so that other channel members are aware of your public key,
-other channel members should also **BROADCAST** their own key, someone on the channel **GENERATE A SECRET**  Key for the current channel and then **EXCHANGE** the newly created secret key with other members.
-
-
-_GENERATE Public Key_|_BROADCAST Public Key_|_GENERATE Symmetric Key_|_EXCHANGE_|_Public Key Help_|_Secret Key Help_
-----------|-----------|-------------------|----------|-----------------|----------------
-/pk gen   | /pk       | /sk gen <someinput> | /sk give <nickname>|/pk help | /sk help
-
-
-
-Use /pk help, /sk help or /achelp to access the help.
+Use /pk help, /sk help or /ic help to access the help.
 
 ## Featuring (because there is always a star in your production..)
 
