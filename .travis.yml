@@ -10,7 +10,7 @@ go:
   - 1.4.3
 
 install:
-  - go get -d -u -v ./...
+  - go get -d -v ./...
 
 script:
   - go build -v
