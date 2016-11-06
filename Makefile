@@ -11,10 +11,10 @@
 #
 
 GOBIN=$(shell which go)
-LNBIN=/bin/ln
-LSBIN=/bin/ls
-RMBIN=/bin/rm
-MKDIR=/bin/mkdir
+LNBIN=$(shell which ln)
+LSBIN=$(shell which ls)
+RMBIN=$(shell which rm)
+MKDIR=$(shell which mkdir)
 
 ACBIN=$(GOPATH)/bin/ic
 ACROOT=$(GOPATH)/src/github.com/unix4fun/ic
@@ -24,22 +24,9 @@ ACW_ROOT=$(HOME)/.weechat
 ACW_PYTHON=$(ACW_ROOT)/python
 ACW_AUTOLOAD=$(ACW_PYTHON)/autoload
 
-AC_HOME=$(HOME)/.ac
+AC_HOME=$(HOME)/.ic
 
 CURRENT=$(shell date +%Y%m%d)
-
-
-#PROTOC=`which protoc`
-#ACROOT=/Users/eau/dev/go/src/github.com/unix4fun/ac
-#ACROOT=.
-#ACPB=${ACROOT}/acpb
-#ACCP=${ACROOT}/accp
-#ACWEECHAT=${ACROOT}/client-scripts/weechat
-
-#ifneq ("/Users/eau/tools/go/bin/go", "")
-#else
-#endif
-
 
 all: update
 	@echo "you can test/use IC && commit!"
@@ -65,10 +52,6 @@ version:
 	@cat ${ACWSCRIPT}/ic-weechat.py.${CURRENT} > ${ACWSCRIPT}/ic-weechat.py
 	@rm -i ${ACWSCRIPT}/ic-weechat.py.${CURRENT}
 
-#ac:
-#	@echo "generate AC Go Protobuf"
-#	${PROTOC} --go_out=${ACPB} -Iacpb ${ACPB}/ac.proto
-#	${PROTOC} --go_out=${ACCP} -Iaccp ${ACCP}/ac.proto
 # XXX TODO:
 # - test GOBIN existence
 # - test ACW_ROOT and _PYTHON existence
@@ -83,3 +66,4 @@ install:
 	${RMBIN} -f ${ACW_AUTOLOAD}/ic-weechat.py
 	${LNBIN} -s ${ACWSCRIPT}/ic-weechat.py ${ACW_AUTOLOAD}/ic-weechat.py
 	@${LSBIN} -la ${ACW_AUTOLOAD}/ic-weechat.py
+	@${LSBIN} -la ${ACBIN}

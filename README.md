@@ -4,18 +4,22 @@
 
 [![Build Status](https://travis-ci.org/unix4fun/ic.svg?branch=master)](https://travis-ci.org/unix4fun/ic)
 
-# WORK IN PROGRESS 
+## Pitch (it's A WORK IN PROGRESS)
 
-An attempt to provide a rather simple (to use and maintain) IRC encryption mechanism, but hopefully better than plaintext and current used ones..
-with (hopefully) no "false" sense of security.
+In these time of buzzwords and massive crypto marketing, everybody claim security, inviolability, super crypto guruness, etc.. etc.. 
+we don't but we do try to provide a simple solution to our own humble needs, encrypt IRC chat that we use daily in a relatively safe 
+and simple fashion.
 
-It is inspired from previous/known/alternative projects that has been done by "pioneers" or e-settlers.. as well as in underground and take account that IRC have some *limitations*.
+This is an attempt to provide an (to use and maintain) IRC encryption mechanism with an irc client we like, hopefully better than plaintext and current used/existing ones..  with (hopefully) not too much "false" sense of security.
 
-It's my first project in an inspiring and pragmatic new language : Go
+It is inspired from previous/known/alternative projects that has been done by "pioneers"/"hackers" in underground and take account that IRC have some *limitations*.
+(understand don't yell : IT SUCKS! USE OTR! please read and think first)
+
+First project in an inspiring and pragmatic new language : Go
 
 ## This Package
 * the IC pipe/tool: 'ic'
-* client scripts (weechat)
+* client script (weechat)
 
 ## Goals
 
@@ -28,26 +32,26 @@ It's my first project in an inspiring and pragmatic new language : Go
 I needed something like this *up-to-date* so I tried to do/build it.
 
 
-
 ## Ideas
 
 So far the design is fairly straight forward, the IRC client itself should/does not have any cryptographic knowledge.
 
 the client script [ic-weechat](https://github.com/unix4fun/ic/client-scripts/weechat/ic-weechat) just *request* services to a little *daemon* running and
-communicating on *stdin/stdout/stderr* using [Google Protobuf](https://code.google.com/p/protobuf/) serialization.
+communicating on *stdin/stdout/stderr* using JSON serialization.
 
-IRC script running on the client *request* one of the following:
-- get my public key
-- get [nick] stored public key(s)
+The IRC script running on the client *request* one of the following:
+- generate an ephemeral ECC 25519 assymetric key pair for *my nickname/serv* 
+- generate a symmetric key for *chan/serv*
+- add the following public key for [nick] 
+- list received & stored public key(s)
 - encrypt [plaintext] for [chan/serv]
 - decrypt [ciphertext] from [chan/serv]
-- seal a KEX (Key EXchange) blob for *nick* (using's *nick*'s public key) on *chan/serv* (exchange the symmetric key for *chan/serv*)
-- open a KEX blob from *nick* on *chan/serv* (receive & open the key exchange blob from *nick*)
-- generate a ECC 25519 pub/priv key pair for *my nickname/serv* 
-- generate a symmetric key pair for *chan/serv*
+- seal a KEX (Key EXchange / ECDH w/ NaCL) for *nick* (using's *nick*'s public key) on *chan/serv* (exchange the symmetric key for *chan/serv*)
+- open a KEX blob from *nick* on *chan/serv* (receive & open the key exchange blob from *nick*, now ready to encrypt on *chan/serv*)
 
-This way the IRC client does not store any secret, nor deal with encryption mechanisms, it work *in-memory* only and do NOT store anything on disk.
-However we are not yet making sure the page are not swapped to disk. 
+This way the IRC client and its scripts does not store any secret, nor deal with encryption mechanisms, it works *in-memory* only and do NOT store anything on disk.
+But you can save all your *channels/serv* keys on disk for re-using later.
+
 
 ## Requirements:
 
@@ -71,7 +75,7 @@ if any issues occurs, just :
     go build
     go install
 
-or fill up an issue so we can investigate and fix.
+or fill up a github issue so we can investigate and fix.
 
 Binary `ic` should then be in `$GOPATH/bin`
 
@@ -105,6 +109,57 @@ _GENERATE Public Key_|_BROADCAST Public Key_|_GENERATE Symmetric Key_|_EXCHANGE_
 ----------|-----------|-------------------|----------|-----------------|----------------
 /pk gen   | /pk       | /sk gen <someinput> | /sk give <nickname>|/pk help | /sk help
 
+### I arrive on a new channel, not encrypted
+
+Everything is loaded, you connect irc, and join #prout, #prout is NOT encrypted,
+yes you just joined, so type:
+
+    /sk gen <some keyboard garbage input>
+
+you will then notice a red bar appearing above your regular status bar, it means
+the current weechat buffer is *ENCRYPTED*.
+
+If you type all messages for #prout will be *ENCRYPTED*, if you do need to speak
+in plaintext again, type /ic to toggle encryption of that buffer on and off
+
+
+### I arrive on a new channel, but it is already encrypted, I cannot read
+
+So you don't have the key, there is not "automatic" requests or such, you need
+someone to give you the channel (/shared) key to be able to read the
+conversations
+
+So first generate an ephemeral key pair (AS A KEY *RECEIVER*): 
+
+    /pk gen
+
+Then you can broadcast your public key on the channel (AS A KEY *RECEIVER*):
+
+    /pk
+
+
+Now, someone on the channel who has the key, has to pass it to you, here is how. 
+Generate an ephemeral key pair (AS A KEY *HOLDER*):
+
+    /pk gen
+
+broadcast your public key:
+    
+    /pk
+
+Give the current buffer/channel key (AS A KEY *HOLDER*):
+
+    /sk give <destnickname>
+
+
+
+You will see you have received a KEX payload, you can decide to ignore it or to
+receive the key for the current buffer (AS A KEY *RECEIVER*):
+
+    /sk use
+
+
+Now you can chat encrypted with your friends, that's it! :)
 
 
 Use /pk help, /sk help or /ic help to access the help.
