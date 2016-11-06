@@ -3,13 +3,11 @@ language: go
 os:
   - linux
   - osx
-  - freebsd
-  - openbsd
-  - netbsd
 
 go:
   - 1.6.3
   - 1.5.4
+  - 1.4.3
 
 install:
   - go get -d -u -v ./...
