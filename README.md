@@ -105,9 +105,13 @@ the flow is simple, when you join the channel, you **GENERATE** and then **BROAD
 other channel members should also **BROADCAST** their own key, someone on the channel **GENERATE A SECRET**  Key for the current channel and then **EXCHANGE** the newly created secret key with other members.
 
 
-_GENERATE Public Key_|_BROADCAST Public Key_|_GENERATE Symmetric Key_|_EXCHANGE_|_Public Key Help_|_Secret Key Help_
-----------|-----------|-------------------|----------|-----------------|----------------
-/pk gen   | /pk       | /sk gen <someinput> | /sk give <nickname>|/pk help | /sk help
+_GENERATE A KeyPair_|_BROADCAST Public Key_|_Public Key Help_
+----------|-----------|-----------|
+/pk gen   | /pk       | /pk help
+
+_GENERATE Symmetric Key_|_Send K(ey)EX(change)_|_Receive K(ey)EX(change)_|_Secret Key Help_
+-------------------|----------|-----------------|----------------
+/sk gen {someinput} | /sk give {nickname}|/sk use | /sk help
 
 ### I arrive on a new channel, not encrypted
 
@@ -184,8 +188,10 @@ Use /pk help, /sk help or /ic help to access the help.
 ## Ordered TODO:
 
 * unit/regression testing in Go (bleh_test.go).
+* add AES-GCM as an alternative AEAD (In addition to NaCL poly1305/salsa20)
 * benchmark and code cleanup, huge code cleanup.
 * identity RSA/Ed25519 keys (currently in study/dev) with ala SSH authorized_nicks (for trusted KEX/messages).
+* document JSON protocol for other IRC client plugin writers
 * rename a SKMap key (for queries automagically on nick change)
 * rename a PKMap key (on nick change)
 * evaluate feasibility of socialist milionnaire probleme implementation (like OTR).
@@ -194,7 +200,7 @@ Use /pk help, /sk help or /ic help to access the help.
 * check/audit/fuzz source code
 * daemon protobuf ping heartbeat
 * irssi plugin/script.
-* xchat plugin/script.
+
 
 ## Done
 * encrypted runtime memory key storage (done but not clean)
