@@ -1,3 +1,5 @@
+// +build go1.5
+
 package icjs
 
 import (
@@ -129,7 +131,7 @@ var (
 )
 
 func init() {
-	icutl.InitDebugLog(os.Stderr)
+	//icutl.InitDebugLog(os.Stderr)
 
 }
 
@@ -245,5 +247,5 @@ func HandleStdin() (err error) {
 	return nil
 	//	} /* end of for() */
 	// XXX need to return Error.New() really...
-	return nil
+	//	return nil
 }

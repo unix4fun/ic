@@ -1,4 +1,5 @@
 // +build go1.4
+
 //go:generate protoc --go_out=iccp -Iiccp iccp/iccp.proto
 //make version
 //echo "package main\nvar Version string '`date +%Y%m%d`'\n" > version.go
@@ -8,35 +9,30 @@ package main
 import (
 	"flag"
 	"fmt"
-	//"github.com/pkg/profile"
 	"github.com/unix4fun/ic/icjs"
 	"github.com/unix4fun/ic/ickp"
 	"github.com/unix4fun/ic/icutl"
 	"io/ioutil"
 	"os"
-	// we are replacing protobuf with basic json, so we can get rid of the
-	// protobuf dependency in the client script..
-	//"github.com/unix4fun/ac/acpb"
 )
 
 //
 //        ____ ___     _______  _____
 //  __ __/ / // _/    /  _/ _ |/ ___/
 // / // /_  _/ _/  ^  / // __ / /_
-// \_,_/ /_//_/     /___/_/ |_\___/ (irc advanced crypto)
+// \_,_/ /_//_/     /___/_/ |_\___/ (irc crypto 4 fun)
 // Unix4Fun
 // Some people doing some stuff somewhere for some reasons...
 //
 // https://unix4fun.github.io/
 //
-// This is u4f Irc A. Crypto
+// This is u4f Irc Crypto 4 Fun
 //
 // A simple way to crypt your conversation(s) if, like us, you remain on IRC.
 // #Slack / HipChat / whatever are soooo overrated...
 //
 //
 
-// ACD will be renamed ic4f -> Irc Crypto 4 Fun
 // ic -> irc crypto daemon
 func usage(mycmd string) {
 	fmt.Fprintf(os.Stderr, "%s [options]", mycmd)
@@ -119,7 +115,7 @@ func main() {
 			i, err = ickp.NewIdentityKey(ickp.KEYEC25519, identity)
 			//ickp.GenKeysED25519(rand.Reader)
 		}
-		icutl.DebugLog.Printf("bleh i: %p err: %p", i, err)
+		icutl.DebugLog.Printf("bleh i: %p err: %v", i, err)
 		err = i.ToKeyFiles("/Users/eau/.ic/ic_id", []byte("proutprout"))
 		if err != nil {
 			panic(err)
@@ -139,14 +135,14 @@ func main() {
 		ickp.ACrun = true
 
 		//fmt.Fprintf(os.Stderr, "[+] ac-%s\nstart\n", Version)
-		icutl.DebugLog.Printf("ic-%s", Version)
+		icutl.DebugLog.Printf("ic4f Irc Crypto 4 Fun version %s", Version)
 
 		// main loop
 		for ickp.ACrun == true {
 			icjs.HandleStdin()
 		}
 
-		icutl.DebugLog.Printf("ac-%s QUITTING NOW!", Version)
+		icutl.DebugLog.Printf("ic4f version %s QUITTING NOW!", Version)
 		/*
 			pprof.WriteHeapProfile(g)
 			g.Close()

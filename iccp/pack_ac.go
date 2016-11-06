@@ -1,19 +1,13 @@
-// +build go1.4
+// +build go1.5
+
 package iccp
 
 import (
 	"encoding/base64"
-	//"fmt"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ic/ickp"
 	"github.com/unix4fun/ic/icutl"
 	"golang.org/x/crypto/nacl/secretbox"
-	//"os"
-	//	"bytes"
-	//	"compress/zlib"
-	//	"encoding/binary"
-	//	"github.com/unix4fun/ac/obf"
-	//	"io"
 )
 
 func packMessageAC(hdr uint32, nonce uint32, blob *[]byte) (out []byte, err error) {

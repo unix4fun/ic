@@ -1,4 +1,4 @@
-// +build go1.4
+// +build go1.5
 
 package ickp
 
@@ -244,7 +244,7 @@ func (psk *PSKMap) initRDMapWith(server string, channel string, rnd []byte) {
 // SKMaps
 //
 func (psk *PSKMap) GetSKMapEntry(server string, channel string) (*SecretKey, bool) {
-	icutl.DebugLog.Printf("===---=-=-=--==- GetSKMapEntry[@%p] (serv: %s channel: %s)! --==-=---=-=-=-==-\n", server, channel)
+	icutl.DebugLog.Printf("===---=-=-=--==- GetSKMapEntry[@%p] (serv: %s channel: %s)! --==-=---=-=-=-==-\n", psk, server, channel)
 	skmap, ok := psk.GetSKMap(server)
 	if ok == true {
 		val, ok := (*skmap)[channel]

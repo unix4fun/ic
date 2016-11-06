@@ -1,18 +1,12 @@
-// +build go1.4
-// accp == AC Crypto Protocol
+// +build go1.5
+
+// iccp == IC(4f) C(rypto) P(rotocol)
 package iccp
 
 import (
-	//"bytes"
-	//"crypto/rand"
-	//"encoding/hex"
-	//"fmt"
-	//"golang.org/x/crypto/nacl/box"       // nacl is now here.
 	"github.com/unix4fun/ic/ickp"
 	"github.com/unix4fun/ic/icutl"
 	"golang.org/x/crypto/nacl/secretbox" // nacl is now here.
-	//"io"
-	//"time"
 )
 
 /*

@@ -1,3 +1,5 @@
+// +build go1.5
+
 package icjs
 
 import (
@@ -16,17 +18,17 @@ type ACCtMessage struct {
 	Server  string `json:"server"`
 	Channel string `json:"channel"`
 	//Blob    []byte `json:"blob"`
-	Blob    string `json:"blob"`
+	Blob string `json:"blob"`
 	//Opt     []byte `json:"opt"`
-	Opt     string `json:"opt"`
+	Opt string `json:"opt"`
 }
 
 type ACCtReply struct {
-	Type  int    `json:"type"`
-	Bada  bool   `json:"bada"`
-	Errno int    `json:"errno"`
+	Type  int  `json:"type"`
+	Bada  bool `json:"bada"`
+	Errno int  `json:"errno"`
 	//Blob  []byte `json:"blob"`
-	Blob  string `json:"blob"`
+	Blob string `json:"blob"`
 	//	Barray [][]byte `json:"blobarray,omitempty"`
 	Barray []string `json:"blobarray,omitempty"`
 	Nonce  uint32   `json:"nonce"`

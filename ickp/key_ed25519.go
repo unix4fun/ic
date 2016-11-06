@@ -2,15 +2,18 @@ package ickp
 
 import (
 	//"crypto/rand"
-	"github.com/agl/ed25519"
-	//"github.com/unix4fun/ac/acutl"
 	"crypto"
+	"golang.org/x/crypto/ed25519"
 	"io"
 )
 
 type Ed25519PrivateKey struct {
+	Pub  ed25519.PublicKey
+	Priv ed25519.PrivateKey
+	/* OLD implementation
 	Pub  *[ed25519.PublicKeySize]byte
 	Priv *[ed25519.PrivateKeySize]byte
+	*/
 }
 
 //
@@ -33,7 +36,7 @@ func (priv *Ed25519PrivateKey) Public() crypto.PublicKey {
 	return priv.Pub
 }
 
-func (priv *Ed25519PrivateKey) Sign(r io.Reader, msg []byte, opts crypto.SignerOpts) ([]byte, error) {
-	signature := ed25519.Sign(priv.Priv, msg)
-	return (*signature)[:], nil
+func (priv *Ed25519PrivateKey) Sign(r io.Reader, msg []byte, opts crypto.SignerOpts) (signature []byte, err error) {
+	signature = ed25519.Sign(priv.Priv, msg)
+	return
 }

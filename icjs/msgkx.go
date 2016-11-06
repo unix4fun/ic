@@ -1,3 +1,5 @@
+// +build go1.5
+
 package icjs
 
 import (
@@ -19,9 +21,9 @@ type ACKxMessage struct {
 }
 
 type ACKxReply struct {
-	Type  int    `json:"type"`
-	Bada  bool   `json:"bada"`
-	Errno int    `json:"errno"`
+	Type  int  `json:"type"`
+	Bada  bool `json:"bada"`
+	Errno int  `json:"errno"`
 	//Blob  []byte `json:"blob"`
 	Blob  string `json:"blob"`
 	Nonce uint32 `json:"nonce"`

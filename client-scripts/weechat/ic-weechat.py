@@ -36,6 +36,7 @@ except ImportError as message:
 # we need to test if the binary is here and fail to load if it is NOT
 AC_BINARY = os.environ["GOPATH"]+"/bin/ic"
 AC_DEBUGFILE = "./ic.debug.txt"
+AC_DEBUGFLAG = "-debug=false"
 
 
 
@@ -1375,7 +1376,7 @@ class AcJSCom(object):
     acDebugFile = None
 
     def __init__(self, acBin, acDbg):
-        self.acBinary = [ acBin, "-debug=true" ]
+        self.acBinary = [ acBin, AC_DEBUGFLAG ]
         if self.acDebugFile is None:
             self.acDebugFile = acDbg
             self.acDebugFd = open(acDbg, 'w')

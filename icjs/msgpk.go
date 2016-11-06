@@ -1,3 +1,5 @@
+// +build go1.5
+
 package icjs
 
 import (
@@ -232,7 +234,7 @@ func (pk *ACPkMessage) HandlerPKLIST() (msgReply []byte, err error) {
 		Errno: 0,
 		Blob:  "",
 	})
-	icutl.DebugLog.Printf("RET [%p] HandlePKLIST(%d:%s/%s) -> [reply: %s]\n", pk, pk.Type, pk.Server, pk.Nick)
+	icutl.DebugLog.Printf("RET [%p] HandlePKLIST(%d:%s/%s) -> [reply: %s]\n", pk, pk.Type, pk.Server, pk.Nick, msgReply)
 	return
 }
 
@@ -265,7 +267,7 @@ func (pk *ACPkMessage) HandlerPKDEL() (msgReply []byte, err error) {
 		Bada:  true,
 		Errno: delErr, // return 0 if deleted successfully, return 1 if the nick was not present.
 	})
-	icutl.DebugLog.Printf("RET [%p] HandlePKDEL(%d:%s/%s) -> [reply: %s]\n", pk, pk.Type, pk.Server, pk.Nick)
+	icutl.DebugLog.Printf("RET [%p] HandlePKDEL(%d:%s/%s) -> [reply: %s]\n", pk, pk.Type, pk.Server, pk.Nick, msgReply)
 	return
 }
 

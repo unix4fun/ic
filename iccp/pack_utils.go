@@ -1,21 +1,16 @@
-// +build go1.4
+// +build go1.5
+
 package iccp
 
 import (
 	"bytes"
-	//"compress/zlib"
-	//"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"github.com/unix4fun/ic/icutl"
 	"github.com/unix4fun/ic/obf"
-	//"golang.org/x/crypto/sha3" // sha3 is now here.
-	//"io"
-	//"io/ioutil"
 	"os"
 	"regexp"
-	//"time"
 )
 
 func Nonce2Byte(nonce uint32) []byte {

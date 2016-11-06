@@ -1,14 +1,10 @@
-// +build go1.4
+// +build go1.5
+
 package iccp
 
 import (
-	//	"bytes"
-	//	"compress/zlib"
-	//	"encoding/base64"
-	//"fmt"
 	"github.com/golang/protobuf/proto" // protobuf is now here.
 	"github.com/unix4fun/ic/icutl"
-	//	"io"
 )
 
 //
