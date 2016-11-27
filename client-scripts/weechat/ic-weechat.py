@@ -1360,7 +1360,13 @@ class AcDisplay(object):
     	newtags = tags+',ACMSG'
 	#weechat.prnt_date_tags(buffer, 0, newtags, message)
         #weechat.prnt(buffer, "%s(%s%s%s)%s\t%s" % (weechat.color("white"), weechat.color("lightcyan"), nick, weechat.color("white"), weechat.color("default"), message ))
-        weechat.prnt_date_tags(buffer, 0, newtags, "%s(%s%s%s)%s\t%s" % (weechat.color("white"), weechat.color("lightcyan"), nick, weechat.color("white"), weechat.color("default"), message ))
+
+# before
+#        weechat.prnt_date_tags(buffer, 0, newtags, "%s(%s%s%s)%s\t%s" % (weechat.color("white"), weechat.color("lightcyan"), nick, weechat.color("white"), weechat.color("default"), message ))
+        # format message
+        newmessage = "%s(%s%s%s)%s\t%s" % (weechat.color("white"), weechat.color("lightcyan"), nick, weechat.color("white"), weechat.color("default"), message )
+        # print it :)
+        weechat.prnt_date_tags(buffer, 0, newtags, newmessage)
 
 
 class AcJSCom(object):

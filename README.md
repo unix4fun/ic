@@ -98,8 +98,8 @@ It will copy the following files into :
     /sk
     '/sk' is used to manage Secret Keys (channel/query keys)
 
-    /ac
-    '/ac' is used to enable disable crypto on a specific (weechat) buffer
+    /ic
+    '/ic' is used to enable disable crypto on a specific (weechat) buffer and main script commands
 
 the flow is simple, when you join the channel, you **GENERATE** and then **BROADCAST** you public key, so that other channel members are aware of your public key,
 other channel members should also **BROADCAST** their own key, someone on the channel **GENERATE A SECRET**  Key for the current channel and then **EXCHANGE** the newly created secret key with other members.

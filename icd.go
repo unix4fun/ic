@@ -79,14 +79,6 @@ func main() {
 	//bitOpt := flag.Int("client", 2048, "generate Client SSL Certificate")
 	flag.Parse()
 
-	/*
-		if len(flag.Args()) != 1 {
-			usage(os.Args[0])
-			flag.PrintDefaults()
-			os.Exit(1)
-		}
-	*/
-
 	if *dbgFlag == true {
 		//log.SetOutput(os.Stderr)
 		icutl.InitDebugLog(os.Stderr)
@@ -139,7 +131,11 @@ func main() {
 
 		// main loop
 		for ickp.ACrun == true {
-			icjs.HandleStdin()
+			// TODO handle error
+			err := icjs.HandleStdin()
+			if err != nil {
+				icutl.DebugLog.Printf("ic4f communication error: %v\n", err)
+			}
 		}
 
 		icutl.DebugLog.Printf("ic4f version %s QUITTING NOW!", Version)
