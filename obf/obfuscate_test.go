@@ -1,8 +1,8 @@
 package obf
 
 import (
-	"testing"
 	"crypto/rand"
+	"testing"
 )
 
 //  0x55        0x55
@@ -42,7 +42,7 @@ func TestObfuscateByte(t *testing.T) {
 		}
 	}
 
-	for i := 0 ; i < 100000 ; i++ {
+	for i := 0; i < 100000; i++ {
 		obfIn := make([]byte, 1)
 		rand.Read(obfIn)
 
@@ -62,5 +62,39 @@ func TestObfuscateByte(t *testing.T) {
 			t.Logf("matching error %02x vs %02x\n", obfIn[0], outIn[0])
 			t.Fail()
 		}
+	}
+}
+
+func TestObfuscateError(t *testing.T) {
+	obfOut, err := ObfuscateByte(nil, 0x55, 0x55)
+	if err == nil || obfOut != nil {
+		t.Logf("ObfuscateByte Error Test\n")
+		t.Fail()
+	}
+
+	obfOut, err = Obfuscate(nil)
+	if err == nil || obfOut != nil {
+		t.Logf("Obfuscate Error Test\n")
+		t.Fail()
+	}
+}
+
+func TestDeObfuscateError(t *testing.T) {
+	obfOut, err := DeobfuscateByte(nil, 0x55, 0x55)
+	if err == nil || obfOut != nil {
+		t.Logf("DeobfuscateByte Error Test\n")
+		t.Fail()
+	}
+
+	obfOut, err = DeobfuscateByte([]byte("123"), 0x55, 0x55)
+	if err == nil || obfOut != nil {
+		t.Logf("DeobfuscateByte Error Test\n")
+		t.Fail()
+	}
+
+	obfOut, err = DeObfuscate(nil)
+	if err == nil || obfOut != nil {
+		t.Logf("Deobfuscate Error Test\n")
+		t.Fail()
 	}
 }

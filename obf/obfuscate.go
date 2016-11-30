@@ -80,6 +80,10 @@ func ObfuscateByte(in []byte, mask_hi, mask_lo byte) (out []byte, err error) {
 	rnd := make([]byte, 2)
 	out = make([]byte, 2)
 
+	if len(in) == 0 {
+		return nil, obfuscateError(-1, "empty input?", nil)
+	}
+
 	_, err = rand.Read(rnd)
 	if err != nil {
 		return nil, obfuscateError(-1, "ObfuscateByte() crypto/rand: ", err)
@@ -123,11 +127,15 @@ func Obfuscate(in []byte) (out []byte, err error) {
 	out = make([]byte, len(in)*2)
 	//    var out []byte
 
+	if len(in) == 0 {
+		return nil, obfuscateError(-1, "Obfuscate():", nil)
+	}
+
 	for i, _ := range in {
 		/* mask have to be provided out */
 		tmp, err := ObfuscateByte(in[i:i+1], 0x55, 0x55)
 		if err != nil {
-			return nil, obfuscateError(-1, "Obfuscate():", err)
+			return nil, obfuscateError(-2, "Obfuscate():", err)
 		}
 		out[i*2] = tmp[0]
 		out[(i*2)+1] = tmp[1]
@@ -140,11 +148,15 @@ func Obfuscate(in []byte) (out []byte, err error) {
 func DeObfuscate(in []byte) (out []byte, err error) {
 	out = make([]byte, len(in)/2)
 	//    fmt.Printf("len: %d\n", len(in))
+	if len(in) == 0 {
+		return nil, obfuscateError(-1, "DeObfuscate():", nil)
+	}
+
 	for i, _ := range out {
 		//        fmt.Printf("i: %d\n", i)
 		tmp, err := DeobfuscateByte(in[i*2:(i*2)+2], 0x55, 0x55)
 		if err != nil {
-			return nil, obfuscateError(-1, "DeObfuscate():", err)
+			return nil, obfuscateError(-2, "DeObfuscate():", err)
 		}
 		out[i] = tmp[0]
 	}

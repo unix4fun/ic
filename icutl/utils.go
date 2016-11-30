@@ -76,18 +76,21 @@ func B64DecodeData(in []byte) (out []byte, err error) {
 
 //func CompressData(in []byte) (data *bytes.Buffer, err error) {
 func CompressData(in []byte) (out []byte, err error) {
+	if len(in) == 0 {
+		return nil, &AcError{Value: -1, Msg: "CompressData() invalid input: ", Err: err}
+	}
 
 	// first let's compress
 	data := new(bytes.Buffer)
 
 	zbuf, err := zlib.NewWriterLevel(data, zlib.BestCompression)
 	if err != nil {
-		return nil, &AcError{Value: -1, Msg: "CompressData().zlib.NewWriterLevel(): ", Err: err}
+		return nil, &AcError{Value: -2, Msg: "CompressData().zlib.NewWriterLevel(): ", Err: err}
 	}
 
 	n, err := zbuf.Write(in)
 	if err != nil || n != len(in) {
-		return nil, &AcError{Value: -2, Msg: "CompressData().zlib.Write(): ", Err: err}
+		return nil, &AcError{Value: -3, Msg: "CompressData().zlib.Write(): ", Err: err}
 	}
 
 	//XXX funny  Flush don't actually flush stuff from zlib into the writer all the time.....
@@ -101,16 +104,20 @@ func CompressData(in []byte) (out []byte, err error) {
 }
 
 func DecompressData(in []byte) (out []byte, err error) {
+	if len(in) == 0 {
+		return nil, &AcError{Value: -1, Msg: "DecompressData() invalid input: ", Err: err}
+	}
+
 	zbuf := bytes.NewBuffer(in)
 	plain, err := zlib.NewReader(zbuf)
 	defer plain.Close()
 	if err != nil {
-		return nil, &AcError{Value: -1, Msg: "DecompressData().zlib.NewReader(): ", Err: err}
+		return nil, &AcError{Value: -2, Msg: "DecompressData().zlib.NewReader(): ", Err: err}
 	}
 
 	out, err = ioutil.ReadAll(plain)
 	if err != nil && err != io.EOF {
-		return nil, &AcError{Value: -2, Msg: "DecompressData().ioutil().ReadAll(): ", Err: err}
+		return nil, &AcError{Value: -3, Msg: "DecompressData().ioutil().ReadAll(): ", Err: err}
 	}
 
 	return out, nil
