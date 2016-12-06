@@ -47,6 +47,48 @@ func (m *ACPackedMessage) String() string            { return proto.CompactTextS
 func (*ACPackedMessage) ProtoMessage()               {}
 func (*ACPackedMessage) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
+func (m *ACPackedMessage) GetHeader() uint32 {
+	if m != nil {
+		return m.Header
+	}
+	return 0
+}
+
+func (m *ACPackedMessage) GetNonce() uint32 {
+	if m != nil {
+		return m.Nonce
+	}
+	return 0
+}
+
+func (m *ACPackedMessage) GetCiphertext() []byte {
+	if m != nil {
+		return m.Ciphertext
+	}
+	return nil
+}
+
+func (m *ACPackedMessage) GetOptions() uint32 {
+	if m != nil {
+		return m.Options
+	}
+	return 0
+}
+
+func (m *ACPackedMessage) GetSigwho() []byte {
+	if m != nil {
+		return m.Sigwho
+	}
+	return nil
+}
+
+func (m *ACPackedMessage) GetSig() []byte {
+	if m != nil {
+		return m.Sig
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*ACPackedMessage)(nil), "iccp.ACPackedMessage")
 }

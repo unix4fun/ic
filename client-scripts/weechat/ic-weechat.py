@@ -10,7 +10,7 @@
 
 SCRIPT_NAME    = 'ic-weechat'
 SCRIPT_AUTHOR  = 'eau <eau+ic4f@unix4fun.net>'
-SCRIPT_VERSION = '20161106'
+SCRIPT_VERSION = '20161206'
 SCRIPT_LICENSE = 'BSD'
 SCRIPT_DESC    = 'ic4f - Irc Crypto 4 Fun'
 
@@ -646,15 +646,14 @@ def skCmdList(data, dabuffer, args):
 
 
 # 
-# AC commands
+# IC commands
 # 
-# /ac save <filename>
-# /ac load <filename>
-# /ac ping
-# /ac help
-# /ac ===> DEFAULT BEHAVIOUR
+# /ic save <filename>
+# /ic load <filename>
+# /ic help
+# /ic ===> DEFAULT BEHAVIOUR
 
-def acCmd_CB(data, dabuffer, args):
+def icCmd_CB(data, dabuffer, args):
     cb_argv = args.split()
     cb_argc = len(cb_argv)
 
@@ -747,20 +746,12 @@ def acCmdHelp(data, dabuffer, args):
     acwee.pmb(dabuffer, "\t\tsave                :\tsave current secret keys (~/.ic/maps)")
     acwee.pmb(dabuffer, "\t\tload                :\tload current secret keys (~/.ic/maps)")
     acwee.pmb(dabuffer, "\t\t<empty>   :\tenable/disable encryption in the current buffer (channel/query)")
-    # /ac           : enable/disable buffer (chan/query) encryption
-    # /ac help      : help on ac
-    # /ac stat      : daemon stat + heartbeat stat
-    # /ac bah       : rekey/reshuffle the internal memory protection
+    # /ic           : enable/disable buffer (chan/query) encryption
+    # /ic help      : help on ic
+    # /ic stat      : daemon stat + heartbeat stat
+    # /ic bah       : rekey/reshuffle the internal memory protection
     acwee.pmb(dabuffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$%%@#$%%@#$%%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
 
-#    weechat.prnt(dabuffer, "%sAC\tAC help:%s" % ( SCRIPT_COLOR, args))
-#    weechat.prnt(dabuffer, "%sAC\t/pk\tbroadcast our public key" % ( SCRIPT_COLOR ))
-#    weechat.prnt(dabuffer, "%sAC\t/pkgen\tgenerate our key pair" % ( SCRIPT_COLOR ))
-#    weechat.prnt(dabuffer, "%sAC\t/pklist\tlist running public keys" % ( SCRIPT_COLOR ))
-#    weechat.prnt(dabuffer, "%sAC\t/sk <nick>\tsend #channel key to <nick>" % ( SCRIPT_COLOR ))
-#    weechat.prnt(dabuffer, "%sAC\t/skadd <entropy>\tcreate #channel key" % ( SCRIPT_COLOR ))
-#    weechat.prnt(dabuffer, "%sAC\t/skuse\tuse/accept the key that has been received on the current buffer" % ( SCRIPT_COLOR ))
-#    weechat.prnt(dabuffer, "%sAC\taliases:" % (SCRIPT_COLOR))
 
     return weechat.WEECHAT_RC_OK
 
@@ -1742,25 +1733,74 @@ class qtMessage(acMessage):
         return self.unpack(envp[0])
 
 
+# a class devoted to handling bar objects..
+# may be it will just be moved to AcCore
+class AcCipherDisplay(object):
+    # OLD XXX <HASH(serv,chan)> => { enabled: true, desc: [list], bar: <baritem> } 
+    # will host : 
+    # { <HASH(serv,chan)>: true }
+    # or may be we will store the bar instead of just a Bool might be more
+    # clever anyway
+    # the bar is tracked by name by weechat
+    acCipher = {}
+
+    def __init__(self):
+        self.acCipher = {}
+
+    def _buildHash(self, serv, chan):
+        return hashlib.sha1(chan+":"+serv).hexdigest()
+
+    def isAcActive(self, serv, chan):
+        cl = clMessage(self).cliac(serv, chan)
+        return cl['bada']
+
+    def isAcEnabled(self, serv, chan):
+        localKey = self._buildHash(serv, chan)
+        if self.acCipher.has_key(localKey) is True:
+            return self.acCipher[localKey]
+        return False
+
+    def acCipherCleanup(self):
+        for keyHash in self.acCipher:
+            cipher_bar = weechat.bar_search(keyHash)
+            weechat.bar_remove(cipher_bar)
+            self.acCipher[keyHash] = False
+        self.acCipher = {}
+
+    def acEnable(self, buffer, serv, chan):
+        localKey = self._buildHash(serv, chan)
+        self.pmb(buffer, "encryption enabled")
+        # get the buffer name and display only in that buffer...
+        bufname = weechat.buffer_get_string(buffer, "full_name")
+        bar_condition = "${buffer.full_name} == %s" % bufname
+        weechat.bar_new(localKey, "off", "400", "window", bar_condition, "bottom", "horizontal", "vertical", "0", "5", "default", "cyan", "red", "off", ":::::: buffer_name, ac_nonce ::::::")
+        # XXX may be we have to test for the return value of bar_new()
+        self.acCipher[localKey] = True
+        return weechat.WEECHAT_RC_OK
+
+    def acDisable(self, buffer, serv, chan):
+        localKey = self._buildHash(serv, chan)
+        self.pmb(buffer, "encryption disabled")
+        cipher_bar = weechat.bar_search(localKey)
+        weechat.bar_remove(cipher_bar)
+        self.acCipher[localKey] = False
+        return weechat.WEECHAT_RC_OK
+
+
 # XXX TODO: now the main class the AcCore class which will embed all that is
 # necessary to make the script run smoothly and communicate with the stdin/stdou
 # go binary daemon..
 
-class AcCore(AcDisplay, AcJSCom):
-    acCipherReady = {} # sha1 hash 'channel:server'
-    acCipherBar = {} # sha1 hash 'channel:server' store the bar display pointer.
-    acCipherDesc = {} # sha1 hash ' channel:server' information to display
+class AcCore(AcDisplay, AcJSCom, AcCipherDisplay):
     acRecvKeyBlobs = {} # sha1 hash 'channel:server'
     acNonces = {} # sha1 hash 'channel:server' store bar items value for now.
     acBarItems = []
 
     def __init__(self, coreBuffer, acBinFile, acDbgFile):
         AcDisplay.__init__(self, "")
-#        AcPbCom.__init__(self, acBinFile, acDbgFile)
         AcJSCom.__init__(self, acBinFile, acDbgFile)
-        self.acCipherReady = {}
-        self.acCipherBar = {}
-        self.acCipherDesc = {}
+        AcCipherDisplay.__init__(self)
+
         self.acRecvKeyBlobs = {}
         self.acNonces = {}
         self.BarItems = []
@@ -1778,17 +1818,7 @@ class AcCore(AcDisplay, AcJSCom):
         return hashlib.sha1(chan+":"+serv).hexdigest()
 
     def coreCleanUp(self):
-        for keyHash in self.acCipherReady:
-            self.acCipherReady[keyHash] = False
-#            del self.acCipherReady[keyHash]
-        for keyHash in self.acCipherBar:
-            weechat.bar_remove(self.acCipherBar[keyHash])
-#            del self.acCipherBar[keyHash]
-#        for keyHash in self.acCipherDesc:
-#            del self.acCipherDesc[keyHash]
-        self.acCipherReady = {}
-        self.acCipherDesc = {}
-        self.acCipherBar = {}
+        self.acCipherCleanup()
         self.acRecvKeyBlobs = {}
     
     def rcvKexPush(self, serv, chan, kexDataList):
@@ -1803,29 +1833,6 @@ class AcCore(AcDisplay, AcJSCom):
             return kexDataList
         else:
             return None
-    def isAcEnabled(self, serv, chan):
-        keyBlobHash = self._buildHash(serv, chan)
-        if self.acCipherReady.has_key(keyBlobHash) and self.acCipherReady[keyBlobHash] == True:
-            return True
-        else:
-            return False
-
-    def isAcActive(self, serv, chan):
-        keyBlobHash = self._buildHash(serv, chan)
-        if self.acCipherReady.has_key(keyBlobHash):
-            return True
-        else:
-            return False
-
-    def acEnable(self, buffer, serv, chan):
-        keyBlobHash = self._buildHash(serv, chan)
-        keyBlobDescList = [serv, chan]
-        self.acCipherDesc[keyBlobHash] = keyBlobDescList
-        return self.acEnableHash(buffer, keyBlobHash)
-
-    def acDisable(self, buffer, serv, chan):
-        keyBlobHash = self._buildHash(serv, chan)
-        return self.acDisableHash(buffer, keyBlobHash)
 
     def acSetNonce(self, serv, chan, nonce):
         keyBlobHash = self._buildHash(serv, chan)
@@ -1842,40 +1849,21 @@ class AcCore(AcDisplay, AcJSCom):
         else:
             return -1
 
-
     # TODO XXX bar color, bar items messages in AcDisplay class to avoid
     # rewriting it... AcDisplay should create the bar items we can use to
     # display more information regarding the number of messages sent with 
     # the current key.
-    def acEnableHash(self, buffer, keyBlobHash):
-        self.pmb(buffer, "encryption enabled")
-        # get the buffer name and display only in that buffer...
-        bufname = weechat.buffer_get_string(buffer, "full_name")
-        bar_condition = "${buffer.full_name} == %s" % bufname
-        self.acCipherReady[keyBlobHash] = True
-        if self.acCipherBar.has_key(keyBlobHash) is False:
-            cipher_bar = weechat.bar_new(keyBlobHash, "off", "400", "window", bar_condition, "bottom", "horizontal", "vertical", "0", "5", "default", "cyan", "red", "off", ":::::: buffer_name, ac_nonce ::::::")
-            self.acCipherBar[keyBlobHash] = cipher_bar
-        return weechat.WEECHAT_RC_OK
-    
-    def acDisableHash(self, buffer, keyBlobHash):
-        self.pmb(buffer, "encryption disabled")
-        self.acCipherReady[keyBlobHash] = False
-        cipher_bar = self.acCipherBar[keyBlobHash]
-        weechat.bar_remove(cipher_bar)
-        del self.acCipherBar[keyBlobHash]
-        return weechat.WEECHAT_RC_OK
 
     # XXX TOREMOVE
     def acHashList(self, dabuffer):
         self.pmb(dabuffer, "= CHANs =")
-        for keyHash in self.acCipherReady:
-            descList = self.acCipherDesc[keyHash]
-            self.pmb(dabuffer, "%s/%s [%s] -> %r", descList[0], descList[1], keyHash, self.acCipherReady[keyHash])
+#        for keyHash in self.acCipherReady:
+#            descList = self.acCipherDesc[keyHash]
+#            self.pmb(dabuffer, "%s/%s [%s] -> %r", descList[0], descList[1], keyHash, self.acCipherReady[keyHash])
         self.pmb(dabuffer, "= BARs =")
-        for keyHash in self.acCipherBar:
-            descList = self.acCipherDesc[keyHash]
-            self.pmb(dabuffer, "%s/%s [%s] -> %r", descList[0], descList[1], keyHash, self.acCipherBar[keyHash])
+#        for keyHash in self.acCipherBar:
+#            descList = self.acCipherDesc[keyHash]
+#            self.pmb(dabuffer, "%s/%s [%s] -> %r", descList[0], descList[1], keyHash, self.acCipherBar[keyHash])
 
 
     
@@ -1889,7 +1877,7 @@ class AcWeechat(AcCore):
 
     CMD_PUBKEY  = { CMD_HKEY_NAME:"pk",     CMD_HKEY_CB: "pkCmd_CB" }
     CMD_SNDKEY  = { CMD_HKEY_NAME:"sk",     CMD_HKEY_CB: "skCmd_CB" }
-    CMD_ACCMD   = { CMD_HKEY_NAME:"ic",     CMD_HKEY_CB: "acCmd_CB" }
+    CMD_ACCMD   = { CMD_HKEY_NAME:"ic",     CMD_HKEY_CB: "icCmd_CB" }
 
     def __init__(self, acBin, acDbg):
         AcCore.__init__(self, "", acBin, acDbg)
