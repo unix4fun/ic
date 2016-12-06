@@ -9,7 +9,7 @@ go:
   - 1.5.4
 
 install:
-  - go get -d -u -v ./...
+  - go get -a -u -v github.com/unix4fun/ic
 
 script:
   - go build -v

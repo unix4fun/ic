@@ -1388,6 +1388,7 @@ class AcJSCom(object):
             self.acProc = subprocess.Popen(self.acBinary, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=self.acDebugFd)
             flags = fcntl.fcntl(self.acProc.stdout, fcntl.F_GETFL) # get current p.stdout flags
             fcntl.fcntl(self.acProc.stdout, fcntl.F_SETFL, flags | os.O_NONBLOCK) # add non blocking
+#        self.acBanner( weechat.current_buffer() )
         return None
 
     def acStopDaemon(self):
@@ -1398,7 +1399,9 @@ class AcJSCom(object):
         # XXX TODO that or terminate, let's go with terminate first..
         #acblob = self.acMsg(ACMSG_TYPE_QUIT, 0, None)
         qtReply = qtMessage(self).quit()
-        self.acProc = None
+#        self.acProc = None
+        self.acProc.terminate()
+
         return None
 
     # return [ Blob|None, Error|None ]
@@ -1812,6 +1815,7 @@ class AcCore(AcDisplay, AcJSCom, AcCipherDisplay):
         self.pmb(buffer, "by %s", SCRIPT_AUTHOR)
         self.pmb(buffer, "Implements AEAD: NaCL/ECC Curve 25519 w/ Salsa20/Poly1305 (more later)")
         self.pmb(buffer, "type: /ic help to get HELP!")
+        self.pmb(buffer, "IC Daemon PID: %d", self.acProc.pid)
         self.pmb(buffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$%%@#$%%@#$%%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
 
     def _buildHash(self, serv, chan):
@@ -1877,7 +1881,7 @@ class AcWeechat(AcCore):
 
     CMD_PUBKEY  = { CMD_HKEY_NAME:"pk",     CMD_HKEY_CB: "pkCmd_CB" }
     CMD_SNDKEY  = { CMD_HKEY_NAME:"sk",     CMD_HKEY_CB: "skCmd_CB" }
-    CMD_ACCMD   = { CMD_HKEY_NAME:"ic",     CMD_HKEY_CB: "icCmd_CB" }
+    CMD_ICCMD   = { CMD_HKEY_NAME:"ic",     CMD_HKEY_CB: "icCmd_CB" }
 
     def __init__(self, acBin, acDbg):
         AcCore.__init__(self, "", acBin, acDbg)
@@ -1890,7 +1894,7 @@ class AcWeechat(AcCore):
 #        weechat.hook_command(self.CMD_HELP[self.CMD_HKEY_NAME], "AC help command", "", "", "", self.CMD_HELP[self.CMD_HKEY_CB], "")
         weechat.hook_command(self.CMD_PUBKEY[self.CMD_HKEY_NAME], "/pk help for more infos", "", "", "", self.CMD_PUBKEY[self.CMD_HKEY_CB], "")
         weechat.hook_command(self.CMD_SNDKEY[self.CMD_HKEY_NAME], "/sk help for more infos", "", "", "nick", self.CMD_SNDKEY[self.CMD_HKEY_CB], "")
-        weechat.hook_command(self.CMD_ACCMD[self.CMD_HKEY_NAME], "enable/disable encryption on the current buffer", "", "", "", self.CMD_ACCMD[self.CMD_HKEY_CB], "")
+        weechat.hook_command(self.CMD_ICCMD[self.CMD_HKEY_NAME], "enable/disable encryption on the current buffer", "", "", "", self.CMD_ICCMD[self.CMD_HKEY_CB], "")
         return weechat.WEECHAT_RC_OK
 
     def acTimerHooks(self):
@@ -1921,15 +1925,6 @@ class AcWeechat(AcCore):
         self.acModifierHooks()
         self.acCmdHooks()
         self.acTimerHooks()
-#    acProcessHooks()
-#    weechat.hook_command("achelp", "AC help command",
-#            "[pubkey]|[givekey name]|[list [name|nick]]",
-#            "arg description",
-#            "pubkey"
-#            "||givekey name|nick"
-#            "||list nick|*",
-#            "achelp_cb",
-#            "")
         return weechat.WEECHAT_RC_OK
 
     def acUnHooks(self):
@@ -1956,24 +1951,15 @@ class AcWeechat(AcCore):
         self.pmb(weechat.current_buffer(), "Bye, you got errors!")
     
     def acWeechatMain(self):
-    #    weechat.prnt("", "Hello, from python script!")
-    #    weechat.prnt("", "%sDSALDSAKDLASg arguments" % weechat.prefix("error"))
-    #    weechat.prnt("", "%swrong arguments" % weechat.prefix(""))
-    #    weechat.prnt("", "%sAC\twrong arguments" % weechat.color("yellow,blue"))
-    #    weechat.config_set_plugin("look.prefix_ac", "AC")
-    #    weechat.prnt("", "text %syellow on blue" % weechat.color("yellow,blue"))
-    #   OLD
-    #   ac_startup()
-    #   NEW
-        self.acBanner( weechat.current_buffer() )
         self.acStartDaemon()
+        self.acBanner( weechat.current_buffer() )
         self.acEnvInit()
         self.acHooks()
     
     def acWeechatExit(self):
-        self.coreCleanUp()
-        self.acStopDaemon()
         self.acUnHooks()
+        self.acStopDaemon()
+        self.coreCleanUp()
         self.pmb(self.coreBuffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$%% ac OUT! @#$%%@#$%%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
         return weechat.WEECHAT_RC_OK
 
