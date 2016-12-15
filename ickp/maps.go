@@ -129,7 +129,7 @@ func (psk *PSKMap) Map2File(outfilestr string, passwd []byte) (bool, error) {
 	 */
 	icutl.DebugLog.Printf("Map2FILE CALL to  %s\n", outfilestr)
 
-	icutl.DebugLog.Printf("<< ACMAP DISPLAY:\n%v\n", ACmap)
+	icutl.DebugLog.Printf("<< ICMAP DISPLAY:\n%v\n", ACmap)
 
 	outfile, err := os.OpenFile(outfilestr, os.O_CREATE|os.O_WRONLY, 0700)
 	defer outfile.Close()
@@ -144,7 +144,7 @@ func (psk *PSKMap) Map2File(outfilestr string, passwd []byte) (bool, error) {
 		return false, err
 	}
 
-	jsonPem, err := AEADEncryptPEMBlock(rand.Reader, "ACMAP", jsonBuffer, passwd)
+	jsonPem, err := AEADEncryptPEMBlock(rand.Reader, "ICMAP", jsonBuffer, passwd)
 	if err != nil {
 		icutl.DebugLog.Printf("ERROR: %v", err)
 		return false, err
