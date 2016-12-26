@@ -1,3 +1,3 @@
 package main
-const acVersion string = "20161206"
 
+const icVersion string = "20161206"

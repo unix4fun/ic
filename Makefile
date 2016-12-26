@@ -43,7 +43,7 @@ update: version
 # XXX TODO: windows support
 version:
 	@echo "Generating ${CURRENT}"
-	@echo "package main\nconst acVersion string = \"`date +%Y%m%d`\"\n" > version.go
+	@echo "package main\nconst icVersion string = \"`date +%Y%m%d`\"\n" > version.go
 	@sed s/SCRIPT_VERSION\ =\ '.*'/SCRIPT_VERSION\ =\ \'${CURRENT}\'/g  ${ACWSCRIPT}/ic-weechat.py > ${ACWSCRIPT}/ic-weechat.py.${CURRENT}
 	@diff -sru ${ACWSCRIPT}/ic-weechat.py ${ACWSCRIPT}/ic-weechat.py.${CURRENT} || if [ $$? -eq 1 ]; then echo "Ok/Ctrl+C" && read t; else exit 0; fi
 	#|| [ $$? -eq 1 ]; then echo "$(?) Ok/Ctrl+C?" && read t

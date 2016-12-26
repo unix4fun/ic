@@ -43,7 +43,7 @@ func init() {
 }
 
 func main() {
-	Version := acVersion
+	Version := icVersion
 
 	//cpuProfile := profile.Start(profile.ProfilePath("."), profile.CPUProfile)
 
