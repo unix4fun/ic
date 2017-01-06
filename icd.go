@@ -9,11 +9,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"os"
+
 	"github.com/unix4fun/ic/icjs"
 	"github.com/unix4fun/ic/ickp"
 	"github.com/unix4fun/ic/icutl"
-	"io/ioutil"
-	"os"
 )
 
 //
@@ -48,14 +49,14 @@ func main() {
 	//cpuProfile := profile.Start(profile.ProfilePath("."), profile.CPUProfile)
 
 	/*
-		f, err := os.Create("ac.pprof")
+		f, err := os.Create("ic.pprof")
 		if err != nil {
 			panic(err)
 		}
-		g, err := os.Create("ac.mprof")
-		if err != nil {
-			panic(err)
-		}
+			g, err := os.Create("ac.mprof")
+			if err != nil {
+				panic(err)
+			}
 
 		err = pprof.StartCPUProfile(f)
 		if err != nil {
@@ -140,8 +141,8 @@ func main() {
 
 		icutl.DebugLog.Printf("ic4f version %s QUITTING NOW!", Version)
 		/*
-			pprof.WriteHeapProfile(g)
-			g.Close()
+				pprof.WriteHeapProfile(g)
+				g.Close()
 			pprof.StopCPUProfile()
 			f.Close()
 		*/

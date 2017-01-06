@@ -608,6 +608,7 @@ def skCmdAddKey(data, dabuffer, args):
             if ctReply['bada'] is True:
                 return acCmdToggle(data, dabuffer, "")
 
+# XXX BUG BUG BUG BUG if loaded or ic activated, when trying to sk gen trigger this message, WHY ?!?!?!
     acwee.pmbac(dabuffer, "make sure the buffer you want to add a key to is either a query or a channel buffer, here is : '%s'", inf[BI_TYPE])
     return weechat.WEECHAT_RC_ERROR
 
@@ -987,7 +988,8 @@ def notice_in_modifier_cb(data, modifier, modifier_data, msg_string):
             try:
                 pkReply = pkMessage(acwee, server).pkadd(peer_nick, peer_host, msg_blob)
             except Exception as e:
-                acwee.pmbac(buffer, "!WARNING!\tMESSAGE NOT SENT: '%s' [NO ENCRYPTOR:%s]", out_msg, str(e))
+                # XXX BUG BUG BUG BUG out_msg not existing
+                acwee.pmbac(buffer, "!WARNING!\tKEY NOT ADDED [NO ENCRYPTOR:%s]", str(e))
             if pkReply['bada'] is True:
                 acwee.pmbac(buffer, "%s broadcasted his public key [%s/%s] ", peer_nick, peer_nick, channel)
                 ret_string = ""
@@ -1134,7 +1136,8 @@ def privmsg_in_modifier_cb(data, modifier, modifier_data, msg_string):
             try:
                 ctReply = ctMessage(acwee, server, channel).ctopen(peer_nick, msg_blob, my_nick)
             except Exception as e:
-                acwee.pmbac(buffer, "!WARNING!\tMESSAGE NOT SENT: '%s' [NO ENCRYPTOR:%s]", out_msg, str(e))
+                # XXX BUG BUG BUG BUG out_msg not existing in this context
+                acwee.pmbac(buffer, "!WARNING!\tMESSAGE NOT DECRYPTED [NO ENCRYPTOR:%s]", str(e))
             if ctReply['bada'] is True:
                 acwee.prtAcPrivMsg(buffer, peer_nick, ctReply['blob'], "irc_privmsg,,notify_message,prefix_nick_default,nick_"+peer_nick+',host_'+peer_host)
 #                weechat.prnt(buffer, "%s(%s%s%s)%s\t%s" % (weechat.color("white"), weechat.color("lightcyan"),peer_nick, weechat.color("white"), weechat.color("default"), ac_ctr.blob ))
@@ -1411,7 +1414,7 @@ class AcJSCom(object):
         # XXX TODO: this is a hack need a proper select loop here.. :)
         # also let's poll stderr to get errors and display it in a status window..
         #time.sleep(0.1)
-        rlist, wlist, xlist = select.select([self.acProc.stdout], [], [], 1)
+        rlist, wlist, xlist = select.select([self.acProc.stdout], [], [], 8)
         if (rlist):
             rcvBlob = self.acProc.stdout.read(bufsize)
         else:
