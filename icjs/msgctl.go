@@ -26,15 +26,15 @@ type ACClReply struct {
 func (cl *ACClMessage) validate() error {
 	icutl.DebugLog.Printf("CALL [%p] Validate(%d))\n", cl, cl.Type)
 	switch cl.Type {
-	case CLLOAD:
+	case clLoad:
 		if len(cl.Blob) > 0 {
 			return nil
 		}
-	case CLSAVE:
+	case clSave:
 		if len(cl.Blob) > 0 {
 			return nil
 		}
-	case CLIAC:
+	case clIsAC:
 		if len(cl.Server) > 0 && len(cl.Channel) > 0 {
 			return nil
 		}
@@ -42,7 +42,7 @@ func (cl *ACClMessage) validate() error {
 	} // end of switch..
 
 	icutl.DebugLog.Printf("RET [%p] Validate(%d) -> [Error: Invalid CL message]\n", cl, cl.Type)
-	return fmt.Errorf("Invalid CL[%d] message!\n", cl.Type)
+	return fmt.Errorf("invalid CL[%d] message", cl.Type)
 }
 
 func (cl *ACClMessage) HandlerCLLOAD() (msgReply []byte, err error) {
@@ -56,7 +56,7 @@ func (cl *ACClMessage) HandlerCLLOAD() (msgReply []byte, err error) {
 	err = cl.validate()
 	if err != nil {
 		msgReply, _ = json.Marshal(&ACClReply{
-			Type:  R_CLLOAD,
+			Type:  clLoadReply,
 			Bada:  false,
 			Errno: -1,
 			Blob:  err.Error(),
@@ -73,7 +73,7 @@ func (cl *ACClMessage) HandlerCLLOAD() (msgReply []byte, err error) {
 	ok, err := ickp.ACmap.File2Map(ickp.AcSaveFile, []byte(cl.Blob))
 	if err != nil || ok != true {
 		msgReply, _ = json.Marshal(&ACClReply{
-			Type:  R_CLLOAD,
+			Type:  clLoadReply,
 			Bada:  false,
 			Errno: -2,
 			Blob:  err.Error(),
@@ -88,7 +88,7 @@ func (cl *ACClMessage) HandlerCLLOAD() (msgReply []byte, err error) {
 	}
 
 	msgReply, _ = json.Marshal(&ACClReply{
-		Type:  R_CLLOAD,
+		Type:  clLoadReply,
 		Bada:  true,
 		Errno: 0,
 	})
@@ -112,7 +112,7 @@ func (cl *ACClMessage) HandlerCLSAVE() (msgReply []byte, err error) {
 	err = cl.validate()
 	if err != nil {
 		msgReply, _ = json.Marshal(&ACClReply{
-			Type:  R_CLSAVE,
+			Type:  clSaveReply,
 			Bada:  false,
 			Errno: -1,
 			Blob:  err.Error(),
@@ -131,7 +131,7 @@ func (cl *ACClMessage) HandlerCLSAVE() (msgReply []byte, err error) {
 	ok, err := ickp.ACmap.Map2File(ickp.AcSaveFile, []byte(cl.Blob))
 	if err != nil || ok != true {
 		msgReply, _ = json.Marshal(&ACClReply{
-			Type:  R_CLSAVE,
+			Type:  clSaveReply,
 			Bada:  false,
 			Errno: -1,
 			Blob:  err.Error(),
@@ -146,7 +146,7 @@ func (cl *ACClMessage) HandlerCLSAVE() (msgReply []byte, err error) {
 	}
 
 	msgReply, _ = json.Marshal(&ACClReply{
-		Type:  R_CLSAVE,
+		Type:  clSaveReply,
 		Bada:  true,
 		Errno: 0,
 	})
@@ -170,7 +170,7 @@ func (cl *ACClMessage) HandlerCLIAC() (msgReply []byte, err error) {
 	err = cl.validate()
 	if err != nil {
 		msgReply, _ = json.Marshal(&ACClReply{
-			Type:  R_CLIAC,
+			Type:  clIsACReply,
 			Bada:  false,
 			Errno: -1,
 			Blob:  err.Error(),
@@ -189,7 +189,7 @@ func (cl *ACClMessage) HandlerCLIAC() (msgReply []byte, err error) {
 	if ok_a == false || ok_b == false {
 		err = fmt.Errorf("no map for this server/channel combo")
 		msgReply, _ = json.Marshal(&ACClReply{
-			Type:  R_CLIAC,
+			Type:  clIsACReply,
 			Bada:  false,
 			Errno: -2,
 			Blob:  err.Error(),
@@ -204,7 +204,7 @@ func (cl *ACClMessage) HandlerCLIAC() (msgReply []byte, err error) {
 	}
 
 	msgReply, _ = json.Marshal(&ACClReply{
-		Type:  R_CLIAC,
+		Type:  clIsACReply,
 		Bada:  true,
 		Errno: 0,
 	})
@@ -231,7 +231,7 @@ func HandleCLMsg(msg []byte) (msgReply []byte, err error) {
 	if err != nil {
 		icutl.DebugLog.Printf("RET HandlerCtMsg(%s) -> [Error: %s]\n", msg, err.Error())
 		msgReply, _ = json.Marshal(&ACClReply{
-			Type:  R_CLERR,
+			Type:  clErrReply,
 			Bada:  false,
 			Errno: -1,
 			Blob:  err.Error(),
@@ -240,16 +240,16 @@ func HandleCLMsg(msg []byte) (msgReply []byte, err error) {
 	}
 
 	switch req.Type {
-	case CLLOAD:
+	case clLoad:
 		msgReply, err = req.HandlerCLLOAD()
-	case CLSAVE:
+	case clSave:
 		msgReply, err = req.HandlerCLSAVE()
-	case CLIAC:
+	case clIsAC:
 		msgReply, err = req.HandlerCLIAC()
 	default:
-		err = fmt.Errorf("Invalid CL Message.")
+		err = fmt.Errorf("invalid CL message")
 		msgReply, _ = json.Marshal(&ACClReply{
-			Type:  R_CLERR,
+			Type:  clErrReply,
 			Bada:  false,
 			Errno: -2,
 			Blob:  err.Error(),

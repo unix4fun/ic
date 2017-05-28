@@ -17,114 +17,110 @@ import (
 //var ACrun bool = ickp.ACrun
 const (
 	_     = iota
-	PKMSG // Public Key Messages
-	KXMSG // Key eXchange Messages
-	CTMSG // Cipher Text Messages
-	CLMSG // ControL Messages
-	QTMSG // Quit Message
-	ERMSG // Error Message)
+	pkMsg // Public Key Messages
+	kxMsg // Key eXchange Messages
+	ctMsg // Cipher Text Messages
+	clMsg // ControL Messages
+	qtMsg // Quit Message
+	erMsg // Error Message)
 
 	// PK Messages
-	PKGEN  // REQ: { "type":PKMSG, "payload": "{ type: PKGEN, nick":"eau", "host":"", "server":"freenode" }" }
-	PKADD  // REQ: { "type":PKMSG, "payload": "{ "nick":"eau", "host":"", "server":"freenode", "key":"blob" }" }
-	PKLIST // { "type":PKMSG, "payload": "{ "nick":"", "server":"freenode" }" }
-	PKDEL  // { "type":PKMSG, "payload": "{ "nick":"eau", "server":"freenode" }" }
+	pkGen  // REQ: { "type":PKMSG, "payload": "{ type: PKGEN, nick":"eau", "host":"", "server":"freenode" }" }
+	pkAdd  // REQ: { "type":PKMSG, "payload": "{ "nick":"eau", "host":"", "server":"freenode", "key":"blob" }" }
+	pkList // { "type":PKMSG, "payload": "{ "nick":"", "server":"freenode" }" }
+	pkDel  // { "type":PKMSG, "payload": "{ "nick":"eau", "server":"freenode" }" }
 
-	R_PKGEN // RSP: { "type":PKMSG, "payload": "{ "type": R_PKGEN, "bada":true,	 "errno":-1, "data":"" }" }
-	R_PKADD // RSP: { "type":PKMSG, "payload": "{ "type": R_PKADD, "bada":true, "errno":0, "data":"" }" }
-	R_PKLIST
-	R_PKDEL
+	pkGenReply // RSP: { "type":PKMSG, "payload": "{ "type": R_PKGEN, "bada":true,	 "errno":-1, "data":"" }" }
+	pkAddReply // RSP: { "type":PKMSG, "payload": "{ "type": R_PKADD, "bada":true, "errno":0, "data":"" }" }
+	pkListReply
+	pkDelReply
 
-	R_PKERR // ERR: { "type":PKMSG, "payload": "{ "type": R_PKERR, "bada":false, errno:-1, data:"error message" }"
+	pkErrReply // ERR: { "type":PKMSG, "payload": "{ "type": R_PKERR, "bada":false, errno:-1, data:"error message" }"
 
 	// KX Messages
-	KXPACK
-	R_KXPACK
+	kxPack
+	kxPackReply
 
-	KXUNPACK
-	R_KXUNPACK
+	kxUnpack
+	kxUnpackReply
 
-	R_KXERR
+	kxErrReply
 
 	// CT Messages
-	CTSEAL
-	R_CTSEAL
+	ctSeal
+	ctSealReply
 
-	CTOPEN
-	R_CTOPEN
+	ctOpen
+	ctOpenReply
 
-	CTADD
-	R_CTADD
+	ctAdd
+	ctAddReply
 
-	R_CTERR
+	ctErrReply
 
 	// CL Messages
-	CLLOAD
-	R_CLLOAD
+	clLoad
+	clLoadReply
 
-	CLSAVE
-	R_CLSAVE
+	clSave
+	clSaveReply
 
-	CLIAC
-	R_CLIAC
+	clIsAC
+	clIsACReply
 
-	R_CLERR
+	clErrReply
 )
 
-// function pointers
+// ACComHandler defining a communication handler function prototype
+// that are used for handling message types.
 type ACComHandler func([]byte) ([]byte, error)
-type ACMsgHandler func() ([]byte, error)
+
+//type ACMsgHandler func() ([]byte, error)
 
 var (
 	// Map of handler depending on the type of message
 	ACComMessageHandlerMap = map[int]ACComHandler{
-		PKMSG: HandlePKMsg,
-		KXMSG: HandleKXMsg,
-		CTMSG: HandleCTMsg,
-		CLMSG: HandleCLMsg,
-		QTMSG: HandleQuitMsg,
+		pkMsg: HandlePKMsg,
+		kxMsg: HandleKXMsg,
+		ctMsg: HandleCTMsg,
+		clMsg: HandleCLMsg,
+		qtMsg: HandleQuitMsg,
 	}
 
-	/*
-		ACPkMessageHandlerMap = map[int]ACMsgHandler{
-			PKGEN: nil,
-		}
-	*/
-
-	MsgType = map[int]string{
-		PKMSG: "PKMSG",
-		KXMSG: "KXMSG",
-		CTMSG: "CTMSG",
-		CLMSG: "CLMSG",
-		QTMSG: "QTMSG",
-		ERMSG: "ERMSG",
+	msgType = map[int]string{
+		pkMsg: "PKMSG",
+		kxMsg: "KXMSG",
+		ctMsg: "CTMSG",
+		clMsg: "CLMSG",
+		qtMsg: "QTMSG",
+		erMsg: "ERMSG",
 
 		// PKMSG
-		PKGEN:    "PKGEN",
-		R_PKGEN:  "R_PKGEN",
-		PKADD:    "PKADD",
-		R_PKADD:  "R_PKADD",
-		PKLIST:   "PKLIST",
-		R_PKLIST: "R_PKLIST",
-		PKDEL:    "PKDEL",
-		R_PKDEL:  "R_PKDEL",
-		R_PKERR:  "R_PKERR",
+		pkGen:       "PKGEN",
+		pkGenReply:  "R_PKGEN",
+		pkAdd:       "PKADD",
+		pkAddReply:  "R_PKADD",
+		pkList:      "PKLIST",
+		pkListReply: "R_PKLIST",
+		pkDel:       "PKDEL",
+		pkDelReply:  "R_PKDEL",
+		pkErrReply:  "R_PKERR",
 
 		// KXMSG
-		KXPACK:     "KXPACK",
-		R_KXPACK:   "R_KXPACK",
-		KXUNPACK:   "KXUNPACK",
-		R_KXUNPACK: "R_KXUNPACK",
-		R_KXERR:    "R_KXERR",
+		kxPack:        "KXPACK",
+		kxPackReply:   "R_KXPACK",
+		kxUnpack:      "KXUNPACK",
+		kxUnpackReply: "R_KXUNPACK",
+		kxErrReply:    "R_KXERR",
 
 		// CTMSG
-		CTSEAL:   "CTSEAL",
-		R_CTSEAL: "R_CTSEAL",
-		CTOPEN:   "CTOPEN",
-		R_CTOPEN: "R_CTOPEN",
-		CTADD:    "CTADD",
-		R_CTADD:  "R_CTADD",
-		R_CTERR:  "R_CTERR",
+		ctSeal:      "CTSEAL",
+		ctSealReply: "R_CTSEAL",
+		ctOpen:      "CTOPEN",
+		ctOpenReply: "R_CTOPEN",
+		ctAdd:       "CTADD",
+		ctAddReply:  "R_CTADD",
+		ctErrReply:  "R_CTERR",
 
 		// CTLMSG
 	}
@@ -135,7 +131,9 @@ func init() {
 
 }
 
-// the enveloppe of JSON messages..
+// ACComMessage is the struct type defining the enveloppe of a JSON message..
+// Type define the type of message.
+// Payload the content of that message.
 type ACComMessage struct {
 	Type    int    `json:"type"`
 	Payload []byte `json:"payload"`
@@ -144,19 +142,18 @@ type ACComMessage struct {
 func (ac *ACComMessage) Validate() (ACComHandler, error) {
 	icutl.DebugLog.Printf("CALL [%p] Validate(%d:%s)\n", ac, ac.Type, ac.Payload)
 	switch ac.Type {
-	case PKMSG, KXMSG, CTMSG, CLMSG, QTMSG:
+	case pkMsg, kxMsg, ctMsg, clMsg, qtMsg:
 		if len(ac.Payload) > 0 {
 			h, ok := ACComMessageHandlerMap[ac.Type]
 			if ok == true {
 				icutl.DebugLog.Printf("RET [%p] Validate(%d:%s) -> [OK]\n", ac, ac.Type, ac.Payload)
 				return h, nil
-			} else {
-				icutl.DebugLog.Printf("RET [%p] Validate(%d:%s) -> [Error: No handlers registered]\n", ac, ac.Type, ac.Payload)
 			}
+			icutl.DebugLog.Printf("RET [%p] Validate(%d:%s) -> [Error: No handlers registered]\n", ac, ac.Type, ac.Payload)
 		}
 	}
 	icutl.DebugLog.Printf("RET [%p] Validate(%d:%s) -> [Error: Invalid message.]\n", ac, ac.Type, ac.Payload)
-	return nil, fmt.Errorf("Invalid message.")
+	return nil, fmt.Errorf("invalid message")
 }
 
 func HandleACComMsg(msg []byte) (msgReply []byte, err error) {
@@ -168,7 +165,7 @@ func HandleACComMsg(msg []byte) (msgReply []byte, err error) {
 	if err != nil {
 		icutl.DebugLog.Printf("RET HandleACMsg(%s) -> [Error: %s]\n", msg, err.Error())
 		msgReply, _ = json.Marshal(&ACComMessage{
-			Type:    ERMSG,
+			Type:    erMsg,
 			Payload: []byte(err.Error()),
 		})
 		return
@@ -178,7 +175,7 @@ func HandleACComMsg(msg []byte) (msgReply []byte, err error) {
 	if err != nil {
 		icutl.DebugLog.Printf("RET HandleACMsg(%s) -> [Error: %s]\n", msg, err.Error())
 		msgReply, _ = json.Marshal(&ACComMessage{
-			Type:    ERMSG,
+			Type:    erMsg,
 			Payload: []byte(err.Error()),
 		})
 		return
@@ -187,7 +184,7 @@ func HandleACComMsg(msg []byte) (msgReply []byte, err error) {
 	replyPayload, err := handler(req.Payload)
 	if err != nil {
 		msgReply, _ = json.Marshal(&ACComMessage{
-			Type:    ERMSG,
+			Type:    erMsg,
 			Payload: replyPayload,
 		})
 		icutl.DebugLog.Printf("RET HandleACMsg(%s) -> [Error: %s\n\treplyPayload: %s]\n", msg, err.Error(), replyPayload)
@@ -202,11 +199,7 @@ func HandleACComMsg(msg []byte) (msgReply []byte, err error) {
 	return
 }
 
-//
-//
-// Handle Quit MESSAGES..
-//
-//
+// HandleQuitMsg handles QUIT messages
 func HandleQuitMsg(msg []byte) (msgReply []byte, err error) {
 	icutl.DebugLog.Printf("CALL HandleQTMsg(msg[%d]:[%s])\n", len(msg), msg)
 	ickp.ACrun = false

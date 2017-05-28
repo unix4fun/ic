@@ -38,22 +38,22 @@ func (ct *ACCtMessage) validate() error {
 	icutl.DebugLog.Printf("CALL [%p] Validate(%d))\n", ct, ct.Type)
 	if (len(ct.Nick) > 0) && (len(ct.Server) > 0) && (len(ct.Channel) > 0) {
 		switch ct.Type {
-		case CTSEAL:
+		case ctSeal:
 			if len(ct.Blob) > 0 {
 				return nil
 			}
-		case CTOPEN:
+		case ctOpen:
 			if len(ct.Blob) > 6 { //&& len(ct.Opt) > 0 {
 				return nil
 			}
-		case CTADD:
+		case ctAdd:
 			return nil
 
 		} // end of switch..
 	} // end of if...
 
 	icutl.DebugLog.Printf("RET [%p] Validate(%d) -> [Error: Invalid CT message]\n", ct, ct.Type)
-	return fmt.Errorf("Invalid KX[%d] message!\n", ct.Type)
+	return fmt.Errorf("invalid KX[%d] message", ct.Type)
 }
 
 func (ct *ACCtMessage) HandlerCTSEAL() (msgReply []byte, err error) {
@@ -74,7 +74,7 @@ func (ct *ACCtMessage) HandlerCTSEAL() (msgReply []byte, err error) {
 	err = ct.validate()
 	if err != nil {
 		msgReply, _ = json.Marshal(&ACCtReply{
-			Type:  R_CTSEAL,
+			Type:  ctSealReply,
 			Bada:  false,
 			Errno: -1,
 			Blob:  err.Error(),
@@ -95,7 +95,7 @@ func (ct *ACCtMessage) HandlerCTSEAL() (msgReply []byte, err error) {
 	if ok_a == false || ok_b == false {
 		err = fmt.Errorf("No key/Corrupted key/rnd map")
 		msgReply, _ = json.Marshal(&ACCtReply{
-			Type:  R_CTSEAL,
+			Type:  ctSealReply,
 			Bada:  false,
 			Errno: -2,
 			Blob:  err.Error(),
@@ -133,7 +133,7 @@ func (ct *ACCtMessage) HandlerCTSEAL() (msgReply []byte, err error) {
 		out, err = iccp.CreateACMessageNACL(acctx, acrnd, reqBlobTmp, []byte(ct.Nick))
 		if err != nil {
 			msgReply, _ = json.Marshal(&ACCtReply{
-				Type:  R_CTSEAL,
+				Type:  ctSealReply,
 				Bada:  false,
 				Errno: -3,
 				Blob:  err.Error(),
@@ -144,7 +144,7 @@ func (ct *ACCtMessage) HandlerCTSEAL() (msgReply []byte, err error) {
 	} // END OF FOR
 
 	msgReply, _ = json.Marshal(&ACCtReply{
-		Type:   R_CTSEAL,
+		Type:   ctSealReply,
 		Bada:   true,
 		Errno:  0,
 		Nonce:  acctx.GetNonce(),
@@ -174,7 +174,7 @@ func (ct *ACCtMessage) HandlerCTOPEN() (msgReply []byte, err error) {
 	err = ct.validate()
 	if err != nil {
 		msgReply, _ = json.Marshal(&ACCtReply{
-			Type:  R_CTOPEN,
+			Type:  ctOpenReply,
 			Bada:  false,
 			Errno: -1,
 			Blob:  err.Error(),
@@ -194,9 +194,9 @@ func (ct *ACCtMessage) HandlerCTOPEN() (msgReply []byte, err error) {
 	acrnd, ok_b := ickp.ACmap.GetRDMapEntry(ct.Server, ct.Channel)
 
 	if ok_a == false || ok_b == false {
-		err = fmt.Errorf("CTOPEN_Handler(): no SKMap/RDMap Entry found!")
+		err = fmt.Errorf("handlerCTOPEN(): no SKMap/RDMap Entry found")
 		msgReply, _ = json.Marshal(&ACCtReply{
-			Type:  R_CTOPEN,
+			Type:  ctOpenReply,
 			Bada:  false,
 			Errno: -2,
 			Blob:  err.Error(),
@@ -210,7 +210,7 @@ func (ct *ACCtMessage) HandlerCTOPEN() (msgReply []byte, err error) {
 	if err != nil {
 		//err = fmt.Errorf("CTOPEN_Handler(): OpenACMessageNACL() error")
 		msgReply, _ = json.Marshal(&ACCtReply{
-			Type:  R_CTOPEN,
+			Type:  ctOpenReply,
 			Bada:  false,
 			Errno: -3,
 			Blob:  err.Error(),
@@ -219,7 +219,7 @@ func (ct *ACCtMessage) HandlerCTOPEN() (msgReply []byte, err error) {
 	}
 
 	msgReply, _ = json.Marshal(&ACCtReply{
-		Type:  R_CTOPEN,
+		Type:  ctOpenReply,
 		Bada:  true,
 		Errno: 0,
 		Nonce: acctx.GetNonce(),
@@ -248,7 +248,7 @@ func (ct *ACCtMessage) HandlerCTADD() (msgReply []byte, err error) {
 	err = ct.validate()
 	if err != nil {
 		msgReply, _ = json.Marshal(&ACCtReply{
-			Type:  R_CTADD,
+			Type:  ctAddReply,
 			Bada:  false,
 			Errno: -1,
 			Blob:  err.Error(),
@@ -270,7 +270,7 @@ func (ct *ACCtMessage) HandlerCTADD() (msgReply []byte, err error) {
 	err = skgen.Init([]byte(ct.Blob), []byte(ct.Channel), []byte(ct.Nick), []byte(ct.Server))
 	if err != nil {
 		msgReply, _ = json.Marshal(&ACCtReply{
-			Type:  R_CTADD,
+			Type:  ctAddReply,
 			Bada:  false,
 			Errno: -2,
 			Blob:  err.Error(),
@@ -295,7 +295,7 @@ func (ct *ACCtMessage) HandlerCTADD() (msgReply []byte, err error) {
 	_, err = rand.Read(newRnd)
 	if err != nil {
 		msgReply, _ = json.Marshal(&ACCtReply{
-			Type:  R_CTADD,
+			Type:  ctAddReply,
 			Bada:  false,
 			Errno: -3,
 			Blob:  err.Error(),
@@ -318,7 +318,7 @@ func (ct *ACCtMessage) HandlerCTADD() (msgReply []byte, err error) {
 	ickp.ACmap.SetRDMapEntry(ct.Server, ct.Channel, newRnd)
 
 	msgReply, _ = json.Marshal(&ACCtReply{
-		Type:  R_CTADD,
+		Type:  ctAddReply,
 		Bada:  true,
 		Errno: 0,
 		Blob:  "OK",
@@ -347,7 +347,7 @@ func HandleCTMsg(msg []byte) (msgReply []byte, err error) {
 	if err != nil {
 		icutl.DebugLog.Printf("RET HandlerCTMsg(%s) -> [Error: %s]\n", msg, err.Error())
 		msgReply, _ = json.Marshal(&ACCtReply{
-			Type:  R_CTERR,
+			Type:  ctErrReply,
 			Bada:  false,
 			Errno: -1,
 			Blob:  err.Error(),
@@ -356,16 +356,16 @@ func HandleCTMsg(msg []byte) (msgReply []byte, err error) {
 	}
 
 	switch req.Type {
-	case CTSEAL:
+	case ctSeal:
 		msgReply, err = req.HandlerCTSEAL()
-	case CTOPEN:
+	case ctOpen:
 		msgReply, err = req.HandlerCTOPEN()
-	case CTADD:
+	case ctAdd:
 		msgReply, err = req.HandlerCTADD()
 	default:
-		err = fmt.Errorf("Invalid CT Message.")
+		err = fmt.Errorf("invalid CT Message")
 		msgReply, _ = json.Marshal(&ACCtReply{
-			Type:  R_CTERR,
+			Type:  ctErrReply,
 			Bada:  false,
 			Errno: -2,
 			Blob:  err.Error(),

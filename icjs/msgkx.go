@@ -33,9 +33,9 @@ func (kx *ACKxMessage) validate() error {
 	icutl.DebugLog.Printf("CALL [%p] Validate(%d))\n", kx, kx.Type)
 	if (len(kx.MyNick) > 0) && (len(kx.PeerNick) > 0) && (len(kx.Server) > 0) && (len(kx.Channel) > 0) {
 		switch kx.Type {
-		case KXPACK:
+		case kxPack:
 			return nil
-		case KXUNPACK:
+		case kxUnpack:
 			if len(kx.Blob) > 0 {
 				return nil
 			}
@@ -43,7 +43,7 @@ func (kx *ACKxMessage) validate() error {
 	} // end of if...
 
 	icutl.DebugLog.Printf("RET [%p] Validate(%d) -> [Error: Invalid KX message]\n", kx, kx.Type)
-	return fmt.Errorf("Invalid KX[%d] message!\n", kx.Type)
+	return fmt.Errorf("invalid KX[%d] message", kx.Type)
 }
 
 func (kx *ACKxMessage) HandlerKXPACK() (msgReply []byte, err error) {
@@ -58,7 +58,7 @@ func (kx *ACKxMessage) HandlerKXPACK() (msgReply []byte, err error) {
 	err = kx.validate()
 	if err != nil {
 		msgReply, _ = json.Marshal(&ACKxReply{
-			Type:  R_KXPACK,
+			Type:  kxPackReply,
 			Bada:  false,
 			Errno: -1,
 			Blob:  err.Error(),
@@ -80,7 +80,7 @@ func (kx *ACKxMessage) HandlerKXPACK() (msgReply []byte, err error) {
 	if ok_a == false || ok_b == false || ok_c == false || ok_d == false {
 		err = fmt.Errorf("KXPACK_Handler().GetSKMapEntry/GetPKMapEntry(): failed")
 		msgReply, _ = json.Marshal(&ACKxReply{
-			Type:  R_KXPACK,
+			Type:  kxPackReply,
 			Bada:  false,
 			Errno: -2,
 			Blob:  err.Error(),
@@ -99,7 +99,7 @@ func (kx *ACKxMessage) HandlerKXPACK() (msgReply []byte, err error) {
 	if err != nil {
 		//err = fmt.Errorf("KXPACK_Handler().CreateKXMessage(): failed")
 		msgReply, _ = json.Marshal(&ACKxReply{
-			Type:  R_KXPACK,
+			Type:  kxPackReply,
 			Bada:  false,
 			Errno: -3,
 			Blob:  err.Error(),
@@ -115,7 +115,7 @@ func (kx *ACKxMessage) HandlerKXPACK() (msgReply []byte, err error) {
 	}
 
 	msgReply, _ = json.Marshal(&ACKxReply{
-		Type:  R_KXPACK,
+		Type:  kxPackReply,
 		Bada:  true,
 		Errno: 0,
 		Blob:  string(kxMsg),
@@ -167,7 +167,7 @@ func (kx *ACKxMessage) HandlerKXUNPACK() (msgReply []byte, err error) {
 	err = kx.validate()
 	if err != nil {
 		msgReply, _ = json.Marshal(&ACKxReply{
-			Type:  R_KXUNPACK,
+			Type:  kxUnpackReply,
 			Bada:  false,
 			Errno: -1,
 			Blob:  err.Error(),
@@ -199,7 +199,7 @@ func (kx *ACKxMessage) HandlerKXUNPACK() (msgReply []byte, err error) {
 
 		err = fmt.Errorf("KXUNPACK_Handler().PKMapLookup(mynick|peernick) failure")
 		msgReply, _ = json.Marshal(&ACKxReply{
-			Type:  R_KXUNPACK,
+			Type:  kxUnpackReply,
 			Bada:  false,
 			Errno: -2,
 			Blob:  err.Error(),
@@ -241,7 +241,7 @@ func (kx *ACKxMessage) HandlerKXUNPACK() (msgReply []byte, err error) {
 			return acMsgResponse, retErr
 		*/
 		msgReply, _ = json.Marshal(&ACKxReply{
-			Type:  R_KXUNPACK,
+			Type:  kxUnpackReply,
 			Bada:  false,
 			Errno: -3,
 			Blob:  err.Error(),
@@ -264,7 +264,7 @@ func (kx *ACKxMessage) HandlerKXUNPACK() (msgReply []byte, err error) {
 	return acMsgResponse, nil
 	*/
 	msgReply, _ = json.Marshal(&ACKxReply{
-		Type:  R_KXUNPACK,
+		Type:  kxUnpackReply,
 		Bada:  true,
 		Errno: 0,
 		Nonce: acctx.GetNonce(),
@@ -294,7 +294,7 @@ func HandleKXMsg(msg []byte) (msgReply []byte, err error) {
 	if err != nil {
 		icutl.DebugLog.Printf("RET HandlerKXMsg(%s) -> [Error: %s]\n", msg, err.Error())
 		msgReply, _ = json.Marshal(&ACKxReply{
-			Type:  R_KXERR,
+			Type:  kxErrReply,
 			Bada:  false,
 			Errno: -1,
 			Blob:  err.Error(),
@@ -303,14 +303,14 @@ func HandleKXMsg(msg []byte) (msgReply []byte, err error) {
 	}
 
 	switch req.Type {
-	case KXPACK:
+	case kxPack:
 		msgReply, err = req.HandlerKXPACK()
-	case KXUNPACK:
+	case kxUnpack:
 		msgReply, err = req.HandlerKXUNPACK()
 	default:
-		err = fmt.Errorf("Invalid KX Message.")
+		err = fmt.Errorf("invalid KX message")
 		msgReply, _ = json.Marshal(&ACKxReply{
-			Type:  R_KXERR,
+			Type:  kxErrReply,
 			Bada:  false,
 			Errno: -2,
 			Blob:  err.Error(),

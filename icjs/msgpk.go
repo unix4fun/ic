@@ -33,20 +33,20 @@ func (pk *ACPkMessage) validate() error {
 
 	if len(pk.Server) > 0 { // as Server information is needed by all requests
 		switch pk.Type {
-		case PKGEN:
+		case pkGen:
 			if len(pk.Nick) > 0 {
 				icutl.DebugLog.Printf("RET [%p] Validate() -> PKGEN OK\n", pk)
 				return nil
 			}
-		case PKADD:
+		case pkAdd:
 			if len(pk.Nick) > 0 && len(pk.Blob) > 0 {
 				icutl.DebugLog.Printf("RET [%p] Validate() -> PKADD OK\n", pk)
 				return nil
 			}
-		case PKLIST:
+		case pkList:
 			icutl.DebugLog.Printf("RET [%p] Validate() -> PKLIST OK\n", pk)
 			return nil
-		case PKDEL:
+		case pkDel:
 			if len(pk.Nick) > 0 {
 				icutl.DebugLog.Printf("RET [%p] Validate() -> PKDEL OK\n", pk)
 				return nil
@@ -55,7 +55,7 @@ func (pk *ACPkMessage) validate() error {
 	} // end of if
 
 	icutl.DebugLog.Printf("RET [%p] Validate(%d) -> [Error: Invalid PK message]\n", pk, pk.Type)
-	return fmt.Errorf("Invalid PK[%d] message!\n", pk.Type)
+	return fmt.Errorf("invalid PK[%d] message", pk.Type)
 }
 
 func (pk *ACPkMessage) HandlerPKGEN() (msgReply []byte, err error) {
@@ -64,7 +64,7 @@ func (pk *ACPkMessage) HandlerPKGEN() (msgReply []byte, err error) {
 	err = pk.validate()
 	if err != nil {
 		msgReply, _ = json.Marshal(&ACPkReply{
-			Type:  R_PKGEN,
+			Type:  pkGenReply,
 			Bada:  false,
 			Errno: -1,
 			Blob:  err.Error(),
@@ -77,7 +77,7 @@ func (pk *ACPkMessage) HandlerPKGEN() (msgReply []byte, err error) {
 	myNewKeys, err := ickp.CreateKxKeys(pk.Nick, pk.Host, pk.Server)
 	if err != nil {
 		msgReply, _ = json.Marshal(&ACPkReply{
-			Type:  R_PKGEN,
+			Type:  pkGenReply,
 			Bada:  false,
 			Errno: -2,
 			Blob:  err.Error(),
@@ -90,7 +90,7 @@ func (pk *ACPkMessage) HandlerPKGEN() (msgReply []byte, err error) {
 	PK, err := iccp.CreatePKMessageNACL(myNewKeys.GetPubkey()[:])
 	if err != nil {
 		msgReply, _ = json.Marshal(&ACPkReply{
-			Type:  R_PKGEN,
+			Type:  pkGenReply,
 			Bada:  false,
 			Errno: -3,
 			Blob:  err.Error(),
@@ -105,7 +105,7 @@ func (pk *ACPkMessage) HandlerPKGEN() (msgReply []byte, err error) {
 
 	// all good we return the data
 	msgReply, _ = json.Marshal(&ACPkReply{
-		Type:  R_PKGEN,
+		Type:  pkGenReply,
 		Bada:  true,
 		Errno: 0,
 	})
@@ -121,7 +121,7 @@ func (pk *ACPkMessage) HandlerPKADD() (msgReply []byte, err error) {
 	err = pk.validate()
 	if err != nil {
 		msgReply, _ = json.Marshal(&ACPkReply{
-			Type:  R_PKADD,
+			Type:  pkAddReply,
 			Bada:  false,
 			Errno: -1,
 			Blob:  err.Error(),
@@ -145,7 +145,7 @@ func (pk *ACPkMessage) HandlerPKADD() (msgReply []byte, err error) {
 	pubk, err := iccp.OpenPKMessageNACL([]byte(pk.Blob))
 	if err != nil {
 		msgReply, _ = json.Marshal(&ACPkReply{
-			Type:  R_PKADD,
+			Type:  pkAddReply,
 			Bada:  false,
 			Errno: -2,
 			Blob:  err.Error(),
@@ -158,7 +158,7 @@ func (pk *ACPkMessage) HandlerPKADD() (msgReply []byte, err error) {
 	err = newkey.SetPubkey(pubk)
 	if err != nil {
 		msgReply, _ = json.Marshal(&ACPkReply{
-			Type:  R_PKADD,
+			Type:  pkAddReply,
 			Bada:  false,
 			Errno: -3,
 			Blob:  err.Error(),
@@ -172,7 +172,7 @@ func (pk *ACPkMessage) HandlerPKADD() (msgReply []byte, err error) {
 
 	// all good we return the data
 	msgReply, _ = json.Marshal(&ACPkReply{
-		Type:  R_PKADD,
+		Type:  pkAddReply,
 		Bada:  true,
 		Errno: 0,
 	})
@@ -186,7 +186,7 @@ func (pk *ACPkMessage) HandlerPKLIST() (msgReply []byte, err error) {
 	err = pk.validate()
 	if err != nil {
 		msgReply, _ = json.Marshal(&ACPkReply{
-			Type:  R_PKLIST,
+			Type:  pkListReply,
 			Bada:  false,
 			Errno: -1,
 			Blob:  err.Error(),
@@ -208,7 +208,7 @@ func (pk *ACPkMessage) HandlerPKLIST() (msgReply []byte, err error) {
 		msgReplyBlob, rerr := json.Marshal(*pkMap)
 		if err != nil {
 			msgReply, _ = json.Marshal(&ACPkReply{
-				Type:  R_PKLIST,
+				Type:  pkListReply,
 				Bada:  false,
 				Errno: -2,
 				Blob:  rerr.Error(),
@@ -221,7 +221,7 @@ func (pk *ACPkMessage) HandlerPKLIST() (msgReply []byte, err error) {
 
 		icutl.DebugLog.Printf("(INFO) PKLIST -> (Blob: %s) ! n Keys\n", msgReplyBlob)
 		msgReply, _ = json.Marshal(&ACPkReply{
-			Type:  R_PKLIST,
+			Type:  pkListReply,
 			Bada:  true,
 			Errno: 0,
 			Blob:  string(msgReplyBlob),
@@ -229,7 +229,7 @@ func (pk *ACPkMessage) HandlerPKLIST() (msgReply []byte, err error) {
 		return
 	}
 	msgReply, _ = json.Marshal(&ACPkReply{
-		Type:  R_PKLIST,
+		Type:  pkListReply,
 		Bada:  true,
 		Errno: 0,
 		Blob:  "",
@@ -245,7 +245,7 @@ func (pk *ACPkMessage) HandlerPKDEL() (msgReply []byte, err error) {
 	err = pk.validate()
 	if err != nil {
 		msgReply, _ = json.Marshal(&ACPkReply{
-			Type:  R_PKDEL,
+			Type:  pkDelReply,
 			Bada:  false,
 			Errno: -1,
 			Blob:  err.Error(),
@@ -263,7 +263,7 @@ func (pk *ACPkMessage) HandlerPKDEL() (msgReply []byte, err error) {
 
 	// all good we return the data
 	msgReply, _ = json.Marshal(&ACPkReply{
-		Type:  R_PKDEL,
+		Type:  pkDelReply,
 		Bada:  true,
 		Errno: delErr, // return 0 if deleted successfully, return 1 if the nick was not present.
 	})
@@ -284,7 +284,7 @@ func HandlePKMsg(msg []byte) (msgReply []byte, err error) {
 	err = json.Unmarshal(msg, req)
 	if err != nil {
 		msgReply, _ = json.Marshal(&ACPkReply{
-			Type:  R_PKERR,
+			Type:  pkErrReply,
 			Bada:  false,
 			Errno: -1,
 			Blob:  err.Error(),
@@ -295,18 +295,18 @@ func HandlePKMsg(msg []byte) (msgReply []byte, err error) {
 	}
 
 	switch req.Type {
-	case PKGEN:
+	case pkGen:
 		msgReply, err = req.HandlerPKGEN()
-	case PKADD:
+	case pkAdd:
 		msgReply, err = req.HandlerPKADD()
-	case PKLIST:
+	case pkList:
 		msgReply, err = req.HandlerPKLIST()
-	case PKDEL:
+	case pkDel:
 		msgReply, err = req.HandlerPKDEL()
 	default:
-		err = fmt.Errorf("Invalid PK Message.")
+		err = fmt.Errorf("invalid PK message")
 		msgReply, _ = json.Marshal(&ACPkReply{
-			Type:  R_PKERR,
+			Type:  pkErrReply,
 			Bada:  false,
 			Errno: -2,
 			Blob:  err.Error(),
