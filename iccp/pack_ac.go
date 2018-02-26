@@ -52,7 +52,7 @@ func unpackMessageAC(in []byte) (mNonce uint32, myHdr, ciphertext []byte, err er
 
 // A very pragmatic approach to protobuf encoding it's roughly true for most cases.
 // XXX TODO: need to fix/clean that!
-func PredictLenNACL(input []byte) (outlen int) {
+func oldPredictLenNACL(input []byte) (outlen int) {
 	zipped, err := icutl.CompressData(input)
 	if err != nil {
 		return 0
@@ -67,6 +67,29 @@ func PredictLenNACL(input []byte) (outlen int) {
 	//outlen += 14
 	icutl.DebugLog.Printf("PredictLenNACL(%d): %d\n", len(input), outlen)
 	return outlen
+}
+
+func PredictLenNACL(inputLen []byte) (outlen int) {
+	/*
+		zipped, err := icutl.CompressData(input)
+		if err != nil {
+			return 0
+		}
+		sboxLen := len(zipped)        // zipped data
+		sboxLen += secretbox.Overhead // NACL hash appended
+		sboxLen += 3                  // 1 byte pb header value type + 2 bytes size  for the bytes part in PB message
+		sboxLen += 6                  // 1 byte pb header + 1 byte size + 4 bytes data for AC header in PB message
+		sboxLen += 7                  // 1 byte pb header value type + 2 byte size + 4 bytes nonce
+		sboxLen += 2                  // 1 byte pb header value type + 1 byte size
+		outlen = base64.StdEncoding.EncodedLen(sboxLen)
+	*/
+	//outlen += 14
+	icutl.DebugLog.Printf("PredictLenNACL(%d): %d\n", inputLen, outlen)
+	return outlen
+}
+
+func PredictLenAESGCM(input []byte) (outlen int) {
+	return
 }
 
 //

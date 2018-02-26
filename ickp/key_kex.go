@@ -1,7 +1,7 @@
 // +build go1.4
 
-// Package ackp implements various key type handlers and associated utility routines
-// ackp stands for AC Key Package
+// Package ickp implements various key type handlers and associated utility routines
+// ickp stands for IC Key Package
 package ickp
 
 import (

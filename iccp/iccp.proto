@@ -41,7 +41,7 @@ message ACPackedMessage {
     fixed32 header = 1;    // obfuscate('AC', 'PK', 'KX')
     uint32 nonce = 2;      // OPTIONAL 32 bits unsigned integer counter starting at 0
     bytes ciphertext = 3;  // the resulting blob
-    uint32 options = 4;    // OPTIONAL options: proto version (1st nibble), proto options (2nd nibble: AES-GCM / NaCL)
+    uint32 options = 4;    // OPTIONAL options: proto version (1st nibble), proto options (2nd nibble: AES-GCM / NaCL / post Q)
     bytes sigwho = 5;      // OPTIONAL signature identity (to match in authorized_key file) we limit this to 8 bytes max.
     bytes sig = 6;         // OPTIONAL sig: ECDSA / RSA / ED52219 signature.
 };

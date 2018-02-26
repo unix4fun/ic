@@ -10,7 +10,7 @@
 
 SCRIPT_NAME    = 'ic-weechat'
 SCRIPT_AUTHOR  = 'eau <eau+ic4f@unix4fun.net>'
-SCRIPT_VERSION = '20170106'
+SCRIPT_VERSION = '20180226'
 SCRIPT_LICENSE = 'BSD'
 SCRIPT_DESC    = 'ic4f - Irc Crypto 4 Fun'
 
@@ -34,9 +34,9 @@ except ImportError as message:
 
 
 # we need to test if the binary is here and fail to load if it is NOT
-AC_BINARY = os.environ["GOPATH"]+"/bin/ic"
-AC_DEBUGFILE = "./ic.debug.txt"
-AC_DEBUGFLAG = "-debug=false"
+IC_BINARY = os.environ["GOPATH"]+"/bin/ic"
+IC_DEBUGFILE = "./ic.debug.txt"
+IC_DEBUGFLAG = "-debug=false"
 
 
 
@@ -44,21 +44,31 @@ AC_DEBUGFLAG = "-debug=false"
 #acCipherReady = {} # sha1 hash 'channel:server'
 #acCipherBar = {} # sha1 hash 'channel:server' store the bar display pointer.
 #acRecvKeyBlobs = {} # sha1 hash 'channel:server'
-acCipherPrefix = "<ic>"
-acKexPrefix = "<kx:"
-acProcess = None
+icKeyPrefix    = "<pk>"
+icCipherPrefix = "<ic>"
+icKexPrefix    = "<kx:"
+icProcess      = None
+
 # XXX TODO
-acChannelRE = r'^(((![A-Z0-9]{5})|([#+&][^\x00\x07\r\n ,:]+))(:[^\x00\x07\r\n ,:]+)?)$'
-acNicknameRE = r'^([a-zA-Z\[\]\\\`\_\^\{\|\}]{1}[[a-zA-Z0-9\[\]\\\`\_\^\{\|\}\-]{0,15})$'
-acKexRE = r'^<kx:([a-zA-Z\[\]\\\`\_\^\{\|\}]{1}[[a-zA-Z0-9\[\]\\\`\_\^\{\|\}\-]{0,15})> (.*)$'
-acB64RE = r'([a-zA-Z0-9\\\+]+[=]{0,2})+$'
-acKeyPrefix = "<pk>"
+icChannelRE = r'^(((![A-Z0-9]{5})|([#+&][^\x00\x07\r\n ,:]+))(:[^\x00\x07\r\n ,:]+)?)$'
+icNicknameRE = r'^([a-zA-Z\[\]\\\`\_\^\{\|\}]{1}[[a-zA-Z0-9\[\]\\\`\_\^\{\|\}\-]{0,15})$'
+icKexRE = r'^<kx:([a-zA-Z\[\]\\\`\_\^\{\|\}]{1}[[a-zA-Z0-9\[\]\\\`\_\^\{\|\}\-]{0,15})> (.*)$'
+icB64RE = r'([a-zA-Z0-9\\\+]+[=]{0,2})+$'
+
+# irc_message_parse
+HPARSE_NICK = "nick"
+HPARSE_HOST = "host"
+HPARSE_CMD  = "command"
+HPARSE_CHAN = "channel"
+HPARSE_ARGS = "arguments"
+HPARSE_TEXT = "text"
+HPARSE_TAGS = "tags"
 
 # socket recv buffer size, lets keep simple for now, use BIG only on public key list requests..
 #BUF_SMALL = 2048
 #BUF_LARGE = 65536
 
-SCRIPT_HDR = 'IC4F\t'
+SCRIPT_HDR   = 'IC4F\t'
 SCRIPT_COLOR = weechat.color("yellow,blue")
 
 #
@@ -75,7 +85,7 @@ SCRIPT_COLOR = weechat.color("yellow,blue")
 #
 
 # return True is b64, False otherwise
-def ac_isb64(teststr):
+def ic_isb64(teststr):
     try:
         if len(teststr) % 4 == 0:
             base64.b64decode(teststr)
@@ -91,7 +101,7 @@ def ac_isb64(teststr):
 #
 #
 #
-def ac_print_buflocalinfo(buffer, info):
+def ic_print_buflocalinfo(buffer, info):
     return
 
 
@@ -109,7 +119,7 @@ BI_TYPE = BUF_INFO_TYPE
 BI_PLUG = BUF_INFO_PLUG
 
 # XXX TODO: need more sanity checks...
-def ac_get_buflocalinfo(buffer):
+def ic_get_buflocalinfo(buffer):
     t = {}
     t[BUF_INFO_NICK] = weechat.buffer_get_string(buffer,"localvar_nick")
     t[BUF_INFO_CHAN] = weechat.buffer_get_string(buffer,"localvar_channel")
@@ -123,7 +133,7 @@ def ac_get_buflocalinfo(buffer):
 # return the userhost for specific server, channel, nick..
 # XXX TODO: None or "unavailable" otherwise...
 #
-def ac_get_userinfo(buffer, nick, channel, server):
+def ic_get_userinfo(buffer, nick, channel, server):
 # XXX TODO: my nick and all other infos are probably useless... 
 #    my_nick = weechat.buffer_get_string(buffer,"localvar_nick")
 #    retVal[gtype = weechat.buffer_get_string(buffer,"localvar_type")
@@ -257,7 +267,7 @@ def acMessageParsePrintmsg(raw_tags, print_msg):
     if plug == "irc" and is_privmsg:
 #        ret_bool = True
         buffer = weechat.buffer_search(plug, name)
-        inf = ac_get_buflocalinfo(buffer)
+        inf = ic_get_buflocalinfo(buffer)
 
         # my nick..
 #        my_nick = inf[BI_NICK]
@@ -298,12 +308,12 @@ def acMessageParsePrintmsg(raw_tags, print_msg):
 #
 def ac_checktimer_cb(data, remaining_calls):
     weechat.prnt("", "timer! data=%s" % data)
-#    global acProcess
-#    acProcess.poll()
-#    if acProcess.returncode is not None:
-#        weechat.prnt("", "code is dead let's restart! data=%r" % acProcess.returncode)
+#    global icProcess
+#    icProcess.poll()
+#    if icProcess.returncode is not None:
+#        weechat.prnt("", "code is dead let's restart! data=%r" % icProcess.returncode)
 #        ac_start_daemon()
-#    weechat.prnt("", "timer! data=%r" % acProcess.returncode)
+#    weechat.prnt("", "timer! data=%r" % icProcess.returncode)
     return weechat.WEECHAT_RC_OK
 
 #
@@ -382,7 +392,7 @@ def pkCmdHelp(data, dabuffer, newargv):
 
 def pkCmdGeneratePair(data, dabuffer, args):
     # KEY INFOS..
-    inf = ac_get_buflocalinfo(dabuffer)
+    inf = ic_get_buflocalinfo(dabuffer)
     if len(inf[BI_NICK]) == 0 or len(inf[BI_SERV]) == 0:
         acwee.pmbac(dabuffer, "could not generate ephemeral key pair, you're connected nowhere!")
         acwee.pmbac(dabuffer, "remember your key pair is associated with your server/nickname pair")
@@ -390,7 +400,7 @@ def pkCmdGeneratePair(data, dabuffer, args):
 
     # XXX TODO: TO CHANGE
 #    userhost = "unavailable"
-    userhost = ac_get_userinfo(dabuffer, inf[BI_NICK], inf[BI_CHAN], inf[BI_SERV])
+    userhost = ic_get_userinfo(dabuffer, inf[BI_NICK], inf[BI_CHAN], inf[BI_SERV])
 
 #    weechat.prnt(dabuffer, "%sAC\tnick: %s" % ( weechat.color("yellow,blue"), nick))
 #    weechat.prnt(dabuffer, "%sAC\tchannel: %s" % ( weechat.color("yellow,blue"), channel))
@@ -458,7 +468,7 @@ def pkCmdDel(data, dabuffer, args):
 # we do NOTICE for public key broadcast and for kex
 #
 def pkCmdBroadcast(data, dabuffer, args):
-    inf = ac_get_buflocalinfo(dabuffer)
+    inf = ic_get_buflocalinfo(dabuffer)
     # XXX TODO: check if channel or private message and IRC
     if inf and inf.has_key(BI_TYPE) and inf.has_key(BI_NICK) and inf.has_key(BI_SERV) and inf.has_key(BI_CHAN):
 
@@ -468,7 +478,7 @@ def pkCmdBroadcast(data, dabuffer, args):
                 myKey = pkReply['blob'][inf[BI_NICK]]
                 if myKey['HasPriv'] is True:
                     acwee.pmbac(dabuffer, "broadcasting my key on %s", inf[BI_CHAN])
-                    weechat.command(dabuffer, "/notice %s %s %s" % (inf[BI_CHAN], acKeyPrefix, myKey['Pubkey']))
+                    weechat.command(dabuffer, "/notice %s %s %s" % (inf[BI_CHAN], icKeyPrefix, myKey['Pubkey']))
             return weechat.WEECHAT_RC_OK
         acwee.pmbac(dabuffer, "NO KEY /pk gen first")
         return weechat.WEECHAT_RC_OK
@@ -519,7 +529,7 @@ def skCmd_CB(data, dabuffer, args):
         elif cmd == "help":
             return skCmdHelp(data, dabuffer, newargv)
         elif cmd == "give":
-            if len(newargv) > 0 and re.match(acNicknameRE, newargv[0], re.M) <> None:
+            if len(newargv) > 0 and re.match(icNicknameRE, newargv[0], re.M) <> None:
                 return skCmdSendKey(data, dabuffer, newargv)
     return skCmdList(data, dabuffer, args)
 
@@ -580,7 +590,7 @@ def skCmdSendKey(data, dabuffer, args):
 #
 #    weechat.prnt(dabuffer, "%sAC\tSENDKEY ARGS: %s" % (SCRIPT_COLOR, args))
 #
-    inf = ac_get_buflocalinfo(dabuffer)
+    inf = ic_get_buflocalinfo(dabuffer)
     if inf and inf.has_key(BI_NICK) and inf.has_key(BI_CHAN) and inf.has_key(BI_SERV) and inf.has_key(BI_TYPE) and inf[BI_PLUG] == "irc":
 #        acwee.pmb(dabuffer, "mynick:%s peer_nick:%s chan: %s serv:%s", inf[BI_NICK], peer, inf[BI_CHAN], inf[BI_SERV])
 #        weechat.prnt(dabuffer, "%sAC\tmynick:%s peer_nick:%s chan: %s serv:%s" % (SCRIPT_COLOR, inf[BI_NICK], peer, inf[BI_CHAN], inf[BI_SERV]))
@@ -588,7 +598,8 @@ def skCmdSendKey(data, dabuffer, args):
         kxReply = kxMessage(acwee, inf[BI_SERV], inf[BI_CHAN]).kxpack(inf[BI_NICK], peer)
         if kxReply['bada'] is True and kxReply['errno'] == 0:
             acwee.pmbac(dabuffer, "sendkey %s -> %s", args, kxReply['blob'])
-            weechat.command(dabuffer, "/notice %s %s%s> %s" % (inf[BI_CHAN], acKexPrefix, peer, kxReply['blob']))
+            # XXX is subject to the same limitation as PRIVMSG on splitting.
+            weechat.command(dabuffer, "/notice %s %s%s> %s" % (inf[BI_CHAN], icKexPrefix, peer, kxReply['blob']))
             return weechat.WEECHAT_RC_OK
     return weechat.WEECHAT_RC_ERROR
 
@@ -600,7 +611,7 @@ def skCmdAddKey(data, dabuffer, args):
     if cb_argc <= 0:
         return weechat.WEECHAT_RC_ERROR
 
-    inf = ac_get_buflocalinfo(dabuffer)
+    inf = ic_get_buflocalinfo(dabuffer)
     if inf and inf.has_key(BUF_INFO_NICK) and inf.has_key(BUF_INFO_CHAN) and inf.has_key(BUF_INFO_SERV) and inf.has_key(BI_TYPE):
         if inf[BI_TYPE] == "channel" or inf[BI_TYPE] == "private":
 
@@ -615,7 +626,7 @@ def skCmdAddKey(data, dabuffer, args):
 
 
 def skCmdUseKey(data, dabuffer, args):
-    inf = ac_get_buflocalinfo(dabuffer)
+    inf = ic_get_buflocalinfo(dabuffer)
     if inf and inf.has_key(BUF_INFO_CHAN) and inf.has_key(BUF_INFO_SERV):
         kexinfo = acwee.rcvKexPop(inf[BI_SERV], inf[BI_CHAN]);
         # TODO: better sanity checks..
@@ -708,9 +719,9 @@ def acCmdLoad(data, dabuffer, args):
     return weechat.WEECHAT_RC_OK
 
 def acCmdToggle(data, dabuffer, args):
-    inf = ac_get_buflocalinfo(dabuffer)
-    chanRetObj = re.match(acChannelRE, inf[BI_CHAN], re.M)
-    nickRetObj = re.match(acNicknameRE, inf[BI_CHAN], re.M)
+    inf = ic_get_buflocalinfo(dabuffer)
+    chanRetObj = re.match(icChannelRE, inf[BI_CHAN], re.M)
+    nickRetObj = re.match(icNicknameRE, inf[BI_CHAN], re.M)
 #    print chanRetObj
 #    print nickRetObj
     if inf and inf.has_key(BI_CHAN) and inf.has_key(BI_SERV) and inf.has_key(BI_TYPE) and len(inf[BI_CHAN]) > 0 and len(inf[BI_SERV]) > 0 and (inf[BI_TYPE] == "channel" or inf[BI_TYPE] == "private") and (chanRetObj <> None or nickRetObj <> None):
@@ -870,12 +881,15 @@ def privmsg_out_modifier_cb(data, modifier, modifier_data, msg_string):
 #    print "PARSED DICT"
 #    print parsed
 
-    if parsed.has_key(HPARSE_CHAN) and parsed.has_key(HPARSE_ARGS):
+#    if parsed.has_key(HPARSE_CHAN) and parsed.has_key(HPARSE_ARGS):
+    if parsed.has_key(HPARSE_CHAN) and parsed.has_key(HPARSE_TEXT):
 #        peer_nick = parsed[HPARSE_NICK]
 #        peer_host = parsed[HPARSE_HOST].split('!', 1)[1].strip()
         channel = parsed[HPARSE_CHAN]
         server = modifier_data
-        out_msg = parsed[HPARSE_ARGS].split(':',1)[1]
+        # this is compat >= 0.3.4
+#        out_msg = parsed[HPARSE_ARGS].split(':',1)[1]
+        out_msg = parsed[HPARSE_TEXT]
         # XXX TODO why do I strip() ?!?
 #        out_msg = parsed[HPARSE_ARGS].split(':',1)[1].strip()
 
@@ -888,7 +902,7 @@ def privmsg_out_modifier_cb(data, modifier, modifier_data, msg_string):
         # XXX TODO: force to create buffer when there is none for a pk message received.. and display in that buffer..
         # XXX TODO: sanity checks!! error handling!!
         buffer = weechat.info_get("irc_buffer", "%s,%s" % (server, channel))
-        inf = ac_get_buflocalinfo(buffer)
+        inf = ic_get_buflocalinfo(buffer)
 
         # my nick..
         my_nick = inf[BI_NICK]
@@ -910,7 +924,7 @@ def privmsg_out_modifier_cb(data, modifier, modifier_data, msg_string):
                 for tmp_msg in ctReply['blobarray']:
                     acwee.acUpdNonce(server, channel, ctReply['nonce'])
 #                    tmp_msg = blobs.pop()
-                    weechat.command(buffer, "/quote PRIVMSG %s :%s %s" % (channel, acCipherPrefix, tmp_msg))
+                    weechat.command(buffer, "/quote PRIVMSG %s :%s %s" % (channel, icCipherPrefix, tmp_msg))
 #                "PRIVMSG "+channel+" :"+"<ac> "+ac_ctr.blob
 #                return "PRIVMSG "+channel+" :"+"<ac> "+blobs[0]
                 return ""
@@ -928,12 +942,6 @@ def privmsg_out_modifier_cb(data, modifier, modifier_data, msg_string):
 # python: stdout/stderr: PARSED DICT
 # python: stdout/stderr: {'tags': '', 'message_without_tags': ':eaueau!~eau@127.0.0.1 NOTICE #crutcruton :<acpk> grnnunjaev6U93HC33mnz1qs215lvz9TeHONXsiVH5Ksh/ZN1N0SZAwIAAD//zK2EPM=', 'nick': 'eaueau', 'host':
 #                         'eaueau!~eau@127.0.0.1', 'command': 'NOTICE', 'arguments': '#crutcruton :<acpk> grnnunjaev6U93HC33mnz1qs215lvz9TeHONXsiVH5Ksh/ZN1N0SZAwIAAD//zK2EPM=', 'channel': '#crutcruton'}
-
-HPARSE_NICK = "nick"
-HPARSE_HOST = "host"
-HPARSE_ARGS = "arguments"
-HPARSE_CHAN = "channel"
-HPARSE_CMD = "command"
 
 
 def notice_in_modifier_cb(data, modifier, modifier_data, msg_string):
@@ -961,7 +969,7 @@ def notice_in_modifier_cb(data, modifier, modifier_data, msg_string):
 
         
         # XXX verify if the channel name is a nickname or a channel name, it is equivalent to if channel[0] != '#':
-        retObj = re.match(acChannelRE, channel, re.M)
+        retObj = re.match(icChannelRE, channel, re.M)
         if retObj == None:
             channel = peer_nick
         server = modifier_data
@@ -970,7 +978,7 @@ def notice_in_modifier_cb(data, modifier, modifier_data, msg_string):
         # XXX TODO: force to create buffer when there is none for a pk message received.. and display in that buffer..
         # XXX TODO: sanity checks!! error handling!!
         buffer = weechat.info_get("irc_buffer", "%s,%s" % (server, channel))
-        inf = ac_get_buflocalinfo(buffer)
+        inf = ic_get_buflocalinfo(buffer)
 
         # my nick..
         my_nick = inf[BI_NICK]
@@ -980,9 +988,9 @@ def notice_in_modifier_cb(data, modifier, modifier_data, msg_string):
         # check if buffer exist
 
         # <acpk> messages... need to strengthen the parsing/verification..
-        if peer_msg.find(acKeyPrefix) == 0 and len(peer_msg) > len(acKeyPrefix)+1:
-            msg_blob = peer_msg[len(acKeyPrefix):].strip()
-            if ac_isb64(msg_blob) is False:
+        if peer_msg.find(icKeyPrefix) == 0 and len(peer_msg) > len(icKeyPrefix)+1:
+            msg_blob = peer_msg[len(icKeyPrefix):].strip()
+            if ic_isb64(msg_blob) is False:
                 acwee.pmbac(buffer, "%s invalid public key (b64) payload broadcasted [%s/%s]!", peer_nick, peer_nick, channel) 
                 return ret_string
             try:
@@ -997,9 +1005,9 @@ def notice_in_modifier_cb(data, modifier, modifier_data, msg_string):
                 acwee.pmbac(buffer, "%s invalid public key payload broadcasted [%s/%s]!", peer_nick, peer_nick, channel)
             return ret_string
         # <ackx:*> messages... need to strengthen the parsing/verification..
-        if peer_msg.find(acKexPrefix) == 0 and len(peer_msg) > 52+len(acKexPrefix)+1:
+        if peer_msg.find(icKexPrefix) == 0 and len(peer_msg) > 52+len(icKexPrefix)+1:
 #            weechat.prnt(buffer, "%sAC\tthis is it KEX EXCHANGE DETECTED" % (SCRIPT_COLOR))
-            retObj = re.match(acKexRE, peer_msg, re.M)
+            retObj = re.match(icKexRE, peer_msg, re.M)
             if retObj:
                 kex_blob = retObj.group(2).strip()
                 kex_nick = retObj.group(1).strip()
@@ -1096,16 +1104,21 @@ def privmsg_in_modifier_cb(data, modifier, modifier_data, msg_string):
     parsed = weechat.info_get_hashtable("irc_message_parse", { "message": msg_string, "server": modifier_data })
 #    print "PARSED DICT"
 #    print parsed
-    if parsed.has_key(HPARSE_NICK) and parsed.has_key(HPARSE_HOST) and parsed.has_key(HPARSE_CHAN) and parsed.has_key(HPARSE_ARGS):
+#    if parsed.has_key(HPARSE_NICK) and parsed.has_key(HPARSE_HOST) and parsed.has_key(HPARSE_CHAN) and parsed.has_key(HPARSE_ARGS):
+    if parsed.has_key(HPARSE_NICK) and parsed.has_key(HPARSE_HOST) and parsed.has_key(HPARSE_CHAN) and parsed.has_key(HPARSE_TEXT):
         peer_nick = parsed[HPARSE_NICK]
 #        peer_host = parsed[HPARSE_HOST].split('!', 1)[1].strip()
         peer_host = parsed[HPARSE_HOST].split('!', 1).pop().strip()
         channel = parsed[HPARSE_CHAN]
         server = modifier_data
-        peer_msg = parsed[HPARSE_ARGS].split(':',1)[1].strip()
+        #peer_msg = parsed[HPARSE_ARGS].split(':',1)[1].strip()
+        peer_msg = parsed[HPARSE_TEXT]
+        msg_tags = parsed[HPARSE_TAGS]
+        print "MESSAGE_TAGS: "
+        print msg_tags
 
         # XXX verify if the channel name is a nickname or a channel name, it is equivalent to if channel[0] != '#':
-        retObj = re.match(acChannelRE, channel, re.M)
+        retObj = re.match(icChannelRE, channel, re.M)
         if retObj == None:
 #            print "MY MY NICK :"
             my_nick = channel
@@ -1120,16 +1133,16 @@ def privmsg_in_modifier_cb(data, modifier, modifier_data, msg_string):
         # XXX TODO: force to create buffer when there is none for a pk message received.. and display in that buffer..
         # XXX TODO: sanity checks!! error handling!!
         buffer = weechat.info_get("irc_buffer", "%s,%s" % (server, channel))
-        inf = ac_get_buflocalinfo(buffer)
+        inf = ic_get_buflocalinfo(buffer)
 
         # my nick..
         # my_nick = inf[BI_NICK]
 
         # XXX isAcEnabled ??
         # <ac> messages... need to strengthen the parsing/verification..
-        if peer_msg.find(acCipherPrefix) == 0 and len(peer_msg) > len(acCipherPrefix)+1 and acwee.isAcActive(server, channel):
-            msg_blob = peer_msg[len(acCipherPrefix):].strip()
-            if ac_isb64(msg_blob) is False:
+        if peer_msg.find(icCipherPrefix) == 0 and len(peer_msg) > len(icCipherPrefix)+1 and acwee.isAcActive(server, channel):
+            msg_blob = peer_msg[len(icCipherPrefix):].strip()
+            if ic_isb64(msg_blob) is False:
                 acwee.pmbac(buffer, "Invalid message (b64) from %s [%s/%s]!", peer_nick, peer_nick, channel)
                 return msg_string
 #            myargs.update({ acwee.KEY_PEERNICK:peer_nick, acwee.KEY_CHANNEL:channel, acwee.KEY_SERVER:server, acwee.KEY_BLOB:msg_blob })
@@ -1167,9 +1180,9 @@ def privmsg_in_modifier_cb(data, modifier, modifier_data, msg_string):
 #        weechat.prnt("", "stderr: %s" % err)
 #    return weechat.WEECHAT_RC_OK
 #    
-def ac_nonce_item_cb(data, item, window, buffer, extra_info):
+def ic_nonce_item_cb(data, item, window, buffer, extra_info):
     # KEY INFOS..
-    inf = ac_get_buflocalinfo(buffer)
+    inf = ic_get_buflocalinfo(buffer)
     nonce_val = acwee.acGetNonce(inf[BI_SERV], inf[BI_CHAN])
     if nonce_val != -1:
         nonce_str = "N: %08d" % nonce_val
@@ -1277,7 +1290,7 @@ class AcExceptions(Exception):
         print repr(self.acExceptions)
 
 
-class AcDisplay(object):
+class IcDisplay(object):
     AC_HDR = "IC"
     AC_COLOR = "yellow, blue"
 
@@ -1360,10 +1373,12 @@ class AcDisplay(object):
         # format message
         newmessage = "%s(%s%s%s)%s\t%s" % (weechat.color("white"), weechat.color("lightcyan"), nick, weechat.color("white"), weechat.color("default"), message )
         # print it :)
+        self.pmb(buffer, "DEBUG MESSAGE: %s", message)
+        self.pmb(buffer, "DEBUG FMT MESSAGE: %s", newmessage)
         weechat.prnt_date_tags(buffer, 0, newtags, newmessage)
 
 
-class AcJSCom(object):
+class IcJSCom(object):
     # depending on the type of data  we might need more space
     BUF_SMALL   = 2048
     BUF_LARGE   = 65536
@@ -1376,7 +1391,7 @@ class AcJSCom(object):
     acDebugFile = None
 
     def __init__(self, acBin, acDbg):
-        self.acBinary = [ acBin, AC_DEBUGFLAG ]
+        self.acBinary = [ acBin, IC_DEBUGFLAG ]
         if self.acDebugFile is None:
             self.acDebugFile = acDbg
             self.acDebugFd = open(acDbg, 'w')
@@ -1385,7 +1400,7 @@ class AcJSCom(object):
         #        except Exception as e:
         #            print "cannot init IAC communication: %s." % str(e)
         #
-    def acStartDaemon(self):
+    def icStartDaemon(self):
         # XXX TODO: handle the debugging channel correctly, handle exceptions!
         if self.acProc is None:
             self.acProc = subprocess.Popen(self.acBinary, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=self.acDebugFd)
@@ -1394,7 +1409,7 @@ class AcJSCom(object):
 #        self.acBanner( weechat.current_buffer() )
         return None
 
-    def acStopDaemon(self):
+    def icStopDaemon(self):
         # XXX daemon should stop properly and not with a terminate
         #self.acProc.terminate()
         # XXX TODO check return code to see if it's out.
@@ -1740,8 +1755,8 @@ class qtMessage(acMessage):
 
 
 # a class devoted to handling bar objects..
-# may be it will just be moved to AcCore
-class AcCipherDisplay(object):
+# may be it will just be moved to IcCore
+class IcCipherDisplay(object):
     # OLD XXX <HASH(serv,chan)> => { enabled: true, desc: [list], bar: <baritem> } 
     # will host : 
     # { <HASH(serv,chan)>: true }
@@ -1793,25 +1808,25 @@ class AcCipherDisplay(object):
         return weechat.WEECHAT_RC_OK
 
 
-# XXX TODO: now the main class the AcCore class which will embed all that is
+# XXX TODO: now the main class the IcCore class which will embed all that is
 # necessary to make the script run smoothly and communicate with the stdin/stdou
 # go binary daemon..
 
-class AcCore(AcDisplay, AcJSCom, AcCipherDisplay):
+class IcCore(IcDisplay, IcJSCom, IcCipherDisplay):
     acRecvKeyBlobs = {} # sha1 hash 'channel:server'
     acNonces = {} # sha1 hash 'channel:server' store bar items value for now.
     acBarItems = []
 
     def __init__(self, coreBuffer, acBinFile, acDbgFile):
-        AcDisplay.__init__(self, "")
-        AcJSCom.__init__(self, acBinFile, acDbgFile)
-        AcCipherDisplay.__init__(self)
+        IcDisplay.__init__(self, "")
+        IcJSCom.__init__(self, acBinFile, acDbgFile)
+        IcCipherDisplay.__init__(self)
 
         self.acRecvKeyBlobs = {}
         self.acNonces = {}
         self.BarItems = []
 
-    def acBanner(self, buffer):
+    def icBanner(self, buffer):
 #        buffer = weechat.current_buffer();
         self.pmb(buffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$%%@#$%%@#$%%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
         self.pmb(buffer, "IRC Crypto 4 Fun %s (c) 2013-2016 unix4fun", SCRIPT_VERSION)
@@ -1856,8 +1871,8 @@ class AcCore(AcDisplay, AcJSCom, AcCipherDisplay):
         else:
             return -1
 
-    # TODO XXX bar color, bar items messages in AcDisplay class to avoid
-    # rewriting it... AcDisplay should create the bar items we can use to
+    # TODO XXX bar color, bar items messages in IcDisplay class to avoid
+    # rewriting it... IcDisplay should create the bar items we can use to
     # display more information regarding the number of messages sent with 
     # the current key.
 
@@ -1875,10 +1890,10 @@ class AcCore(AcDisplay, AcJSCom, AcCipherDisplay):
 
     
 #
-# AcWeechat related stuff, like hooking mechanism, heartbeat, etc...
-# and get all from AcCore, communication, display, etc..
+# IcWeechat related stuff, like hooking mechanism, heartbeat, etc...
+# and get all from IcCore, communication, display, etc..
 # 
-class AcWeechat(AcCore):
+class IcWeechat(IcCore):
     CMD_HKEY_NAME = "name"
     CMD_HKEY_CB = "cb"
 
@@ -1887,24 +1902,24 @@ class AcWeechat(AcCore):
     CMD_ICCMD   = { CMD_HKEY_NAME:"ic",     CMD_HKEY_CB: "icCmd_CB" }
 
     def __init__(self, acBin, acDbg):
-        AcCore.__init__(self, "", acBin, acDbg)
+        IcCore.__init__(self, "", acBin, acDbg)
 #
 #
 # Hooks
 #
 #
-    def acCmdHooks(self):
+    def icCmdHooks(self):
 #        weechat.hook_command(self.CMD_HELP[self.CMD_HKEY_NAME], "AC help command", "", "", "", self.CMD_HELP[self.CMD_HKEY_CB], "")
         weechat.hook_command(self.CMD_PUBKEY[self.CMD_HKEY_NAME], "/pk help for more infos", "", "", "", self.CMD_PUBKEY[self.CMD_HKEY_CB], "")
         weechat.hook_command(self.CMD_SNDKEY[self.CMD_HKEY_NAME], "/sk help for more infos", "", "", "nick", self.CMD_SNDKEY[self.CMD_HKEY_CB], "")
         weechat.hook_command(self.CMD_ICCMD[self.CMD_HKEY_NAME], "enable/disable encryption on the current buffer", "", "", "", self.CMD_ICCMD[self.CMD_HKEY_CB], "")
         return weechat.WEECHAT_RC_OK
 
-    def acTimerHooks(self):
+    def icTimerHooks(self):
     #    weechat.hook_timer(1000, 0, 0, "ac_checktimer_cb", "prout")
         return weechat.WEECHAT_RC_OK
 
-    def acSignalHooks(self):
+    def icSignalHooks(self):
     #    weechat.hook_signal("*,irc_in_notice", "notice_in_signal_cb", "")
     #    weechat.hook_signal("*,irc_in2_notice", "notice_in_signal_cb", "")
         return weechat.WEECHAT_RC_OK
@@ -1915,7 +1930,7 @@ class AcWeechat(AcCore):
     #: stdout/stderr: modifier: weechat_print
     #: stdout/stderr: modifier_data: irc;freenode.#crutcruton;irc_privmsg,notify_message,prefix_nick_default,nick_croute,log1
     #
-    def acModifierHooks(self):
+    def icModifierHooks(self):
         # input message hooks
         weechat.hook_modifier("weechat_print", "printmsg_modifier_cb", "")
         weechat.hook_modifier("irc_in_notice", "notice_in_modifier_cb", "")
@@ -1923,20 +1938,20 @@ class AcWeechat(AcCore):
         weechat.hook_modifier("irc_out_privmsg", "privmsg_out_modifier_cb", "")
         return weechat.WEECHAT_RC_OK
 
-    def acHooks(self):
-        self.acSignalHooks()
-        self.acModifierHooks()
-        self.acCmdHooks()
-        self.acTimerHooks()
+    def icHooks(self):
+        self.icSignalHooks()
+        self.icModifierHooks()
+        self.icCmdHooks()
+        self.icTimerHooks()
         return weechat.WEECHAT_RC_OK
 
-    def acUnHooks(self):
+    def icUnHooks(self):
         weechat.unhook_all()
 
-    def acEnvInit(self):
+    def icEnvInit(self):
         # here we will enable environnement, config variables
         # and setup the bar items we need for display
-        bar_item = weechat.bar_item_new("(extra)ac_nonce", "ac_nonce_item_cb", "")
+        bar_item = weechat.bar_item_new("(extra)ac_nonce", "ic_nonce_item_cb", "")
         return None
 
     #
@@ -1950,20 +1965,20 @@ class AcWeechat(AcCore):
     #
     #
     #
-    def acWeechatError(self):
+    def icWeechatError(self):
         self.pmb(weechat.current_buffer(), "Bye, you got errors!")
     
-    def acWeechatMain(self):
-        self.acStartDaemon()
-        self.acBanner( weechat.current_buffer() )
-        self.acEnvInit()
-        self.acHooks()
+    def icWeechatMain(self):
+        self.icStartDaemon()
+        self.icBanner( weechat.current_buffer() )
+        self.icEnvInit()
+        self.icHooks()
     
-    def acWeechatExit(self):
-        self.acUnHooks()
-        self.acStopDaemon()
+    def icWeechatExit(self):
+        self.icUnHooks()
+        self.icStopDaemon()
         self.coreCleanUp()
-        self.pmb(self.coreBuffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$%% ac OUT! @#$%%@#$%%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
+        self.pmb(self.coreBuffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$%% ic OUT! @#$%%@#$%%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
         return weechat.WEECHAT_RC_OK
 
 
@@ -1991,15 +2006,15 @@ class AcWeechat(AcCore):
 #
 
 # a hack as weechat cannot call class function of an instanciated class
-def acWeechatExit():
-    return acwee.acWeechatExit()
+def icWeechatExit():
+    return acwee.icWeechatExit()
 
 # we register the script now
 if __name__ == "__main__":
     # registering our global object
-    acwee = AcWeechat(AC_BINARY, AC_DEBUGFILE)
-    if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE, SCRIPT_DESC, "acWeechatExit", ""):
-        acwee.acWeechatMain()
+    acwee = IcWeechat(IC_BINARY, IC_DEBUGFILE)
+    if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE, SCRIPT_DESC, "icWeechatExit", ""):
+        acwee.icWeechatMain()
     else:
-        acwee.acWeechatError()
+        acwee.icWeechatError()
 

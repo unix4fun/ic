@@ -8,9 +8,14 @@ import (
 	"encoding/asn1"
 	"encoding/pem"
 	"errors"
-	"github.com/unix4fun/ic/icutl"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
+	"strings"
+
+	"github.com/nu7hatch/gouuid"
+	"github.com/unix4fun/ic/icutl"
 	//"io/ioutil"
 	//"strings"
 	//"bytes"
@@ -20,113 +25,159 @@ const (
 	KEYRSA = iota
 	KEYECDSA
 	KEYEC25519
+
+	KeyRSAStr     = "ic-rsa"
+	KeyECDSAStr   = "ic-ecdsa"
+	KeyEC25519Str = "ic-25519"
+
+	PEMHDR_RSA   = "RSA PRIVATE KEY"
+	PEMHDR_ECDSA = "ECDSA PRIVATE KEY"
+	PEMHDR_25519 = "EC25519 PRIVATE KEY"
+)
+
+var (
+	S2K = map[string]int{
+		KeyRSAStr:     KEYRSA,
+		KeyECDSAStr:   KEYECDSA,
+		KeyEC25519Str: KEYEC25519,
+	}
+
+	K2S = map[int]string{
+		KEYRSA:     KeyRSAStr,
+		KEYECDSA:   KeyECDSAStr,
+		KEYEC25519: KeyEC25519Str,
+	}
 )
 
 type IdentityKey struct {
 	keyType  int
-	keyOwner string
+	keyOwner *uuid.UUID
 	rsa      *rsa.PrivateKey
 	ecdsa    *ecdsa.PrivateKey
 	ec25519  *Ed25519PrivateKey
 }
 
 type IdentityPublicKey struct {
-	KeyType  int
-	KeyOwner string
-	KeyBin   []byte
+	KeyType int
+	//	KeyOwner string
+	KeyBin []byte
 }
 
 func (i *IdentityKey) Type() string {
-	switch i.keyType {
-	case KEYRSA:
-		return "ac-rsa"
-	case KEYECDSA:
-		return "ac-ecdsa"
-	case KEYEC25519:
-		return "ac-ec25519"
+	str, ok := K2S[i.keyType]
+	if ok {
+		return str
 	}
 	return ""
 }
 
-func (i *IdentityKey) PubToFile(filename string) error {
-	/*
-		b := new(bytes.Buffer)
+func (i *IdentityKey) PubToPKIX(wr io.Writer) error {
 
-		pubStr, err := i.PubToPKIX()
-		if err != nil {
-		}
+	var err error
+	var keyBin, keyHdr []byte
 
-		//ioutil.WriteFile()
-	*/
+	switch i.keyType {
+	case KEYRSA:
+		keyBin, err = x509.MarshalPKIXPublicKey(i.rsa.Public())
+	case KEYECDSA:
+		keyBin, err = x509.MarshalPKIXPublicKey(i.ecdsa.Public())
+	case KEYEC25519:
+		keyBin, err = asn1.Marshal(i.ec25519.Pub[:])
+	default:
+		return errors.New("invalid key type")
+	}
+
+	if err != nil {
+		return err
+	}
+	b64comp, err := icutl.CompressData(keyBin)
+	if err != nil {
+		return err
+	}
+	b64pub := icutl.B64EncodeData(b64comp)
+
+	tmphdr, ok := K2S[i.keyType]
+	if !ok {
+		return errors.New("invalid key type")
+	}
+	keyHdr = []byte(tmphdr) //[]byte("ic-rsa")
+
+	// let's write our stuff...
+	// XXX error checking...
+	wr.Write(keyHdr)
+	wr.Write([]byte(" "))
+	wr.Write(b64pub)
+	wr.Write([]byte(" "))
+	wr.Write([]byte(i.keyOwner.String()))
+
+	// we're good
 	return nil
 }
 
-func (i *IdentityKey) PubToPKIX() ([]byte, error) {
-	/*
-		var err error
-		var keyBin, keyHdr []byte
+func (i *IdentityKey) PKIXToPub(rd io.Reader) (err error) {
+	pbuf, err := ioutil.ReadAll(rd)
+	if err != nil {
+		return err
+	}
 
-		switch i.keyType {
-		case KEYRSA:
-			keyBin, err = x509.MarshalPKIXPublicKey(i.rsa.Public())
-			keyHdr = []byte("ac-rsa")
-		case KEYECDSA:
-			keyBin, err = x509.MarshalPKIXPublicKey(i.ecdsa.Public())
-			keyHdr = []byte("ac-ecdsa")
-		case KEYEC25519:
-			keyBin, err = asn1.Marshal(i.ec25519.Pub[:])
-			keyHdr = []byte("ac-25519")
-		default:
-			return nil, errors.New("invalid key type")
+	pstrArr := strings.Split(string(pbuf), " ")
+	if len(pstrArr) != 3 {
+		return errors.New("invalid pubkey file")
+	}
+
+	if len(pstrArr[0]) > 0 && len(pstrArr[1]) > 0 && len(pstrArr[2]) > 0 {
+
+		// sanity checks before using the splits...
+		keyType, ok := S2K[pstrArr[0]]
+		if !ok || keyType != i.keyType {
+			return errors.New("keytype confusion or invalid")
 		}
 
+		// uuid parse
+		if i.keyOwner.String() != pstrArr[2] {
+			return errors.New("invalid owner")
+		}
+
+		// decode the stuff..
+		deb64, err := icutl.B64DecodeData([]byte(pstrArr[1]))
 		if err != nil {
-			return nil, err
-		}
-		b64comp, err := icutl.CompressData(keyBin)
-		if err != nil {
-			return nil, err
-		}
-		b64pub := icutl.B64EncodeData(b64comp)
-
-	*/
-	// let's write our stuff...
-	/*
-		wr.Write(keyHdr)
-		wr.Write([]byte(" "))
-		wr.Write(b64pub)
-		wr.Write([]byte(" "))
-		wr.Write([]byte(i.keyOwner))
-	*/
-	// we're good
-	//return b64pub, nil
-	return nil, nil
-}
-
-func PKIXToPub(rd io.Reader) (pub interface{}, err error) {
-	/*
-		pbuf, err := ioutil.ReadAll(rd)
-		if err != nil {
-			return nil, err
+			return err
 		}
 
-		pstrArr := strings.Split(string(pbuf), " ")
-		if len(pstrArr) != 3 {
-			return nil, errors.New("invalid pubkey file")
-		}
-
-		deb64, err := icutl.B64DecodeData(pstrArr[1])
-		if err != nil {
-			return nil, err
-		}
-
+		// decompress
 		pubraw, err := icutl.DecompressData(deb64)
 		if err != nil {
-			return nil, err
+			return err
 		}
-	*/
 
-	return nil, nil
+		switch keyType {
+		case KEYRSA:
+			if i.rsa != nil {
+				tempKey, err := x509.ParsePKIXPublicKey(pubraw)
+				if err != nil {
+					return err
+				}
+				i.rsa.PublicKey = *(tempKey.(*rsa.PublicKey))
+				return nil
+			}
+			break
+		case KEYECDSA:
+			if i.ecdsa != nil {
+				tempKey, err := x509.ParsePKIXPublicKey(pubraw)
+				if err != nil {
+					return err
+				}
+				i.ecdsa.PublicKey = *(tempKey.(*ecdsa.PublicKey))
+				return nil
+			}
+			break
+		case KEYEC25519:
+			// TODO
+			//keyBin, err = asn1.Unmarshal(pubraw)
+		}
+	}
+
+	return errors.New("invalid key")
 }
 
 func (i *IdentityKey) PrivToPKIX(wr io.Writer, passwd []byte) error {
@@ -136,13 +187,13 @@ func (i *IdentityKey) PrivToPKIX(wr io.Writer, passwd []byte) error {
 
 	switch i.keyType {
 	case KEYRSA:
-		keyHeader = "RSA PRIVATE KEY"
+		keyHeader = PEMHDR_RSA // "RSA PRIVATE KEY"
 		keyDer = x509.MarshalPKCS1PrivateKey(i.rsa)
 	case KEYECDSA:
-		keyHeader = "ECDSA PRIVATE KEY"
+		keyHeader = PEMHDR_ECDSA //"ECDSA PRIVATE KEY"
 		keyDer, err = x509.MarshalECPrivateKey(i.ecdsa)
 	case KEYEC25519:
-		keyHeader = "EC25519 PRIVATE KEY"
+		keyHeader = PEMHDR_25519 //"EC25519 PRIVATE KEY"
 		keyDer, err = asn1.Marshal(i.ec25519.Pub[:])
 	default:
 		return errors.New("invalid key type")
@@ -157,22 +208,60 @@ func (i *IdentityKey) PrivToPKIX(wr io.Writer, passwd []byte) error {
 	return pem.Encode(wr, pemKey)
 }
 
-func (i *IdentityKey) ToKeyFiles(prefix string, passwd []byte) error {
-	/*
-		pubFile, err := os.OpenFile(prefix+".pub", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
-		defer pubFile.Close()
-		if err != nil {
-			return err
-		}
-	*/
-	privFile, err := os.OpenFile(prefix, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0700)
-	defer privFile.Close()
+func (i *IdentityKey) PKIXToPriv(rd io.Reader, passwd []byte) error {
+	pbuf, err := ioutil.ReadAll(rd)
 	if err != nil {
 		return err
 	}
 
-	//err = i.PubToPKIX(pubFile)
-	err = i.PubToFile(prefix + ".pub")
+	pemBlock, _ := pem.Decode(pbuf)
+	if pemBlock == nil {
+		return fmt.Errorf("no PEM found")
+	}
+
+	plainBlock, err := AEADDecryptPEMBlock(pemBlock, passwd)
+	switch pemBlock.Type {
+	case PEMHDR_RSA:
+		i.keyType = KEYRSA
+
+		// set the keyowner
+		i.keyOwner, err = uuid.NewV5(uuid.NamespaceX500, plainBlock)
+
+		// parse the key
+		i.rsa, err = x509.ParsePKCS1PrivateKey(plainBlock)
+		if err != nil {
+			return err
+		}
+
+	case PEMHDR_ECDSA:
+		i.keyType = KEYECDSA
+		i.ecdsa, err = x509.ParseECPrivateKey(plainBlock)
+		if err != nil {
+			return err
+		}
+	case PEMHDR_25519:
+		// TODO
+	default:
+		return errors.New("Invalid key type")
+	}
+
+	return nil
+}
+
+func (i *IdentityKey) ToKeyFiles(prefix string, passwd []byte) error {
+	privFile, err := os.OpenFile(prefix, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0700)
+	if err != nil {
+		return err
+	}
+	defer privFile.Close()
+
+	pubFile, err := os.OpenFile(prefix+".pub", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0700)
+	if err != nil {
+		return err
+	}
+	defer pubFile.Close()
+
+	err = i.PubToPKIX(pubFile)
 	if err != nil {
 		return err
 	}
@@ -185,31 +274,93 @@ func (i *IdentityKey) ToKeyFiles(prefix string, passwd []byte) error {
 	return nil
 }
 
-// will try to load fprefix.pub / fprefix
-func FromKeyFiles(prefix string) (i *IdentityKey, err error) {
-	pubFile, err := os.Open(prefix + ".pub")
-	defer pubFile.Close()
-	if err != nil {
-		return nil, err
+// just validation that the key is valid and complete..
+func (i *IdentityKey) Validate() (err error) {
+	switch i.keyType {
+	case KEYRSA:
+		err = i.rsa.Validate()
+		if err != nil {
+			return
+		}
+		/*
+				privKeyDer := x509.MarshalPKCS1PrivateKey(i.rsa)
+				keyOwner, err = uuid.NewV5(uuid.NamespaceX500, privKeyDer)
+				if err != nil {
+					return
+				}
+
+			if i.keyOwner != keyOwner {
+				err = errors.New("Invalid owner")
+			}
+		*/
+	case KEYECDSA:
+		// TODO
+	case KEYEC25519:
+		// TODO
 	}
-	privFile, err := os.Open(prefix)
-	defer privFile.Close()
-	if err != nil {
-		return nil, err
-	}
-	return nil, nil
+	return
 }
 
-func NewIdentityKey(keytype int, owner string) (*IdentityKey, error) {
+// will try to load fprefix.pub / fprefix
+func (i *IdentityKey) FromKeyFiles(prefix string, passwd []byte) (err error) {
+	pubFile, err := os.Open(prefix + ".pub")
+	if err != nil {
+		return err
+	}
+	defer pubFile.Close()
+
+	privFile, err := os.Open(prefix)
+	if err != nil {
+		return err
+	}
+	defer privFile.Close()
+
+	err = i.PKIXToPriv(privFile, passwd)
+	if err != nil {
+		return err
+	}
+
+	err = i.PKIXToPub(pubFile)
+	if err != nil {
+		return err
+	}
+
+	err = i.Validate()
+	return err
+}
+
+func LoadIdentityKey(prefix string, passwd []byte) (i *IdentityKey, err error) {
+	i = new(IdentityKey)
+
+	err = i.FromKeyFiles(prefix, passwd)
+	if err != nil {
+		return nil, err
+	}
+
+	return i, nil
+}
+
+func NewIdentityKey(keytype int) (*IdentityKey, error) {
 	var err error
 	i := new(IdentityKey)
 
-	icutl.DebugLog.Printf("bleh bleh keygen for %s\n", owner)
+	icutl.DebugLog.Printf("bleh bleh keygen for %d\n", keytype)
 
 	switch keytype {
 	case KEYRSA:
 		i.keyType = keytype
 		i.rsa, err = GenKeysRSA(rand.Reader)
+		privKeyDer := x509.MarshalPKCS1PrivateKey(i.rsa)
+		i.keyOwner, err = uuid.NewV5(uuid.NamespaceX500, privKeyDer)
+		if err != nil {
+			icutl.DebugLog.Printf("UUID error\n")
+			return nil, err
+		}
+		err = i.rsa.Validate()
+		if err != nil {
+			return nil, err
+		}
+
 	case KEYECDSA:
 		i.keyType = keytype
 		i.ecdsa, err = GenKeysECDSA(rand.Reader)
@@ -251,6 +402,7 @@ func NewIdentityKey(keytype int, owner string) (*IdentityKey, error) {
 		return nil, err
 	}
 	//fmt.Printf("C'EST BON ON A FINI\n")
-	i.keyOwner = owner
+	// UUID.
+	//i.keyOwner = owner
 	return i, nil
 }

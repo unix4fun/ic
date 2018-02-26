@@ -10,7 +10,11 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
+	"runtime"
 
 	"github.com/unix4fun/ic/icjs"
 	"github.com/unix4fun/ic/ickp"
@@ -46,36 +50,19 @@ func init() {
 func main() {
 	Version := icVersion
 
-	//cpuProfile := profile.Start(profile.ProfilePath("."), profile.CPUProfile)
-
-	/*
-		f, err := os.Create("ic.pprof")
-		if err != nil {
-			panic(err)
-		}
-			g, err := os.Create("ac.mprof")
-			if err != nil {
-				panic(err)
-			}
-
-		err = pprof.StartCPUProfile(f)
-		if err != nil {
-			panic(err)
-		}
-	*/
-	//defer f.Close()
-	//defer pprof.StopCPUProfile()
+	go func() {
+		runtime.LockOSThread()
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+		runtime.UnlockOSThread()
+	}()
 
 	// parsing the RSA code...
-	rsaFlag := flag.Bool("rsagen", false, "generate RSA identity keys")
-	ecFlag := flag.Bool("ecgen", false, "generate ECDSA identity keys (these are using NIST curve SecP384")
-	saecFlag := flag.Bool("ec25gen", false, "generate EC 25519 identify keys")
+	rsaFlag := flag.Bool("genrsa", false, "generate RSA identity keys")
+	ecFlag := flag.Bool("genec", false, "generate ECDSA identity keys (these are using NIST curve SecP384")
+	saecFlag := flag.Bool("gen25519", false, "generate EC 25519 identify keys")
 	dbgFlag := flag.Bool("debug", false, "activate debug log")
 	//jsonFlag := flag.Bool("json", true, "use json communication channel")
-	/*
-		cpuProfile := flag.String("cpuprofile", "", "write cpu profile to file")
-		memProfile := flag.String("memprofile", "", "write mem profile to file")
-	*/
+
 	// we cannot use more than 2048K anyway why bother with a flag then
 	//bitOpt := flag.Int("client", 2048, "generate Client SSL Certificate")
 	flag.Parse()
@@ -92,27 +79,43 @@ func main() {
 		// generate a set of identity RSA keys and save them to file encrypted
 		//accp.GenRSAKeys()
 		var i *ickp.IdentityKey
+		var keyType int
 		var err error
-
-		identity := flag.Arg(0)
 
 		switch {
 		case *rsaFlag == true:
-			i, err = ickp.NewIdentityKey(ickp.KEYRSA, identity)
+			keyType = ickp.KEYRSA
+			//i, err = ickp.NewIdentityKey(ickp.KEYRSA)
 			//ickp.GenKeysRSA(rand.Reader)
 		case *ecFlag == true:
-			fmt.Printf("LET'S SWITCH!!: %v -> %s\n", *ecFlag, identity)
-			i, err = ickp.NewIdentityKey(ickp.KEYECDSA, identity)
+			keyType = ickp.KEYECDSA
+			//i, err = ickp.NewIdentityKey(ickp.KEYECDSA)
 			//ickp.GenKeysECDSA(rand.Reader)
 		case *saecFlag == true:
-			i, err = ickp.NewIdentityKey(ickp.KEYEC25519, identity)
+			keyType = ickp.KEYEC25519
 			//ickp.GenKeysED25519(rand.Reader)
 		}
-		icutl.DebugLog.Printf("bleh i: %p err: %v", i, err)
-		err = i.ToKeyFiles("/Users/eau/.ic/ic_id", []byte("proutprout"))
+
+		// creating and saving key
+		i, err = ickp.NewIdentityKey(keyType)
 		if err != nil {
 			panic(err)
 		}
+
+		icutl.DebugLog.Printf("bleh i: %p err: %v", i, err)
+		err = i.ToKeyFiles("/home/rival/.ic/ic_id", []byte("proutprout"))
+		if err != nil {
+			panic(err)
+		}
+
+		// loading the saved key
+		i2, err := ickp.LoadIdentityKey("/home/rival/.ic/ic_id", []byte("proutprout"))
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Printf("SAVED KEY: %v\n", i)
+		fmt.Printf("LOADED KEY: %v\n", i2)
 
 	} else {
 		// find and load the keys in memory to sign our requests

@@ -7,6 +7,10 @@ import (
 	"io"
 )
 
+const (
+	KEYSIZE_RSA = 4096
+)
+
 func GenKeysRSA(r io.Reader) (*rsa.PrivateKey, error) {
-	return rsa.GenerateKey(r, 2048)
+	return rsa.GenerateKey(r, KEYSIZE_RSA)
 }
