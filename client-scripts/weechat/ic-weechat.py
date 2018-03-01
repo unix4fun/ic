@@ -642,6 +642,8 @@ def skCmdSendKey(data, dabuffer, args):
             # XXX is subject to the same limitation as PRIVMSG on splitting.
             weechat.command(dabuffer, "/notice %s %s%s> %s" % (inf[BI_CHAN], icKexPrefix, peer, kxReply['blob']))
             return weechat.WEECHAT_RC_OK
+        else:
+            acwee.pmbac(dabuffer, "sendkey %s failure: %d/%s", args, kxReply['errno'], kxReply['blob'])
     return weechat.WEECHAT_RC_ERROR
 
 
@@ -718,16 +720,16 @@ def icCmd_CB(data, dabuffer, args):
         cmd = cb_argv[0]
 #        acwee.pmb(dabuffer, "CMD: %s NEWARGS: %s", cmd, newargv)
         if cmd == "save":
-            return acCmdSave(data, dabuffer, newargv)
+            return icCmdSave(data, dabuffer, newargv)
         elif cmd == "load":
-            return acCmdLoad(data, dabuffer, newargv)
+            return icCmdLoad(data, dabuffer, newargv)
         elif cmd == "help":
-            return acCmdHelp(data, dabuffer, args)
+            return icCmdHelp(data, dabuffer, args)
         else:
             return acCmdToggle(data, dabuffer, args)
 
 
-def acCmdSave(data, dabuffer, args):
+def icCmdSave(data, dabuffer, args):
     cb_argv = args.split()
     cb_argc = len(cb_argv)
     cb_passwd = weechat.string_eval_expression("${sec.data.icmaps}", {}, {}, {})
@@ -744,7 +746,7 @@ def acCmdSave(data, dabuffer, args):
     return weechat.WEECHAT_RC_OK
 
 
-def acCmdLoad(data, dabuffer, args):
+def icCmdLoad(data, dabuffer, args):
     cb_argv = args.split()
     cb_argc = len(cb_argv)
     cb_passwd = weechat.string_eval_expression("${sec.data.icmaps}", {}, {}, {})
@@ -775,7 +777,7 @@ def acCmdToggle(data, dabuffer, args):
         acwee.pmbac(dabuffer, "cannot encrypt this buffer...")
     return weechat.WEECHAT_RC_OK
 
-def acCmdHelp(data, dabuffer, args):
+def icCmdHelp(data, dabuffer, args):
     #acwee = data
     acwee.pmb(dabuffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$ /ic help %%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
     acwee.pmb(dabuffer, "args: %s", args)
@@ -798,6 +800,8 @@ def acCmdHelp(data, dabuffer, args):
     acwee.pmb(dabuffer, "\t\thelp                :\thelp about ic (this help)")
     acwee.pmb(dabuffer, "\t\tsave                :\tsave current secret keys (~/.ic/maps)")
     acwee.pmb(dabuffer, "\t\tload                :\tload current secret keys (~/.ic/maps)")
+    acwee.pmb(dabuffer, "\t\t                    :\tNOTE: you need to set weechat secure data storage named 'icmaps' (secure help)")
+    acwee.pmb(dabuffer, "\t\t                    :\texample: /secure set icmaps mypassword")
     acwee.pmb(dabuffer, "\t\t<empty>   :\tenable/disable encryption in the current buffer (channel/query)")
     # /ic           : enable/disable buffer (chan/query) encryption
     # /ic help      : help on ic

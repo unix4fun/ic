@@ -101,13 +101,15 @@ It will copy the following files into :
     /ic
     '/ic' is used to enable disable crypto on a specific (weechat) buffer and main script commands
 
-the flow is simple, when you join the channel, you **GENERATE** and then **BROADCAST** you public key, so that other channel members are aware of your public key,
-other channel members should also **BROADCAST** their own key, someone on the channel **GENERATE A SECRET**  Key for the current channel and then **EXCHANGE** the newly created secret key with other members.
+the flow is simple, when you join the channel, you **GENERATE** & **BROADCAST** your public key, so that other channel members are aware of your public key,
+other channel members should also **BROADCAST** their own key, a channel member **GENERATE A SECRET** (or already have the) key for the current channel 
+to then **EXCHANGE** the (newly created) secret key with other members.
 
 
-_GENERATE A KeyPair_|_BROADCAST Public Key_|_Public Key Help_
-----------|-----------|-----------|
-/pk gen   | /pk       | /pk help
+_GENERATE A KeyPair_& _BROADCAST Public Key_|_Public Key Help_
+----------|-----------|
+/pk gen   | /pk help
+
 
 _GENERATE Symmetric Key_|_Send K(ey)EX(change)_|_Receive K(ey)EX(change)_|_Secret Key Help_
 -------------------|----------|-----------------|----------------
@@ -133,21 +135,12 @@ So you don't have the key, there is not "automatic" requests or such, you need
 someone to give you the channel (/shared) key to be able to read the
 conversations
 
-So first generate an ephemeral key pair (AS A KEY *RECEIVER*): 
-
-    /pk gen
-
-Then you can broadcast your public key on the channel (AS A KEY *RECEIVER*):
+So first generate & broadcast an ephemeral key pair (AS A KEY *RECEIVER*): 
 
     /pk
 
-
-Now, someone on the channel who has the key, has to pass it to you, here is how. 
-Generate an ephemeral key pair (AS A KEY *HOLDER*):
-
-    /pk gen
-
-broadcast your public key:
+Now, someone on the channel who has the channel key, has to pass it to you, here is how. 
+Generate an ephemeral key pair (AS A KEY *HOLDER*) and broadcast your public key:
     
     /pk
 
@@ -157,7 +150,7 @@ Give the current buffer/channel key (AS A KEY *HOLDER*):
 
 
 
-You will see you have received a KEX payload, you can decide to ignore it or to
+You will see you have received a Key EXchange payload, you can decide to ignore it or to
 receive the key for the current buffer (AS A KEY *RECEIVER*):
 
     /sk use
