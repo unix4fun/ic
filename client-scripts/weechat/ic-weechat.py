@@ -10,7 +10,7 @@
 
 SCRIPT_NAME    = 'ic-weechat'
 SCRIPT_AUTHOR  = 'eau <eau+ic4f@unix4fun.net>'
-SCRIPT_VERSION = '20180226'
+SCRIPT_VERSION = '20180228'
 SCRIPT_LICENSE = 'BSD'
 SCRIPT_DESC    = 'ic4f - Irc Crypto 4 Fun'
 
@@ -251,12 +251,27 @@ def ic_get_userinfo(buffer, nick, channel, server):
 
 def acMessageParsePrintmsg(raw_tags, print_msg):
 #    ret_bool = False
-#    print raw_tags
-#    print print_msg
-    plug, name, tags = raw_tags.split(';')
+#    print "RAW TAGS:"
+#    print type(raw_tags)
+#    print "PRINT MSG:"
+#    print type(print_msg)
+#    print "END"
+    idx_first = raw_tags.find(";")
+    idx_last = raw_tags.rfind(";")
+#    print "FIRST: %d LAST: %d LEN: %d" % (idx_first, idx_last, len(raw_tags))
+
+    if idx_first == -1 or idx_last == -1 or idx_last+1 == len(raw_tags):
+        return [ False, print_msg ]
+
+    # will handle if the channel contains a ;
+    plug = raw_tags[:idx_first]
+    name = raw_tags[idx_first+1:idx_last]
+    tags = raw_tags[idx_last+1:]
+
+    #plug, name, tags = raw_tags.split(';')
     taglist = tags.split(',')
     ret_nick = ""
-    ret_buffer = None
+#    ret_buffer = None
     try:
         taglist.index("irc_privmsg")
         is_privmsg = True
@@ -277,14 +292,14 @@ def acMessageParsePrintmsg(raw_tags, print_msg):
         # sanity checks...
         if inf.has_key(BI_CHAN) and inf.has_key(BI_SERV) and inf.has_key(BI_NICK) and acwee.isAcEnabled(inf[BI_SERV], inf[BI_CHAN]):
             raw_peer_nick, message = print_msg.split('\t', 2)
+
             for t in taglist:
                 if t.find("nick_") == 0:
                     ret_nick = t[5:].strip()
-            if inf[BI_NICK] == ret_nick:
-                acwee.prtAcPrivMsg(buffer, inf[BI_NICK], message, tags)
-                return [ True, message ]
-
-        return [ False, print_msg ]
+                    if inf[BI_NICK] == ret_nick:
+                        acwee.prtAcPrivMsg(buffer, inf[BI_NICK], message, tags)
+                        return [ True, message ]
+    return [ False, print_msg ]
 
 
 
@@ -345,14 +360,14 @@ def pkCmd_CB(data, dabuffer, args):
 #    acwee.pmb(dabuffer, "ARGS[%d]: %r (raw:%s)\n", cb_argc, cb_argv, args)
 
     if cb_argc == 0:
-        return pkCmdBroadcast(data, dabuffer, args)
+        return pkCmdGenAndBroadcast(data, dabuffer, args)
     if cb_argc >= 1:
         cmd = cb_argv[0]
         newargv = " ".join(cb_argv[1:])
         if cmd == 'ls':
             return pkCmdList(data, dabuffer, newargv)
-        elif cmd == 'gen':
-            return pkCmdGeneratePair(data, dabuffer, newargv)
+#        elif cmd == 'gen':
+#            return pkCmdGeneratePair(data, dabuffer, newargv)
         elif cmd == "rm":
             return pkCmdDel(data, dabuffer, newargv)
         elif cmd == "help":
@@ -374,12 +389,12 @@ def pkCmdHelp(data, dabuffer, newargv):
     acwee.pmb(dabuffer, "\t\tRemove the public(/priv) key of <nick>")
     acwee.pmb(dabuffer, "\t\texample: /pk rm jamboree")
     acwee.pmb(dabuffer, "\t\t")
-    acwee.pmb(dabuffer, "/pk gen")
+#    acwee.pmb(dabuffer, "/pk gen")
+#    acwee.pmb(dabuffer, "\t\texample: /pk gen")
+#    acwee.pmb(dabuffer, "\t\t")
+    acwee.pmb(dabuffer, "/pk")
     acwee.pmb(dabuffer, "\t\tGenerate a personal ephemeral public/private key pair for secret key exchange,")
     acwee.pmb(dabuffer, "\t\tIt rely on Go's crypto/rand PRNG and use NaCL Curve 25519 go.crypto implementation")
-    acwee.pmb(dabuffer, "\t\texample: /pk gen")
-    acwee.pmb(dabuffer, "\t\t")
-    acwee.pmb(dabuffer, "/pk")
     acwee.pmb(dabuffer, "\t\tBroadcast your public key in the current buffer (channel|query) using notice")
     acwee.pmb(dabuffer, "\t\texample: /pk")
     acwee.pmb(dabuffer, "\t\t")
@@ -467,26 +482,46 @@ def pkCmdDel(data, dabuffer, args):
 #
 # we do NOTICE for public key broadcast and for kex
 #
-def pkCmdBroadcast(data, dabuffer, args):
+def pkCmdGenAndBroadcast(data, dabuffer, args):
     inf = ic_get_buflocalinfo(dabuffer)
+
     # XXX TODO: check if channel or private message and IRC
     if inf and inf.has_key(BI_TYPE) and inf.has_key(BI_NICK) and inf.has_key(BI_SERV) and inf.has_key(BI_CHAN):
-
-        pkReply = pkMessage(acwee, inf[BI_SERV]).pklist("")
-        if pkReply['bada'] is True and pkReply['errno'] == 0 and len(pkReply['blob']) > 0:
-            if pkReply['blob'].has_key(inf[BI_NICK]) is True:
-                myKey = pkReply['blob'][inf[BI_NICK]]
-                if myKey['HasPriv'] is True:
-                    acwee.pmbac(dabuffer, "broadcasting my key on %s", inf[BI_CHAN])
-                    weechat.command(dabuffer, "/notice %s %s %s" % (inf[BI_CHAN], icKeyPrefix, myKey['Pubkey']))
-            return weechat.WEECHAT_RC_OK
-        acwee.pmbac(dabuffer, "NO KEY /pk gen first")
-        return weechat.WEECHAT_RC_OK
+        # now we need some info to generate ephemeral keys...
+        userhost = ic_get_userinfo(dabuffer, inf[BI_NICK], inf[BI_CHAN], inf[BI_SERV])
+        if ( inf[BI_TYPE] == "channel" or inf[BI_TYPE] == "private" ) and len(inf[BI_NICK]) > 0:
+            # pkgen()
+            pkReply = pkMessage(acwee, inf[BI_SERV]).pkgen(inf[BI_NICK], userhost)
+            # if generation went ok
+            if pkReply['bada'] == True and pkReply['errno'] == 0: # XXX TODO test is it's None or error
+                acwee.pmbac(dabuffer, "generated a new ECC 25519 public/private keypair ('/pk ls' to see it)")
+                # get the key again.
+                pkReply = pkMessage(acwee, inf[BI_SERV]).pklist("")
+                if pkReply['bada'] is True and pkReply['errno'] == 0 and len(pkReply['blob']) > 0:
+                    if pkReply['blob'].has_key(inf[BI_NICK]) is True:
+                        myKey = pkReply['blob'][inf[BI_NICK]]
+                        if myKey['HasPriv'] is True:
+                            acwee.pmbac(dabuffer, "broadcasting my key on %s", inf[BI_CHAN])
+                            weechat.command(dabuffer, "/notice %s %s %s" % (inf[BI_CHAN], icKeyPrefix, myKey['Pubkey']))
+#            else:
+#                acwee.pmbac(dabuffer, "could not generate key (%d -> check daemon logs?)!", pkReply['errno'])
+#            return weechat.WEECHAT_RC_OK
+#
+#        #acwee.pmbac(dabuffer, "could not generate key you are NOT in a (connected) channel/query buffer!")
+#
+#        pkReply = pkMessage(acwee, inf[BI_SERV]).pklist("")
+#        if pkReply['bada'] is True and pkReply['errno'] == 0 and len(pkReply['blob']) > 0:
+#            if pkReply['blob'].has_key(inf[BI_NICK]) is True:
+#                myKey = pkReply['blob'][inf[BI_NICK]]
+#                if myKey['HasPriv'] is True:
+#                    acwee.pmbac(dabuffer, "broadcasting my key on %s", inf[BI_CHAN])
+#                    weechat.command(dabuffer, "/notice %s %s %s" % (inf[BI_CHAN], icKeyPrefix, myKey['Pubkey']))
+#                    return weechat.WEECHAT_RC_OK
+#        acwee.pmbac(dabuffer, "NO KEY /pk gen first")
+#        return weechat.WEECHAT_RC_OK
     else:
         acwee.pmbac(dabuffer, "/pk only works in a channel/privmsg buffer")
-        return weechat.WEECHAT_RC_OK
-
-
+    return weechat.WEECHAT_RC_OK
 
 #
 #
@@ -842,24 +877,30 @@ MDIDX_BINDEX = 4
 MDIDX_OPT = 5
 MDIDX_BUFFER = 6
 
+def printmsg_modifier_cb(data, modifier, modifier_data, msg_string):
+    retval = acMessageParsePrintmsg(modifier_data, msg_string)
+    if retval[0] is True:
+        return str("")
+    return msg_string
+
 # XXX TODO: i need a SERIOUS amount of docs otherwise this will be unmaintanable...
 # all these data gathering tricks are to be known and to be followed based on weechat dev..
 # long process to reach a reliable/production ready code...
-def printmsg_modifier_cb(data, modifier, modifier_data, msg_string):
+def oldprintmsg_modifier_cb(data, modifier, modifier_data, msg_string):
 #    print "HERE IN PRINTMSG MODIFIER"
 #    print "printmsg_modifier_cb()"
-#    print "DATA:"
+    print "DATA: %s/%d" % ( str(type(data)), len(data) )
 #    print data
-#    print "MODIFIER:"
-#    print modifier
-#    print "MODIFIER_DATA:"
-#    print modifier_data
-#    print "MSG_STRING:"
-#    print msg_string
-
-    retval = acMessageParsePrintmsg(modifier_data, msg_string)
-    if retval[0] is True:
-        return ""
+    print "MODIFIER: %s/%d" % (str(type(modifier)), len(modifier))
+    print "MODIFIER_DATA: %s/%d" % (str(type(modifier_data)), len(modifier_data))
+    print "MSG_STRING: %s/%d" % (str(type(msg_string)),  len(msg_string))
+    print "AVANT RETVAL NOW"
+#    retval = acMessageParsePrintmsg(modifier_data, msg_string)
+    print "RETVAL"
+#    print retval
+    print "/RETVAL"
+#    if retval[0] is True:
+#        return ""
     return msg_string
 
 #
@@ -1114,8 +1155,11 @@ def privmsg_in_modifier_cb(data, modifier, modifier_data, msg_string):
         #peer_msg = parsed[HPARSE_ARGS].split(':',1)[1].strip()
         peer_msg = parsed[HPARSE_TEXT]
         msg_tags = parsed[HPARSE_TAGS]
-        print "MESSAGE_TAGS: "
-        print msg_tags
+#        print "YOUPI MESSAGE_TAGS: "
+#        print "ICIICICICIIC"
+#        print type(msg_tags)
+#        print "LALALALALAL"
+#        print "/MESSAGE_TAGS"
 
         # XXX verify if the channel name is a nickname or a channel name, it is equivalent to if channel[0] != '#':
         retObj = re.match(icChannelRE, channel, re.M)
@@ -1162,10 +1206,11 @@ def privmsg_in_modifier_cb(data, modifier, modifier_data, msg_string):
                 acwee.pmb(buffer, "Invalid message from %s [%s/%s] %d (%s)!", peer_nick, peer_nick, channel, ctReply['errno'], ctReply['blob'])
 
         # HOW TO DISPLAY PLAINTEXT
-        if acwee.isAcEnabled(server, channel):
-            return msg_string
+#        if acwee.isAcEnabled(server, channel):
+#            return msg_string, modifier_data
 
         return msg_string
+#        return msg_string, modifier_data
 
 # XXX TODO: TO REMOVE this was an example/test
 #def my_process_cb(data, command, return_code, out, err):
@@ -1371,10 +1416,25 @@ class IcDisplay(object):
 # before
 #        weechat.prnt_date_tags(buffer, 0, newtags, "%s(%s%s%s)%s\t%s" % (weechat.color("white"), weechat.color("lightcyan"), nick, weechat.color("white"), weechat.color("default"), message ))
         # format message
-        newmessage = "%s(%s%s%s)%s\t%s" % (weechat.color("white"), weechat.color("lightcyan"), nick, weechat.color("white"), weechat.color("default"), message )
+#
+#        print "ByTES"
+#        print isinstance(message, bytes)
+       #     mystr = message.encode("utf-8")
+#        print "UNICODE"
+#        print isinstance(message, unicode)
+
+        message = message.encode("utf-8")
+        newmessage = "%s(%s%s%s)%s\t%s" % (weechat.color("white"),
+                weechat.color("lightcyan"), 
+                nick, 
+                weechat.color("white"),
+                weechat.color("default"), 
+                message )
+        #utfready = newmessage.encode("utf-8")
+
         # print it :)
-        self.pmb(buffer, "DEBUG MESSAGE: %s", message)
-        self.pmb(buffer, "DEBUG FMT MESSAGE: %s", newmessage)
+        #self.pmb(buffer, "DEBUG MESSAGE: %s", message)
+        #self.pmb(buffer, "DEBUG FMT MESSAGE: %s", newmessage)
         weechat.prnt_date_tags(buffer, 0, newtags, newmessage)
 
 

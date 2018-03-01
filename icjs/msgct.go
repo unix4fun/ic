@@ -13,9 +13,12 @@ import (
 )
 
 const (
-	IRCMSG_MAXSIZE = 512
-	IRCMSG_PREFIX  = "PRIVMSG  : " // that's what it should containt
-	IRCMSG_SUFFIX  = "\r\n"
+	IRCMSG_MAXSIZE  = 512
+	IRCMSG_PREFIX   = "PRIVMSG  :" // that's what it should containt
+	IRCMSG_CTPREFIX = "<ic>"
+	IRCMSG_SUFFIX   = "\r\n"
+
+	IRCMSG_OVERHEAD = len(IRCMSG_PREFIX) + len(IRCMSG_CTPREFIX) + len(IRCMSG_SUFFIX)
 )
 
 type ACCtMessage struct {
@@ -67,7 +70,7 @@ func (ct *ACCtMessage) HandlerCTSEAL() (msgReply []byte, err error) {
 	//var acBlobArray [][]byte
 	var acBlobArray []string
 	var out []byte
-	var reqBlobTmp []byte
+	//var reqBlobTmp []byte
 
 	icutl.DebugLog.Printf("CALL [%p] HandlerCTSEAL([%d/%s/%s] <%s> %08s)\n",
 		ct,
@@ -121,48 +124,38 @@ func (ct *ACCtMessage) HandlerCTSEAL() (msgReply []byte, err error) {
 	//:nick!user@host PRIVMSG target :<usable bytes><CRLF>
 	// let's encrypt to see how big is the message
 	// PRIVMSG <chan> :<encrypted msg><\r\n> < 512 bytes
-	out, err = iccp.CreateACMessageNACL(acctx, acrnd, []byte(ct.Blob[:]), []byte(ct.Nick))
+	blockBlob := []byte(ct.Blob[:])
+	blockNick := []byte(ct.Nick)
+	// let's try to cipher it first
+	out, err = iccp.CreateACMessageNACL(acctx, acrnd, blockBlob, blockNick)
+
 	ctLen := len(out)           // <ac> AbBDKLFl==
 	ctLen += len(ct.Channel)    // #channel
 	ctLen += len(IRCMSG_PREFIX) // PRIVMSG ...: (1 byte candy)
 	ctLen += len(IRCMSG_SUFFIX) // \r\n (ending)
 	ctLen += 1                  // candy! :)
 
-	if msgLen < IRCMSG_MAXSIZE {
+	// Plaintext
+	pt := ct.Blob
+	ptLen := len(ct.Blob)
+
+	// define maximum
+	ctOverhead := IRCMSG_OVERHEAD + len(ct.Channel) + 1
+	ctMaxSize := IRCMSG_MAXSIZE - ctOverhead
+
+	if ctLen < ctMaxSize {
 		acBlobArray = append(acBlobArray, string(out))
 	} else {
-		nBlock := msgLen / (IRCMSG_MAXSIZE - (len(ct.Channel) + len(IRCMSG_PREFIX) + len(IRCMSG_SUFFIX) + 1))
-		nBlock++
+		//nBlock := msgLen / (IRCMSG_MAXSIZE - (len(ct.Channel) + len(IRCMSG_PREFIX) + len(IRCMSG_SUFFIX) + 1))
+		// we split in blocks
+		nBlock := (ctLen / ctMaxSize) + 1
+		blockSize := ptLen / nBlock
+		blockMod := ptLen % nBlock
 
-	}
-
-	msgLen := ctLen
-	//msgLen := iccp.oldPredictLenNACL([]byte(ct.Blob)) + len(ct.Channel) + 14
-	//nBlock := msgLen/410 + 1
-	if msgLen < IRCMSG_MAXSIZE {
-		acBlobArray = append(acBlobArray, string(out))
-	} else {
-		// XXX TODO what was working..
-		//msgLen := iccp.PredictLenNACL(msgLen) + len(ct.Channel) + 14
-		//nBlock := msgLen/(512-(len(ct.Channel)+11+2+1)) + 1
-		nBlock := msgLen / (IRCMSG_MAXSIZE - (len(ct.Channel) + len(IRCMSG_PREFIX) + len(IRCMSG_SUFFIX) + 1))
-		nBlock++
-
-		// BUG HERE with offsets...
-		for j, bSize, bAll, bPtr := 0, len(ct.Blob)/nBlock, len(ct.Blob), 0; j < nBlock; j, bPtr = j+1, bPtr+bSize {
-			if bPtr+bSize+1 >= bAll {
-				reqBlobTmp = []byte(ct.Blob)[bPtr:]
-				//fmt.Fprintf(os.Stderr, "** %d block[%d:%d]: %s \n", j, bPtr, bAll, reqBlobTmp)
-				//fmt.Fprintf(os.Stderr, ">> %d => %c || %d => %c\n", bAll, reqBlob[bAll-1], bAll+1, reqBlob[bAll+1])
-				//reqBlob[bPtr:bAll]
-			} else {
-				reqBlobTmp = []byte(ct.Blob)[bPtr : bPtr+bSize]
-				//fmt.Fprintf(os.Stderr, ">>#%d block[%d:%d]: %s \n", j, bPtr, bPtr+bSize, reqBlobTmp)
-				//reqBlob[bPtr : bPtr+bSize]
-			} // END OF ELSE
-
-			//fmt.Fprintf(os.Stderr, ">> NEW #%d block[%d:%d]: %s \n", j, bPtr, bPtr+len(reqBlobTmp), reqBlobTmp)
-			out, err = iccp.CreateACMessageNACL(acctx, acrnd, reqBlobTmp, []byte(ct.Nick))
+		// each block
+		for i := 0; i < nBlock; i++ {
+			blockBlob = []byte(pt[i*blockSize : (i*blockSize)+blockSize])
+			out, err = iccp.CreateACMessageNACL(acctx, acrnd, blockBlob, blockNick)
 			if err != nil {
 				msgReply, _ = json.Marshal(&ACCtReply{
 					Type:  ctSealReply,
@@ -173,8 +166,66 @@ func (ct *ACCtMessage) HandlerCTSEAL() (msgReply []byte, err error) {
 				return
 			}
 			acBlobArray = append(acBlobArray, string(out))
-		} // END OF FOR
+		}
+		// last block..
+		if blockMod > 0 {
+			blockBlob = []byte(pt[nBlock*blockSize : (nBlock*blockSize)+blockMod])
+			out, err = iccp.CreateACMessageNACL(acctx, acrnd, blockBlob, blockNick)
+			if err != nil {
+				msgReply, _ = json.Marshal(&ACCtReply{
+					Type:  ctSealReply,
+					Bada:  false,
+					Errno: -4,
+					Blob:  err.Error(),
+				})
+				return
+			}
+			acBlobArray = append(acBlobArray, string(out))
+		}
 	}
+
+	// OLD WAY
+	/*
+		msgLen := ctLen
+		//msgLen := iccp.oldPredictLenNACL([]byte(ct.Blob)) + len(ct.Channel) + 14
+		//nBlock := msgLen/410 + 1
+		if msgLen < IRCMSG_MAXSIZE {
+			acBlobArray = append(acBlobArray, string(out))
+		} else {
+			// XXX TODO what was working..
+			//msgLen := iccp.PredictLenNACL(msgLen) + len(ct.Channel) + 14
+			//nBlock := msgLen/(512-(len(ct.Channel)+11+2+1)) + 1
+			nBlock := msgLen / (IRCMSG_MAXSIZE - (len(ct.Channel) + len(IRCMSG_PREFIX) + len(IRCMSG_SUFFIX) + 1))
+			nBlock++
+
+			// BUG HERE with offsets...
+			for j, bSize, bAll, bPtr := 0, len(ct.Blob)/nBlock, len(ct.Blob), 0; j < nBlock; j, bPtr = j+1, bPtr+bSize {
+				if bPtr+bSize+1 >= bAll {
+					reqBlobTmp = []byte(ct.Blob)[bPtr:]
+					//fmt.Fprintf(os.Stderr, "** %d block[%d:%d]: %s \n", j, bPtr, bAll, reqBlobTmp)
+					//fmt.Fprintf(os.Stderr, ">> %d => %c || %d => %c\n", bAll, reqBlob[bAll-1], bAll+1, reqBlob[bAll+1])
+					//reqBlob[bPtr:bAll]
+				} else {
+					reqBlobTmp = []byte(ct.Blob)[bPtr : bPtr+bSize]
+					//fmt.Fprintf(os.Stderr, ">>#%d block[%d:%d]: %s \n", j, bPtr, bPtr+bSize, reqBlobTmp)
+					//reqBlob[bPtr : bPtr+bSize]
+				} // END OF ELSE
+
+				//fmt.Fprintf(os.Stderr, ">> NEW #%d block[%d:%d]: %s \n", j, bPtr, bPtr+len(reqBlobTmp), reqBlobTmp)
+				out, err = iccp.CreateACMessageNACL(acctx, acrnd, reqBlobTmp, []byte(ct.Nick))
+				if err != nil {
+					msgReply, _ = json.Marshal(&ACCtReply{
+						Type:  ctSealReply,
+						Bada:  false,
+						Errno: -3,
+						Blob:  err.Error(),
+					})
+					return
+				}
+				acBlobArray = append(acBlobArray, string(out))
+			} // END OF FOR
+		}
+	*/
 	msgReply, _ = json.Marshal(&ACCtReply{
 		Type:   ctSealReply,
 		Bada:   true,

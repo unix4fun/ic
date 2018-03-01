@@ -205,8 +205,11 @@ func (pk *ACPkMessage) HandlerPKLIST() (msgReply []byte, err error) {
 		icutl.DebugLog.Printf("ok_map len: %d\n", len(*pkMap))
 
 		// KISS: we always return all keys... the script will parse what it needs. :)
+		// XXX we MUST limit this to the requested key normally the map
+		// limits naturally to one nick one key but in case of fast
+		// changes + public key broadcast it can eventually be flooded.
 		msgReplyBlob, rerr := json.Marshal(*pkMap)
-		if err != nil {
+		if rerr != nil {
 			msgReply, _ = json.Marshal(&ACPkReply{
 				Type:  pkListReply,
 				Bada:  false,
@@ -216,7 +219,6 @@ func (pk *ACPkMessage) HandlerPKLIST() (msgReply []byte, err error) {
 			})
 			icutl.DebugLog.Printf("RET [%p] HandlePKADD(%d:%s/%s) -> [Error: %s]\n", pk, pk.Type, pk.Server, pk.Nick, err.Error())
 			return
-			//panic(rErr)
 		}
 
 		icutl.DebugLog.Printf("(INFO) PKLIST -> (Blob: %s) ! n Keys\n", msgReplyBlob)
@@ -228,6 +230,7 @@ func (pk *ACPkMessage) HandlerPKLIST() (msgReply []byte, err error) {
 		})
 		return
 	}
+
 	msgReply, _ = json.Marshal(&ACPkReply{
 		Type:  pkListReply,
 		Bada:  true,
