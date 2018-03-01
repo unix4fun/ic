@@ -10,7 +10,7 @@
 
 SCRIPT_NAME    = 'ic-weechat'
 SCRIPT_AUTHOR  = 'eau <eau+ic4f@unix4fun.net>'
-SCRIPT_VERSION = '20180228'
+SCRIPT_VERSION = '20180301'
 SCRIPT_LICENSE = 'BSD'
 SCRIPT_DESC    = 'ic4f - Irc Crypto 4 Fun'
 
@@ -291,7 +291,13 @@ def acMessageParsePrintmsg(raw_tags, print_msg):
         
         # sanity checks...
         if inf.has_key(BI_CHAN) and inf.has_key(BI_SERV) and inf.has_key(BI_NICK) and acwee.isAcEnabled(inf[BI_SERV], inf[BI_CHAN]):
-            raw_peer_nick, message = print_msg.split('\t', 2)
+#            print isinstance(print_msg, bytes)
+#            print isinstance(print_msg, unicode)
+#            print "PRINT MSG: %s\n" % print_msg
+            idx_msg = print_msg.find('\t')
+            raw_peer_nick = print_msg[:idx_msg]
+            message = print_msg[idx_msg+1:]
+#            raw_peer_nick, message = print_msg.split('\t', 2)
 
             for t in taglist:
                 if t.find("nick_") == 0:
@@ -880,7 +886,8 @@ MDIDX_BUFFER = 6
 def printmsg_modifier_cb(data, modifier, modifier_data, msg_string):
     retval = acMessageParsePrintmsg(modifier_data, msg_string)
     if retval[0] is True:
-        return str("")
+#        print "MESSAGE SENT BY ME SO I DISPLAY AND RETURN BLEH"
+        return "".encode("utf-8")
     return msg_string
 
 # XXX TODO: i need a SERIOUS amount of docs otherwise this will be unmaintanable...
@@ -1423,13 +1430,24 @@ class IcDisplay(object):
 #        print "UNICODE"
 #        print isinstance(message, unicode)
 
-        message = message.encode("utf-8")
+
+        #print "BYTES: " + str(isinstance(message, bytes)) + " UNICODE: " + str(isinstance(message, unicode))
+        if isinstance(message, unicode):
+            message_utf8 = message.encode('utf-8')
+        elif isinstance(message, bytes):
+            message_utf8 = message
+
+        if isinstance(nick, unicode):
+            nick_utf8 = nick.encode('utf-8')
+        elif isinstance(nick, bytes):
+            nick_utf8 = nick
+
         newmessage = "%s(%s%s%s)%s\t%s" % (weechat.color("white"),
-                weechat.color("lightcyan"), 
-                nick, 
-                weechat.color("white"),
-                weechat.color("default"), 
-                message )
+                weechat.color("lightcyan"), nick_utf8, weechat.color("white"),
+                weechat.color("default"), message_utf8)
+#        newmessage = u'{}({}{}{}){}\t{}'.format(weechat.color("white"), weechat.color("lightcyan"), nick, weechat.color("white"), weechat.color("default"), message)
+#        newmessage = u'({})\t{}'.format(nick, message)
+#        mystr = newmessage
         #utfready = newmessage.encode("utf-8")
 
         # print it :)
@@ -1994,7 +2012,8 @@ class IcWeechat(IcCore):
         # input message hooks
         weechat.hook_modifier("weechat_print", "printmsg_modifier_cb", "")
         weechat.hook_modifier("irc_in_notice", "notice_in_modifier_cb", "")
-        weechat.hook_modifier("irc_in_privmsg", "privmsg_in_modifier_cb", "")
+        #weechat.hook_modifier("irc_in_privmsg", "privmsg_in_modifier_cb", "")
+        weechat.hook_modifier("irc_in2_privmsg", "privmsg_in_modifier_cb", "")
         weechat.hook_modifier("irc_out_privmsg", "privmsg_out_modifier_cb", "")
         return weechat.WEECHAT_RC_OK
 
