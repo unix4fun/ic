@@ -5,9 +5,9 @@ os:
   - osx
 
 go:
-  - 1.10
-  - 1.9.4
-  - 1.8.7
+  - "1.10"
+  - "1.9.4"
+  - "1.8.7"
 
 install:
   - go get -a -u -v github.com/unix4fun/ic
