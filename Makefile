@@ -28,14 +28,15 @@ AC_HOME=$(HOME)/.ic
 
 CURRENT=$(shell date +%Y%m%d)
 
-all: update
+all: update install
+	@echo go: ${GOBIN}
 	@echo "you can test/use IC && commit!"
 
 clean:
 	@echo "cleaning"
 	rm -rf ic ic.debug.txt
 
-update: version
+ver-update: version
 	@echo "updating proto & version"
 	@go generate
 
@@ -55,6 +56,9 @@ version:
 # XXX TODO:
 # - test GOBIN existence
 # - test ACW_ROOT and _PYTHON existence
+#
+update:
+	@${GOBIN} get -u github.com/unix4fun/ic
 
 install: 
 	@echo "go: ${GOBIN}"

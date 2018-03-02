@@ -10,7 +10,7 @@
 
 SCRIPT_NAME    = 'ic-weechat'
 SCRIPT_AUTHOR  = 'eau <eau+ic4f@unix4fun.net>'
-SCRIPT_VERSION = '20180301'
+SCRIPT_VERSION = '20180302'
 SCRIPT_LICENSE = 'BSD'
 SCRIPT_DESC    = 'ic4f - Irc Crypto 4 Fun'
 
@@ -378,7 +378,7 @@ def pkCmd_CB(data, dabuffer, args):
             return pkCmdDel(data, dabuffer, newargv)
         elif cmd == "help":
             return pkCmdHelp(data, dabuffer, newargv)
-    return pkCmdBroadcast(data, dabuffer, newargv)
+    return pkCmdHelp(data, dabuffer, newargv)
 
 def pkCmdHelp(data, dabuffer, newargv):
     acwee.pmb(dabuffer, "$#%%$#@%%#%%@#$%%@#$%%@$#%%@#$ /pk help %%@#$%%#@$%%#@$%%@#$%%@#%%@#$%%@")
