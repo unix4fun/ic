@@ -1,6 +1,6 @@
 
 # PROJECT IS NOT MAINTAINED AND OBSOLETED BY A REWRITE
-# [WIC](https://git.sr.ht/~eau/wic
+# [git.sr.ht/~eau/wic](https://git.sr.ht/~eau/wic)
 # PLEASE USE WIC INSTEAD
 
 # **I**(rc) **C**(rypto) 4 Fun= IC4F
