@@ -1,3 +1,8 @@
+
+# PROJECT IS NOT MAINTAINED AND OBSOLETED BY A REWRITE
+# [WIC](https://git.sr.ht/~eau/wic
+# PLEASE USE WIC INSTEAD
+
 # **I**(rc) **C**(rypto) 4 Fun= IC4F
 
 [![Join the chat at https://gitter.im/ic4f/Lobby](https://badges.gitter.im/ic4f/Lobby.svg)](https://gitter.im/ic4f/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
